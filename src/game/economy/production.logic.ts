@@ -1,7 +1,11 @@
 import { PlayerState, BuildingInstance } from "../core/game.types";
-import { BuildingType, BuildingCost, ResourceType } from "../core/economy.types";
+import { BuildingType, BuildingCost, ResourceType, ResourceInventory, BuildingDefinition } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
-import { hasEnoughResources, removeResource } from "./stockpile.logic";
+import { hasEnoughResources, removeResource, getResourceAmount, addResource } from "./stockpile.logic";
+import { EconomySimulationState, cloneState, requiresRoad, hasAssignedWorkersForBuilding } from "../core/economy.simulation";
+import { SimulationConfig } from "./balancing.constants";
+import { ProductionRecipe } from "./recipes.types";
+import { RECIPES } from "./recipes.data";
 
 export function canAffordBuilding(
   player: PlayerState,
@@ -57,4 +61,126 @@ export function canAffordUpgrade(
   const cost = getUpgradeCost(building);
   if (!cost) return false;
   return hasEnoughResources(player.stock, cost.resources);
+}
+
+export function processProduction(
+  state: EconomySimulationState,
+  deltaSec: number,
+  config: SimulationConfig
+): EconomySimulationState {
+  const next = cloneState(state);
+
+  for (const building of Object.values(next.buildings)) {
+    if (!building.isActive) continue;
+    if (!building.connectedToRoad && requiresRoad(building.type)) continue;
+
+    const def = BUILDING_DEFINITIONS[building.type];
+    if (!def.recipeIds?.length) continue;
+    if (!hasAssignedWorkersForBuilding(next, building)) continue;
+
+    const recipe = chooseRecipeForBuilding(building, def);
+    if (!recipe) continue;
+
+    building.currentRecipeId = recipe.id;
+
+    if (!hasEnoughResources(building.inputBuffer, recipe.inputs)) {
+      building.progressSec = 0;
+      continue;
+    }
+
+    if (!canStoreRecipeOutputs(building.outputBuffer, recipe, config)) {
+      continue;
+    }
+
+    const cycleTime = getRecipeCycleTime(building, recipe, config);
+    building.progressSec += deltaSec;
+
+    while (building.progressSec >= cycleTime) {
+      if (!hasEnoughResources(building.inputBuffer, recipe.inputs)) {
+        building.progressSec = 0;
+        break;
+      }
+
+      if (!canStoreRecipeOutputs(building.outputBuffer, recipe, config)) {
+        break;
+      }
+
+      building.progressSec -= cycleTime;
+      building.inputBuffer = subtractRecipeInputs(building.inputBuffer, recipe);
+      building.outputBuffer = addRecipeOutputs(building.outputBuffer, recipe);
+      building.corruption = (building.corruption ?? 0) + 0.15;
+    }
+  }
+
+  return next;
+}
+
+export function chooseRecipeForBuilding(
+  building: BuildingInstance,
+  def: BuildingDefinition
+): ProductionRecipe | null {
+  if (!def.recipeIds?.length) return null;
+
+  if (building.currentRecipeId) {
+    const existing = RECIPES[building.currentRecipeId];
+    if (existing) return existing;
+  }
+
+  for (const recipeId of def.recipeIds) {
+    const recipe = RECIPES[recipeId];
+    if (recipe) return recipe;
+  }
+
+  return null;
+}
+
+export function getRecipeCycleTime(
+  building: BuildingInstance,
+  recipe: ProductionRecipe,
+  config: SimulationConfig
+): number {
+  const speedMultiplier =
+    1 + (building.level - 1) * config.recipeLevelSpeedBonus;
+
+  return recipe.workTimeSec / speedMultiplier;
+}
+
+export function subtractRecipeInputs(
+  inventory: ResourceInventory,
+  recipe: ProductionRecipe
+): ResourceInventory {
+  let next = { ...inventory };
+
+  for (const [resource, amount] of Object.entries(recipe.inputs)) {
+    next = removeResource(next, resource as ResourceType, amount ?? 0);
+  }
+
+  return next;
+}
+
+export function addRecipeOutputs(
+  inventory: ResourceInventory,
+  recipe: ProductionRecipe
+): ResourceInventory {
+  let next = { ...inventory };
+
+  for (const [resource, amount] of Object.entries(recipe.outputs)) {
+    next = addResource(next, resource as ResourceType, amount ?? 0);
+  }
+
+  return next;
+}
+
+export function canStoreRecipeOutputs(
+  outputBuffer: ResourceInventory,
+  recipe: ProductionRecipe,
+  config: SimulationConfig
+): boolean {
+  for (const [resource, amount] of Object.entries(recipe.outputs)) {
+    const current = getResourceAmount(outputBuffer, resource as ResourceType);
+    if (current + (amount ?? 0) > config.buildingOutputBufferLimit) {
+      return false;
+    }
+  }
+  return true;
 }
