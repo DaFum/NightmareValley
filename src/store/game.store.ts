@@ -6,6 +6,7 @@ export interface GameStore {
   gameState: EconomySimulationState;
   isRunning: boolean;
   tickRate: number;
+  lastError?: Error | string | unknown;
   setGameState: (state: EconomySimulationState) => void;
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
@@ -33,12 +34,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   gameState: initialGameState,
   isRunning: false,
   tickRate: 1,
+  lastError: undefined,
 
   setGameState: (state) => set({ gameState: state }),
   togglePlayPause: () => set((state) => ({ isRunning: !state.isRunning })),
-  setTickRate: (rate) => set({ tickRate: rate }),
+  setTickRate: (rate) => {
+    let clampedRate = 1;
+    if (Number.isFinite(rate) && rate > 0) {
+      clampedRate = Math.max(1e-6, Math.min(1000, rate));
+    }
+    set({ tickRate: clampedRate });
+  },
 
   advanceTick: (deltaSec) => {
+    if (deltaSec <= 0) return;
+
     const { gameState, isRunning, tickRate } = get();
     if (!isRunning) return;
 
@@ -47,7 +57,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: nextState });
     } catch (error) {
       console.error("Simulation tick failed:", error);
-      // Optional: set({ isRunning: false }) to halt on error
+      set({ isRunning: false, lastError: error });
     }
   },
 }));
