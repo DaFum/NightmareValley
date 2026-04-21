@@ -1,0 +1,1662 @@
+{
+  "buildings": {
+    "stage0": {
+      "count_found": 32,
+      "assigned": {
+        "organHarvester": {
+          "file": "buildings/stage0/organHarvester.png",
+          "box": [
+            13,
+            80,
+            345,
+            248
+          ]
+        },
+        "seedOfTheHowlingRoot": {
+          "file": "buildings/stage0/seedOfTheHowlingRoot.png",
+          "box": [
+            359,
+            44,
+            676,
+            244
+          ]
+        },
+        "millOfGnashing": {
+          "file": "buildings/stage0/millOfGnashing.png",
+          "box": [
+            687,
+            40,
+            1011,
+            252
+          ]
+        },
+        "sepulcherQuarry": {
+          "file": "buildings/stage0/sepulcherQuarry.png",
+          "box": [
+            1020,
+            60,
+            1350,
+            247
+          ]
+        },
+        "wombWell": {
+          "file": "buildings/stage0/wombWell.png",
+          "box": [
+            11,
+            332,
+            353,
+            496
+          ]
+        },
+        "shoreOfHooks": {
+          "file": "buildings/stage0/shoreOfHooks.png",
+          "box": [
+            359,
+            332,
+            681,
+            488
+          ]
+        },
+        "fieldOfMouths": {
+          "file": "buildings/stage0/fieldOfMouths.png",
+          "box": [
+            689,
+            320,
+            1021,
+            488
+          ]
+        },
+        "dustCathedralMill": {
+          "file": "buildings/stage0/dustCathedralMill.png",
+          "box": [
+            1029,
+            328,
+            1355,
+            500
+          ]
+        },
+        "ovenOfLastBread": {
+          "file": "buildings/stage0/ovenOfLastBread.png",
+          "box": [
+            18,
+            573,
+            345,
+            752
+          ]
+        },
+        "styOfConsumption": {
+          "file": "buildings/stage0/styOfConsumption.png",
+          "box": [
+            354,
+            592,
+            678,
+            748
+          ]
+        },
+        "houseOfFlensing": {
+          "file": "buildings/stage0/houseOfFlensing.png",
+          "box": [
+            682,
+            584,
+            1017,
+            753
+          ]
+        },
+        "coalWound": {
+          "file": "buildings/stage0/coalWound.png",
+          "box": [
+            1024,
+            596,
+            1356,
+            752
+          ]
+        },
+        "ironVeinPit": {
+          "file": "buildings/stage0/ironVeinPit.png",
+          "box": [
+            18,
+            816,
+            350,
+            1004
+          ]
+        },
+        "goldCatacomb": {
+          "file": "buildings/stage0/goldCatacomb.png",
+          "box": [
+            362,
+            820,
+            670,
+            1008
+          ]
+        },
+        "bloodSmeltery": {
+          "file": "buildings/stage0/bloodSmeltery.png",
+          "box": [
+            676,
+            816,
+            1017,
+            1008
+          ]
+        },
+        "haloLiquefier": {
+          "file": "buildings/stage0/haloLiquefier.png",
+          "box": [
+            1023,
+            812,
+            1358,
+            1007
+          ]
+        },
+        "instrumentCrucible": {
+          "file": "buildings/stage0/instrumentCrucible.png",
+          "box": [
+            15,
+            1072,
+            345,
+            1244
+          ]
+        },
+        "bladeVestry": {
+          "file": "buildings/stage0/bladeVestry.png",
+          "box": [
+            354,
+            1057,
+            678,
+            1248
+          ]
+        },
+        "skinStitchery": {
+          "file": "buildings/stage0/skinStitchery.png",
+          "box": [
+            690,
+            1056,
+            1012,
+            1255
+          ]
+        },
+        "vaultOfDigestiveStone": {
+          "file": "buildings/stage0/vaultOfDigestiveStone.png",
+          "box": [
+            1023,
+            1056,
+            1356,
+            1240
+          ]
+        },
+        "pitOfWarBirth": {
+          "file": "buildings/stage0/pitOfWarBirth.png",
+          "box": [
+            15,
+            1296,
+            342,
+            1496
+          ]
+        },
+        "spireOfJurisdiction": {
+          "file": "buildings/stage0/spireOfJurisdiction.png",
+          "box": [
+            354,
+            1296,
+            681,
+            1492
+          ]
+        },
+        "refectoryOfSalt": {
+          "file": "buildings/stage0/refectoryOfSalt.png",
+          "box": [
+            687,
+            1296,
+            1016,
+            1494
+          ]
+        },
+        "fatRenderer": {
+          "file": "buildings/stage0/fatRenderer.png",
+          "box": [
+            1026,
+            1292,
+            1351,
+            1496
+          ]
+        },
+        "ashPress": {
+          "file": "buildings/stage0/ashPress.png",
+          "box": [
+            16,
+            1532,
+            345,
+            1747
+          ]
+        }
+      },
+      "extras": [
+        {
+          "file": "buildings/stage0/extra_01.png",
+          "box": [
+            356,
+            1548,
+            678,
+            1732
+          ]
+        },
+        {
+          "file": "buildings/stage0/extra_02.png",
+          "box": [
+            699,
+            1525,
+            1017,
+            1736
+          ]
+        },
+        {
+          "file": "buildings/stage0/extra_03.png",
+          "box": [
+            1029,
+            1536,
+            1351,
+            1739
+          ]
+        },
+        {
+          "file": "buildings/stage0/extra_04.png",
+          "box": [
+            20,
+            1784,
+            356,
+            1988
+          ]
+        },
+        {
+          "file": "buildings/stage0/extra_05.png",
+          "box": [
+            367,
+            1776,
+            686,
+            1983
+          ]
+        },
+        {
+          "file": "buildings/stage0/extra_06.png",
+          "box": [
+            692,
+            1750,
+            1010,
+            1981
+          ]
+        },
+        {
+          "file": "buildings/stage0/extra_07.png",
+          "box": [
+            1026,
+            1780,
+            1348,
+            1978
+          ]
+        }
+      ]
+    },
+    "stage1": {
+      "count_found": 14,
+      "assigned": {
+        "organHarvester": {
+          "file": "buildings/stage1/organHarvester.png",
+          "box": [
+            7,
+            64,
+            354,
+            285
+          ]
+        },
+        "seedOfTheHowlingRoot": {
+          "file": "buildings/stage1/seedOfTheHowlingRoot.png",
+          "box": [
+            351,
+            56,
+            1361,
+            286
+          ]
+        },
+        "millOfGnashing": {
+          "file": "buildings/stage1/millOfGnashing.png",
+          "box": [
+            7,
+            328,
+            1361,
+            536
+          ]
+        },
+        "sepulcherQuarry": {
+          "file": "buildings/stage1/sepulcherQuarry.png",
+          "box": [
+            4,
+            577,
+            353,
+            788
+          ]
+        },
+        "wombWell": {
+          "file": "buildings/stage1/wombWell.png",
+          "box": [
+            351,
+            580,
+            1361,
+            793
+          ]
+        },
+        "shoreOfHooks": {
+          "file": "buildings/stage1/shoreOfHooks.png",
+          "box": [
+            7,
+            840,
+            1361,
+            1041
+          ]
+        },
+        "fieldOfMouths": {
+          "file": "buildings/stage1/fieldOfMouths.png",
+          "box": [
+            7,
+            1080,
+            1361,
+            1295
+          ]
+        },
+        "dustCathedralMill": {
+          "file": "buildings/stage1/dustCathedralMill.png",
+          "box": [
+            9,
+            1336,
+            350,
+            1552
+          ]
+        },
+        "ovenOfLastBread": {
+          "file": "buildings/stage1/ovenOfLastBread.png",
+          "box": [
+            348,
+            1332,
+            1361,
+            1548
+          ]
+        },
+        "styOfConsumption": {
+          "file": "buildings/stage1/styOfConsumption.png",
+          "box": [
+            10,
+            1588,
+            353,
+            1788
+          ]
+        },
+        "houseOfFlensing": {
+          "file": "buildings/stage1/houseOfFlensing.png",
+          "box": [
+            356,
+            1583,
+            686,
+            1784
+          ]
+        },
+        "coalWound": {
+          "file": "buildings/stage1/coalWound.png",
+          "box": [
+            684,
+            1556,
+            1361,
+            2024
+          ]
+        },
+        "ironVeinPit": {
+          "file": "buildings/stage1/ironVeinPit.png",
+          "box": [
+            12,
+            1828,
+            355,
+            2024
+          ]
+        },
+        "goldCatacomb": {
+          "file": "buildings/stage1/goldCatacomb.png",
+          "box": [
+            356,
+            1824,
+            686,
+            2024
+          ]
+        }
+      },
+      "extras": []
+    },
+    "stage2": {
+      "count_found": 16,
+      "assigned": {
+        "organHarvester": {
+          "file": "buildings/stage2/organHarvester.png",
+          "box": [
+            7,
+            52,
+            355,
+            293
+          ]
+        },
+        "seedOfTheHowlingRoot": {
+          "file": "buildings/stage2/seedOfTheHowlingRoot.png",
+          "box": [
+            351,
+            32,
+            679,
+            303
+          ]
+        },
+        "millOfGnashing": {
+          "file": "buildings/stage2/millOfGnashing.png",
+          "box": [
+            679,
+            36,
+            1365,
+            296
+          ]
+        },
+        "sepulcherQuarry": {
+          "file": "buildings/stage2/sepulcherQuarry.png",
+          "box": [
+            0,
+            324,
+            708,
+            552
+          ]
+        },
+        "wombWell": {
+          "file": "buildings/stage2/wombWell.png",
+          "box": [
+            700,
+            308,
+            1018,
+            549
+          ]
+        },
+        "shoreOfHooks": {
+          "file": "buildings/stage2/shoreOfHooks.png",
+          "box": [
+            1020,
+            336,
+            1365,
+            536
+          ]
+        },
+        "fieldOfMouths": {
+          "file": "buildings/stage2/fieldOfMouths.png",
+          "box": [
+            15,
+            588,
+            353,
+            800
+          ]
+        },
+        "dustCathedralMill": {
+          "file": "buildings/stage2/dustCathedralMill.png",
+          "box": [
+            351,
+            577,
+            1365,
+            808
+          ]
+        },
+        "ovenOfLastBread": {
+          "file": "buildings/stage2/ovenOfLastBread.png",
+          "box": [
+            7,
+            828,
+            681,
+            1032
+          ]
+        },
+        "styOfConsumption": {
+          "file": "buildings/stage2/styOfConsumption.png",
+          "box": [
+            684,
+            824,
+            1022,
+            1029
+          ]
+        },
+        "houseOfFlensing": {
+          "file": "buildings/stage2/houseOfFlensing.png",
+          "box": [
+            1021,
+            812,
+            1365,
+            1044
+          ]
+        },
+        "coalWound": {
+          "file": "buildings/stage2/coalWound.png",
+          "box": [
+            0,
+            1064,
+            1365,
+            1280
+          ]
+        },
+        "ironVeinPit": {
+          "file": "buildings/stage2/ironVeinPit.png",
+          "box": [
+            0,
+            1312,
+            1365,
+            1528
+          ]
+        },
+        "goldCatacomb": {
+          "file": "buildings/stage2/goldCatacomb.png",
+          "box": [
+            2,
+            1548,
+            1365,
+            1772
+          ]
+        },
+        "bloodSmeltery": {
+          "file": "buildings/stage2/bloodSmeltery.png",
+          "box": [
+            5,
+            1792,
+            350,
+            2008
+          ]
+        },
+        "haloLiquefier": {
+          "file": "buildings/stage2/haloLiquefier.png",
+          "box": [
+            354,
+            1772,
+            1363,
+            2000
+          ]
+        }
+      },
+      "extras": []
+    },
+    "stage3": {
+      "count_found": 35,
+      "assigned": {
+        "organHarvester": {
+          "file": "buildings/stage3/organHarvester.png",
+          "box": [
+            16,
+            27,
+            352,
+            291
+          ]
+        },
+        "seedOfTheHowlingRoot": {
+          "file": "buildings/stage3/seedOfTheHowlingRoot.png",
+          "box": [
+            357,
+            24,
+            681,
+            292
+          ]
+        },
+        "millOfGnashing": {
+          "file": "buildings/stage3/millOfGnashing.png",
+          "box": [
+            684,
+            35,
+            1021,
+            290
+          ]
+        },
+        "sepulcherQuarry": {
+          "file": "buildings/stage3/sepulcherQuarry.png",
+          "box": [
+            1021,
+            43,
+            1360,
+            292
+          ]
+        },
+        "wombWell": {
+          "file": "buildings/stage3/wombWell.png",
+          "box": [
+            15,
+            322,
+            349,
+            543
+          ]
+        },
+        "shoreOfHooks": {
+          "file": "buildings/stage3/shoreOfHooks.png",
+          "box": [
+            348,
+            322,
+            696,
+            537
+          ]
+        },
+        "fieldOfMouths": {
+          "file": "buildings/stage3/fieldOfMouths.png",
+          "box": [
+            686,
+            296,
+            1017,
+            546
+          ]
+        },
+        "dustCathedralMill": {
+          "file": "buildings/stage3/dustCathedralMill.png",
+          "box": [
+            1021,
+            328,
+            1361,
+            543
+          ]
+        },
+        "ovenOfLastBread": {
+          "file": "buildings/stage3/ovenOfLastBread.png",
+          "box": [
+            6,
+            569,
+            353,
+            785
+          ]
+        },
+        "styOfConsumption": {
+          "file": "buildings/stage3/styOfConsumption.png",
+          "box": [
+            351,
+            563,
+            682,
+            789
+          ]
+        },
+        "houseOfFlensing": {
+          "file": "buildings/stage3/houseOfFlensing.png",
+          "box": [
+            684,
+            568,
+            1020,
+            785
+          ]
+        },
+        "coalWound": {
+          "file": "buildings/stage3/coalWound.png",
+          "box": [
+            1021,
+            569,
+            1364,
+            783
+          ]
+        },
+        "ironVeinPit": {
+          "file": "buildings/stage3/ironVeinPit.png",
+          "box": [
+            6,
+            802,
+            348,
+            1000
+          ]
+        },
+        "goldCatacomb": {
+          "file": "buildings/stage3/goldCatacomb.png",
+          "box": [
+            353,
+            795,
+            677,
+            1003
+          ]
+        },
+        "bloodSmeltery": {
+          "file": "buildings/stage3/bloodSmeltery.png",
+          "box": [
+            681,
+            799,
+            1021,
+            997
+          ]
+        },
+        "haloLiquefier": {
+          "file": "buildings/stage3/haloLiquefier.png",
+          "box": [
+            1023,
+            792,
+            1365,
+            1002
+          ]
+        },
+        "instrumentCrucible": {
+          "file": "buildings/stage3/instrumentCrucible.png",
+          "box": [
+            11,
+            1014,
+            677,
+            1228
+          ]
+        },
+        "bladeVestry": {
+          "file": "buildings/stage3/bladeVestry.png",
+          "box": [
+            680,
+            1025,
+            1022,
+            1217
+          ]
+        },
+        "skinStitchery": {
+          "file": "buildings/stage3/skinStitchery.png",
+          "box": [
+            1028,
+            1020,
+            1364,
+            1216
+          ]
+        },
+        "vaultOfDigestiveStone": {
+          "file": "buildings/stage3/vaultOfDigestiveStone.png",
+          "box": [
+            9,
+            1246,
+            346,
+            1430
+          ]
+        },
+        "pitOfWarBirth": {
+          "file": "buildings/stage3/pitOfWarBirth.png",
+          "box": [
+            350,
+            1245,
+            677,
+            1428
+          ]
+        },
+        "spireOfJurisdiction": {
+          "file": "buildings/stage3/spireOfJurisdiction.png",
+          "box": [
+            685,
+            1232,
+            1020,
+            1429
+          ]
+        },
+        "refectoryOfSalt": {
+          "file": "buildings/stage3/refectoryOfSalt.png",
+          "box": [
+            1026,
+            1245,
+            1363,
+            1435
+          ]
+        },
+        "fatRenderer": {
+          "file": "buildings/stage3/fatRenderer.png",
+          "box": [
+            19,
+            1453,
+            345,
+            1640
+          ]
+        },
+        "ashPress": {
+          "file": "buildings/stage3/ashPress.png",
+          "box": [
+            351,
+            1450,
+            682,
+            1643
+          ]
+        }
+      },
+      "extras": [
+        {
+          "file": "buildings/stage3/extra_01.png",
+          "box": [
+            686,
+            1454,
+            1016,
+            1643
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_02.png",
+          "box": [
+            1031,
+            1475,
+            1355,
+            1639
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_03.png",
+          "box": [
+            18,
+            1661,
+            356,
+            1847
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_04.png",
+          "box": [
+            359,
+            1660,
+            683,
+            1846
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_05.png",
+          "box": [
+            693,
+            1645,
+            1028,
+            1855
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_06.png",
+          "box": [
+            1031,
+            1671,
+            1356,
+            1849
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_07.png",
+          "box": [
+            19,
+            1859,
+            336,
+            2033
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_08.png",
+          "box": [
+            349,
+            1869,
+            680,
+            2036
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_09.png",
+          "box": [
+            695,
+            1864,
+            1009,
+            2037
+          ]
+        },
+        {
+          "file": "buildings/stage3/extra_10.png",
+          "box": [
+            1033,
+            1879,
+            1359,
+            2039
+          ]
+        }
+      ]
+    },
+    "stage4": {
+      "count_found": 32,
+      "assigned": {
+        "organHarvester": {
+          "file": "buildings/stage4/organHarvester.png",
+          "box": [
+            27,
+            17,
+            344,
+            273
+          ]
+        },
+        "seedOfTheHowlingRoot": {
+          "file": "buildings/stage4/seedOfTheHowlingRoot.png",
+          "box": [
+            372,
+            7,
+            659,
+            269
+          ]
+        },
+        "millOfGnashing": {
+          "file": "buildings/stage4/millOfGnashing.png",
+          "box": [
+            697,
+            26,
+            1002,
+            271
+          ]
+        },
+        "sepulcherQuarry": {
+          "file": "buildings/stage4/sepulcherQuarry.png",
+          "box": [
+            1023,
+            48,
+            1352,
+            277
+          ]
+        },
+        "wombWell": {
+          "file": "buildings/stage4/wombWell.png",
+          "box": [
+            27,
+            312,
+            346,
+            545
+          ]
+        },
+        "shoreOfHooks": {
+          "file": "buildings/stage4/shoreOfHooks.png",
+          "box": [
+            361,
+            321,
+            697,
+            532
+          ]
+        },
+        "fieldOfMouths": {
+          "file": "buildings/stage4/fieldOfMouths.png",
+          "box": [
+            696,
+            278,
+            1005,
+            549
+          ]
+        },
+        "dustCathedralMill": {
+          "file": "buildings/stage4/dustCathedralMill.png",
+          "box": [
+            1024,
+            331,
+            1349,
+            545
+          ]
+        },
+        "ovenOfLastBread": {
+          "file": "buildings/stage4/ovenOfLastBread.png",
+          "box": [
+            19,
+            571,
+            354,
+            786
+          ]
+        },
+        "styOfConsumption": {
+          "file": "buildings/stage4/styOfConsumption.png",
+          "box": [
+            360,
+            549,
+            674,
+            795
+          ]
+        },
+        "houseOfFlensing": {
+          "file": "buildings/stage4/houseOfFlensing.png",
+          "box": [
+            691,
+            569,
+            1009,
+            795
+          ]
+        },
+        "coalWound": {
+          "file": "buildings/stage4/coalWound.png",
+          "box": [
+            1031,
+            579,
+            1353,
+            793
+          ]
+        },
+        "ironVeinPit": {
+          "file": "buildings/stage4/ironVeinPit.png",
+          "box": [
+            20,
+            809,
+            342,
+            1032
+          ]
+        },
+        "goldCatacomb": {
+          "file": "buildings/stage4/goldCatacomb.png",
+          "box": [
+            371,
+            815,
+            681,
+            1039
+          ]
+        },
+        "bloodSmeltery": {
+          "file": "buildings/stage4/bloodSmeltery.png",
+          "box": [
+            700,
+            813,
+            1022,
+            1033
+          ]
+        },
+        "haloLiquefier": {
+          "file": "buildings/stage4/haloLiquefier.png",
+          "box": [
+            1033,
+            812,
+            1345,
+            1038
+          ]
+        },
+        "instrumentCrucible": {
+          "file": "buildings/stage4/instrumentCrucible.png",
+          "box": [
+            23,
+            1054,
+            345,
+            1291
+          ]
+        },
+        "bladeVestry": {
+          "file": "buildings/stage4/bladeVestry.png",
+          "box": [
+            352,
+            1042,
+            676,
+            1291
+          ]
+        },
+        "skinStitchery": {
+          "file": "buildings/stage4/skinStitchery.png",
+          "box": [
+            694,
+            1048,
+            1028,
+            1290
+          ]
+        },
+        "vaultOfDigestiveStone": {
+          "file": "buildings/stage4/vaultOfDigestiveStone.png",
+          "box": [
+            1037,
+            1041,
+            1349,
+            1295
+          ]
+        },
+        "pitOfWarBirth": {
+          "file": "buildings/stage4/pitOfWarBirth.png",
+          "box": [
+            27,
+            1316,
+            341,
+            1550
+          ]
+        },
+        "spireOfJurisdiction": {
+          "file": "buildings/stage4/spireOfJurisdiction.png",
+          "box": [
+            351,
+            1297,
+            685,
+            1553
+          ]
+        },
+        "refectoryOfSalt": {
+          "file": "buildings/stage4/refectoryOfSalt.png",
+          "box": [
+            695,
+            1301,
+            1018,
+            1550
+          ]
+        },
+        "fatRenderer": {
+          "file": "buildings/stage4/fatRenderer.png",
+          "box": [
+            1026,
+            1304,
+            1345,
+            1544
+          ]
+        },
+        "ashPress": {
+          "file": "buildings/stage4/ashPress.png",
+          "box": [
+            21,
+            1565,
+            346,
+            1773
+          ]
+        }
+      },
+      "extras": [
+        {
+          "file": "buildings/stage4/extra_01.png",
+          "box": [
+            365,
+            1560,
+            676,
+            1777
+          ]
+        },
+        {
+          "file": "buildings/stage4/extra_02.png",
+          "box": [
+            696,
+            1558,
+            1007,
+            1790
+          ]
+        },
+        {
+          "file": "buildings/stage4/extra_03.png",
+          "box": [
+            1035,
+            1569,
+            1348,
+            1782
+          ]
+        },
+        {
+          "file": "buildings/stage4/extra_04.png",
+          "box": [
+            31,
+            1792,
+            349,
+            2021
+          ]
+        },
+        {
+          "file": "buildings/stage4/extra_05.png",
+          "box": [
+            361,
+            1795,
+            687,
+            2017
+          ]
+        },
+        {
+          "file": "buildings/stage4/extra_06.png",
+          "box": [
+            696,
+            1805,
+            1016,
+            2017
+          ]
+        },
+        {
+          "file": "buildings/stage4/extra_07.png",
+          "box": [
+            1030,
+            1800,
+            1347,
+            2017
+          ]
+        }
+      ]
+    }
+  },
+  "resources": {
+    "count_found": 31,
+    "assigned": {
+      "sinewTimber": {
+        "file": "resources/sinewTimber.png",
+        "box": [
+          15,
+          55,
+          341,
+          255
+        ]
+      },
+      "toothPlanks": {
+        "file": "resources/toothPlanks.png",
+        "box": [
+          355,
+          76,
+          682,
+          256
+        ]
+      },
+      "sepulcherStone": {
+        "file": "resources/sepulcherStone.png",
+        "box": [
+          691,
+          52,
+          1012,
+          253
+        ]
+      },
+      "amnioticWater": {
+        "file": "resources/amnioticWater.png",
+        "box": [
+          1026,
+          43,
+          1350,
+          252
+        ]
+      },
+      "eyelessFish": {
+        "file": "resources/eyelessFish.png",
+        "box": [
+          13,
+          301,
+          348,
+          501
+        ]
+      },
+      "marrowGrain": {
+        "file": "resources/marrowGrain.png",
+        "box": [
+          359,
+          306,
+          676,
+          490
+        ]
+      },
+      "boneDust": {
+        "file": "resources/boneDust.png",
+        "box": [
+          689,
+          290,
+          1016,
+          493
+        ]
+      },
+      "funeralLoaf": {
+        "file": "resources/funeralLoaf.png",
+        "box": [
+          1032,
+          326,
+          1350,
+          488
+        ]
+      },
+      "pigFleshMass": {
+        "file": "resources/pigFleshMass.png",
+        "box": [
+          14,
+          538,
+          348,
+          722
+        ]
+      },
+      "flensedMeat": {
+        "file": "resources/flensedMeat.png",
+        "box": [
+          360,
+          554,
+          677,
+          719
+        ]
+      },
+      "graveCoal": {
+        "file": "resources/graveCoal.png",
+        "box": [
+          682,
+          540,
+          1016,
+          721
+        ]
+      },
+      "veinIronOre": {
+        "file": "resources/veinIronOre.png",
+        "box": [
+          1033,
+          532,
+          1353,
+          721
+        ]
+      },
+      "cathedralGoldOre": {
+        "file": "resources/cathedralGoldOre.png",
+        "box": [
+          4,
+          760,
+          345,
+          957
+        ]
+      },
+      "veinIronBar": {
+        "file": "resources/veinIronBar.png",
+        "box": [
+          351,
+          762,
+          676,
+          949
+        ]
+      },
+      "haloGoldBar": {
+        "file": "resources/haloGoldBar.png",
+        "box": [
+          688,
+          759,
+          1016,
+          955
+        ]
+      },
+      "tormentInstrument": {
+        "file": "resources/tormentInstrument.png",
+        "box": [
+          1023,
+          751,
+          1354,
+          949
+        ]
+      },
+      "ribBlade": {
+        "file": "resources/ribBlade.png",
+        "box": [
+          350,
+          975,
+          676,
+          1167
+        ]
+      },
+      "skinWall": {
+        "file": "resources/skinWall.png",
+        "box": [
+          686,
+          975,
+          1020,
+          1161
+        ]
+      },
+      "brainSalt": {
+        "file": "resources/brainSalt.png",
+        "box": [
+          6,
+          981,
+          346,
+          1168
+        ]
+      },
+      "saintFat": {
+        "file": "resources/saintFat.png",
+        "box": [
+          1027,
+          950,
+          1358,
+          1372
+        ]
+      },
+      "lungAsh": {
+        "file": "resources/lungAsh.png",
+        "box": [
+          12,
+          1175,
+          344,
+          1372
+        ]
+      }
+    },
+    "extras": [
+      {
+        "file": "resources/extra_01.png",
+        "box": [
+          351,
+          1197,
+          675,
+          1372
+        ]
+      },
+      {
+        "file": "resources/extra_02.png",
+        "box": [
+          689,
+          1166,
+          1016,
+          1372
+        ]
+      },
+      {
+        "file": "resources/extra_03.png",
+        "box": [
+          8,
+          1383,
+          335,
+          1609
+        ]
+      },
+      {
+        "file": "resources/extra_04.png",
+        "box": [
+          350,
+          1405,
+          670,
+          1605
+        ]
+      },
+      {
+        "file": "resources/extra_05.png",
+        "box": [
+          684,
+          1411,
+          1016,
+          1603
+        ]
+      },
+      {
+        "file": "resources/extra_06.png",
+        "box": [
+          1033,
+          1371,
+          1356,
+          1600
+        ]
+      },
+      {
+        "file": "resources/extra_07.png",
+        "box": [
+          10,
+          1627,
+          340,
+          1823
+        ]
+      },
+      {
+        "file": "resources/extra_08.png",
+        "box": [
+          357,
+          1634,
+          671,
+          1815
+        ]
+      },
+      {
+        "file": "resources/extra_09.png",
+        "box": [
+          679,
+          1615,
+          1020,
+          1821
+        ]
+      },
+      {
+        "file": "resources/extra_10.png",
+        "box": [
+          1032,
+          1613,
+          1357,
+          1820
+        ]
+      }
+    ]
+  },
+  "workers": {
+    "count_found": 18,
+    "assigned": {
+      "burdenThrall": {
+        "file": "workers/burdenThrall.png",
+        "box": [
+          26,
+          43,
+          332,
+          461
+        ]
+      },
+      "fleshMason": {
+        "file": "workers/fleshMason.png",
+        "box": [
+          367,
+          45,
+          687,
+          459
+        ]
+      },
+      "timberExecutioner": {
+        "file": "workers/timberExecutioner.png",
+        "box": [
+          702,
+          36,
+          1008,
+          464
+        ]
+      },
+      "rootCantor": {
+        "file": "workers/rootCantor.png",
+        "box": [
+          1045,
+          34,
+          1337,
+          465
+        ]
+      },
+      "gnashSawyer": {
+        "file": "workers/gnashSawyer.png",
+        "box": [
+          40,
+          492,
+          347,
+          856
+        ]
+      },
+      "graveToothBreaker": {
+        "file": "workers/graveToothBreaker.png",
+        "box": [
+          368,
+          499,
+          688,
+          862
+        ]
+      },
+      "wellSupplicant": {
+        "file": "workers/wellSupplicant.png",
+        "box": [
+          716,
+          491,
+          1006,
+          862
+        ]
+      },
+      "hookFisher": {
+        "file": "workers/hookFisher.png",
+        "box": [
+          1032,
+          484,
+          1314,
+          858
+        ]
+      },
+      "mouthFarmer": {
+        "file": "workers/mouthFarmer.png",
+        "box": [
+          31,
+          875,
+          328,
+          1236
+        ]
+      },
+      "dustMiller": {
+        "file": "workers/dustMiller.png",
+        "box": [
+          363,
+          891,
+          684,
+          1235
+        ]
+      },
+      "ovenAcolyte": {
+        "file": "workers/ovenAcolyte.png",
+        "box": [
+          704,
+          879,
+          1010,
+          1235
+        ]
+      },
+      "styKeeper": {
+        "file": "workers/styKeeper.png",
+        "box": [
+          1018,
+          891,
+          1365,
+          1235
+        ]
+      },
+      "flenser": {
+        "file": "workers/flenser.png",
+        "box": [
+          20,
+          1251,
+          336,
+          1602
+        ]
+      },
+      "deepVeinMiner": {
+        "file": "workers/deepVeinMiner.png",
+        "box": [
+          359,
+          1247,
+          677,
+          1597
+        ]
+      },
+      "smelterMonk": {
+        "file": "workers/smelterMonk.png",
+        "box": [
+          687,
+          1252,
+          1028,
+          1972
+        ]
+      },
+      "painArtisan": {
+        "file": "workers/painArtisan.png",
+        "box": [
+          1029,
+          1243,
+          1357,
+          1969
+        ]
+      },
+      "warInfant": {
+        "file": "workers/warInfant.png",
+        "box": [
+          12,
+          1629,
+          335,
+          1971
+        ]
+      },
+      "saltPriest": {
+        "file": "workers/saltPriest.png",
+        "box": [
+          344,
+          1605,
+          674,
+          1967
+        ]
+      }
+    },
+    "missing": [
+      "fatBoiler",
+      "ashCollector"
+    ],
+    "extras": []
+  },
+  "notes": [
+    "All mappings are assigned by reading order left-to-right, top-to-bottom because the sheets are unlabeled.",
+    "Stages contain 32 building sprites each; only the first 25 are assigned to named BuildingType entries, remaining 7 are exported as extras.",
+    "Resource sheet contains 31 sprites; first 21 are assigned to ResourceType entries, remaining 10 are exported as extras.",
+    "Worker sheet contains 18 sprites; only the first 18 are assigned to WorkerType entries, leaving fatBoiler and ashCollector missing from the provided sheet."
+  ]
+}
