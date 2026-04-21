@@ -23,7 +23,7 @@ class TextureRegistryService {
   }
 
   getTexture(key: string): PIXI.Texture | undefined {
-    return PIXI.utils.TextureCache[key] || PIXI.Texture.from(key);
+    return PIXI.utils.TextureCache[key] ?? undefined;
   }
 
   hasTexture(key: string): boolean {

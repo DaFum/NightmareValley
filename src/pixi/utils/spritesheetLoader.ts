@@ -50,10 +50,24 @@ export async function loadSpritesheets(): Promise<void> {
         if (baseTex.valid) {
           resolve();
         } else {
-          baseTex.once("loaded", () => resolve());
-          baseTex.once("error", (err) => reject(err));
+          function onLoaded() {
+            baseTex.off("error", onError);
+            resolve();
+          }
+          function onError(err: any) {
+            baseTex.off("loaded", onLoaded);
+            reject(err);
+          }
+
+          baseTex.once("loaded", onLoaded);
+          baseTex.once("error", onError);
+
           // Check again in case it loaded synchronously between the check and adding listeners
-          if (baseTex.valid) resolve();
+          if (baseTex.valid) {
+            baseTex.off("loaded", onLoaded);
+            baseTex.off("error", onError);
+            resolve();
+          }
         }
       });
 
@@ -121,8 +135,8 @@ export async function loadSpritesheets(): Promise<void> {
         if (stage.assigned) {
           for (const logicalName of Object.keys(stage.assigned)) {
             const entry = stage.assigned[logicalName];
-            // Match the render adapter's exact expectation (topKey + logicalName for logic resolution, omitting stageKey)
-            const fullKey = `${topKey}_${logicalName}`;
+            // Match the render adapter's exact expectation
+            const fullKey = `${topKey}_${stageKey}_${logicalName}`;
             handleEntry(entry.file, entry.box, fullKey);
           }
         }
