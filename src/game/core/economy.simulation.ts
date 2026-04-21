@@ -167,6 +167,20 @@ export function spawnWorker(
 ): EconomySimulationState {
   const next = cloneState(state);
 
+  if (!next.players[ownerId]) {
+    throw new Error(`Unknown player: ${ownerId}`);
+  }
+
+  if (homeBuildingId) {
+    const home = next.buildings[homeBuildingId];
+    if (!home) {
+      throw new Error(`Unknown home building: ${homeBuildingId}`);
+    }
+    if (home.ownerId !== ownerId) {
+      throw new Error(`Building ${homeBuildingId} belongs to another player`);
+    }
+  }
+
   const workerId = createId("worker");
   next.workers[workerId] = {
     id: workerId,
@@ -304,6 +318,10 @@ export function assignWorkerToBuilding(
     throw new Error("Unknown worker or building");
   }
 
+  if (worker.ownerId !== building.ownerId) {
+    throw new Error("Cannot assign worker to building of different owner");
+  }
+
   const def = BUILDING_DEFINITIONS[building.type];
   const allowedSlots = def.workerSlots[worker.type] ?? 0;
   const currentAssignedSameType = building.assignedWorkers
@@ -313,6 +331,13 @@ export function assignWorkerToBuilding(
 
   if (allowedSlots <= currentAssignedSameType) {
     throw new Error(`${building.type} has no free slot for ${worker.type}`);
+  }
+
+  if (worker.currentBuildingId && worker.currentBuildingId !== buildingId) {
+    const prevBuilding = next.buildings[worker.currentBuildingId];
+    if (prevBuilding) {
+      prevBuilding.assignedWorkers = prevBuilding.assignedWorkers.filter((id) => id !== workerId);
+    }
   }
 
   if (!building.assignedWorkers.includes(workerId)) {
@@ -394,6 +419,10 @@ export function simulateTick(
   deltaSec: number,
   config: SimulationConfig = DEFAULT_SIMULATION_CONFIG
 ): EconomySimulationState {
+  if (!Number.isFinite(deltaSec) || deltaSec <= 0) {
+    return state;
+  }
+
   let next = cloneState(state);
 
   next.tick += 1;

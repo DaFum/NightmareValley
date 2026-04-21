@@ -1,6 +1,7 @@
 import { IsoFootprint } from "./iso.types";
 
-export function getIsoDepth(screenX: number, screenY: number): number {
+export function getIsoDepth(_screenX: number, screenY: number): number {
+  // _screenX kept for potential future tiebreaker usage
   return screenY;
 }
 

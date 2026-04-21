@@ -3,6 +3,7 @@ import { IsoRenderWorld } from "./render.types";
 import { tileToScreen } from "../iso/iso.project";
 import { getEntityZIndex } from "../iso/iso.depth";
 import { getBuildingDefinition, getWorkerDefinition } from "../core/economy.data";
+import { RECIPES } from "../economy/recipes.data";
 
 const TILE_WIDTH = 64;
 const TILE_HEIGHT = 32;
@@ -68,15 +69,24 @@ export function mapEconomyStateToIsoWorld(
     } else if (building.corruption && building.corruption > 50) {
         renderState = "damaged";
     } else {
-        const def = getBuildingDefinition(building);
-        // Extremely simplified check: if it has inputs but they are empty
-        if (def.recipeIds && def.recipeIds.length > 0) {
-             const inputCount = Object.keys(building.inputBuffer).length;
-             if (inputCount === 0) {
-                 renderState = "waitingForInput";
-                 statusIcons.push("missing_input");
-             }
+      const def = getBuildingDefinition(building);
+      if (def.recipeIds && def.recipeIds.length > 0) {
+        const activeRecipeId = building.currentRecipeId || def.recipeIds[0];
+        const activeRecipe = activeRecipeId ? RECIPES[activeRecipeId] : undefined;
+
+        if (activeRecipe && activeRecipe.inputs) {
+          for (const [resType, requiredAmt] of Object.entries(activeRecipe.inputs)) {
+            if ((requiredAmt as number) > 0) {
+              const currentAmt = building.inputBuffer[resType as keyof typeof building.inputBuffer] ?? 0;
+              if (currentAmt <= 0) {
+                renderState = "waitingForInput";
+                statusIcons.push("missing_input");
+                break;
+              }
+            }
+          }
         }
+      }
     }
 
     world.buildings.push({
@@ -118,21 +128,35 @@ export function mapEconomyStateToIsoWorld(
     const footY = sy + TILE_HEIGHT / 2;
     const variant = (hashStringToInt(worker.id) % 3) + 1;
 
-    // Simplistic direction and animation derivation
     let dir: "NE" | "NW" | "SE" | "SW" = "SE";
     let renderState: IsoRenderWorld["workers"][0]["state"] = "idle";
     let animation: IsoRenderWorld["workers"][0]["animation"] = "idle";
     let carrying: string | undefined = undefined;
 
-    // Determine carrier logic via active tasks (simplification)
     const activeTask = state.transport.activeCarrierTasks[worker.id];
     if (activeTask) {
-        renderState = "carrying";
-        animation = "carry";
-        carrying = activeTask.resourceType;
+      renderState = "carrying";
+      animation = "carry";
+      carrying = activeTask.resourceType;
+
+      const dropoffBuilding = state.buildings[activeTask.dropoffBuildingId];
+      const pickupBuilding = state.buildings[activeTask.pickupBuildingId];
+      // simplified target logic: target dropoff if already carrying, else pickup
+      const targetBuilding = worker.position.x === pickupBuilding?.position.x && worker.position.y === pickupBuilding?.position.y
+                             ? dropoffBuilding
+                             : pickupBuilding;
+
+      if (targetBuilding) {
+        const dx = targetBuilding.position.x - worker.position.x;
+        const dy = targetBuilding.position.y - worker.position.y;
+        if (dx > 0 && dy >= 0) dir = "SE";
+        else if (dx <= 0 && dy > 0) dir = "SW";
+        else if (dx < 0 && dy <= 0) dir = "NW";
+        else if (dx >= 0 && dy < 0) dir = "NE";
+      }
     } else if (!worker.isIdle) {
-        renderState = "working";
-        animation = "work";
+      renderState = "working";
+      animation = "work";
     }
 
     let tool: string | undefined;

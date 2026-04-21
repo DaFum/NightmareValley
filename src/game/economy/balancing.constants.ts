@@ -13,7 +13,7 @@ export interface SimulationConfig {
   stressPerActiveCarrier: number;
 }
 
-export const DEFAULT_SIMULATION_CONFIG: SimulationConfig = {
+export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.freeze({
   defaultTransportPriority: 10,
   maxJobsPerTick: 100,
   carrierBaseSpeed: 1,
@@ -26,4 +26,4 @@ export const DEFAULT_SIMULATION_CONFIG: SimulationConfig = {
   workerInfectionGainFromCorruption: 0.05,
   stressPerQueuedJob: 0.2,
   stressPerActiveCarrier: 0.5,
-};
+});

@@ -93,6 +93,11 @@ export function processProduction(
     }
 
     const cycleTime = getRecipeCycleTime(building, recipe, config);
+    if (cycleTime <= 0) {
+      building.progressSec = 0;
+      continue;
+    }
+
     building.progressSec += deltaSec;
 
     while (building.progressSec >= cycleTime) {
@@ -121,7 +126,7 @@ export function chooseRecipeForBuilding(
 ): ProductionRecipe | null {
   if (!def.recipeIds?.length) return null;
 
-  if (building.currentRecipeId) {
+  if (building.currentRecipeId && def.recipeIds.includes(building.currentRecipeId)) {
     const existing = RECIPES[building.currentRecipeId];
     if (existing) return existing;
   }

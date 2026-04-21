@@ -25,22 +25,25 @@ export function processExtraction(
     building.progressSec += deltaSec;
 
     while (building.progressSec >= cycleTime) {
-      building.progressSec -= cycleTime;
-
       const currentAmount = getResourceAmount(
         building.outputBuffer,
         def.extraction.resource
       );
 
-      if (currentAmount >= config.buildingOutputBufferLimit) {
+      const availableSpace = config.buildingOutputBufferLimit - currentAmount;
+      if (availableSpace <= 0) {
+        // Keep progress so it completes instantly when space frees up
         building.progressSec = Math.min(building.progressSec, cycleTime);
         break;
       }
 
+      building.progressSec -= cycleTime;
+      const amountToAdd = Math.min(def.extraction.amountPerCycle, availableSpace);
+
       building.outputBuffer = addResource(
         building.outputBuffer,
         def.extraction.resource,
-        def.extraction.amountPerCycle
+        amountToAdd
       );
 
       building.corruption = (building.corruption ?? 0) + 0.1;

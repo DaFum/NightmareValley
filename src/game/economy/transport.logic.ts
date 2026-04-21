@@ -57,7 +57,9 @@ export function generateTransportJobs(
 
   let created = 0;
   const existingJobSignatures = new Set(
-    Object.values(next.transport.jobs).map(makeTransportSignature)
+    Object.values(next.transport.jobs)
+      .filter((j) => j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled")
+      .map(makeTransportSignature)
   );
 
   const buildings = Object.values(next.buildings);
@@ -271,8 +273,17 @@ export function findBestJobForCarrier(
     const target = state.buildings[job.toBuildingId];
     if (!source || !target) continue;
 
+    let totalReserved = 0;
+    for (const otherJob of Object.values(state.transport.jobs)) {
+      if (otherJob.fromBuildingId === source.id && otherJob.resourceType === job.resourceType) {
+        totalReserved += otherJob.reserved;
+      }
+    }
+
     const sourceAmount = getResourceAmount(source.outputBuffer, job.resourceType);
-    if (sourceAmount < job.amount) continue;
+    const available = sourceAmount - totalReserved;
+
+    if (available < job.amount) continue;
 
     const dist =
       distance(carrier.position, source.position) +
@@ -306,6 +317,13 @@ export function moveCarrierTasks(
     const job = next.transport.jobs[task.jobId];
 
     if (!carrier || !source || !target || !job) {
+      if (job) {
+        job.status = "queued";
+        job.reserved = Math.max(0, job.reserved - task.amount);
+      }
+      if (carrier) {
+        carrier.isIdle = true;
+      }
       delete next.transport.activeCarrierTasks[workerId];
       continue;
     }
@@ -353,6 +371,13 @@ export function deliverCarrierTasks(
     const job = next.transport.jobs[task.jobId];
 
     if (!carrier || !source || !target || !job) {
+      if (job) {
+        job.status = "queued";
+        job.reserved = Math.max(0, job.reserved - task.amount);
+      }
+      if (carrier) {
+        carrier.isIdle = true;
+      }
       delete next.transport.activeCarrierTasks[workerId];
       continue;
     }

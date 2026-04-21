@@ -12,6 +12,10 @@ export function addResource(
   type: ResourceType,
   amount: number
 ): ResourceInventory {
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error("amount must be a non-negative number");
+  }
+
   return {
     ...inventory,
     [type]: (inventory[type] ?? 0) + amount,
@@ -23,6 +27,10 @@ export function removeResource(
   type: ResourceType,
   amount: number
 ): ResourceInventory {
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error("amount must be a non-negative number");
+  }
+
   const current = inventory[type] ?? 0;
 
   if (current < amount) {
@@ -51,14 +59,21 @@ export function applyResourceDelta(
   inventory: ResourceInventory,
   delta: Partial<Record<ResourceType, number>>
 ): ResourceInventory {
+  for (const [resource, amount] of Object.entries(delta)) {
+    if (!Number.isFinite(amount)) {
+      throw new Error(`Invalid non-finite delta amount for ${resource}`);
+    }
+    const key = resource as ResourceType;
+    if ((inventory[key] ?? 0) + (amount ?? 0) < 0) {
+      throw new Error(`Resource underflow for ${key}`);
+    }
+  }
+
   let next = { ...inventory };
 
   for (const [resource, amount] of Object.entries(delta)) {
     const key = resource as ResourceType;
     next[key] = (next[key] ?? 0) + (amount ?? 0);
-    if ((next[key] ?? 0) < 0) {
-      throw new Error(`Resource underflow for ${key}`);
-    }
   }
 
   return next;
