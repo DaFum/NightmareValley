@@ -78,7 +78,7 @@ export function generateTransportJobs(
         if (neededAmount <= 0) continue;
 
         const carrierCapacity = WORKER_DEFINITIONS["burdenThrall"].carryCapacity;
-        const amountToMove = Math.min((config as any).maxJobBatchSize || carrierCapacity, amountAvailable, neededAmount);
+        const amountToMove = Math.min(config.maxJobBatchSize || carrierCapacity, amountAvailable, neededAmount);
         if (amountToMove <= 0) continue;
 
         const signature = `${source.id}->${target.id}:${resourceType}`;
@@ -277,6 +277,9 @@ export function findBestJobForCarrier(
     const target = state.buildings[job.toBuildingId];
     if (!source || !target) continue;
 
+    const targetNeed = getBuildingResourceNeed(target, job.resourceType, DEFAULT_SIMULATION_CONFIG);
+    if (targetNeed <= 0) continue;
+
     let totalReserved = 0;
     for (const otherJob of Object.values(state.transport.jobs)) {
       if (otherJob.fromBuildingId === source.id && otherJob.resourceType === job.resourceType) {
@@ -410,7 +413,9 @@ export function deliverCarrierTasks(
       job.delivered += moved;
       job.status = "delivered";
     } else {
-      if (availableFromSource === 0 || targetNeed === 0) {
+      if (targetNeed === 0) {
+        job.status = "lost"; // Treating "lost" as terminal per types, but meaning "cancelled"
+      } else if (availableFromSource === 0) {
         job.status = "queued";
       } else {
         job.status = "lost";

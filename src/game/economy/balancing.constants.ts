@@ -11,6 +11,7 @@ export interface SimulationConfig {
   workerInfectionGainFromCorruption: number;
   stressPerQueuedJob: number;
   stressPerActiveCarrier: number;
+  maxJobBatchSize?: number;
 }
 
 export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.freeze({
@@ -26,4 +27,5 @@ export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.free
   workerInfectionGainFromCorruption: 0.05,
   stressPerQueuedJob: 0.2,
   stressPerActiveCarrier: 0.5,
+  maxJobBatchSize: 10,
 });

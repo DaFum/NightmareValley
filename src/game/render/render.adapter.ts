@@ -106,14 +106,14 @@ export function mapEconomyStateToIsoWorld(
       zIndex: getEntityZIndex({ footX: sx, footY: footY }),
       spriteKey: `building_${building.type}`,
       variant,
-      buildStage: building.level >= 1 ? 4 : (building.constructionProgress !== undefined ? Math.floor(building.constructionProgress * 4) as 0|1|2|3|4 : 0),
+      buildStage: building.level >= 1 ? 4 : (Math.max(0, Math.min(4, Math.floor(Math.max(0, Math.min(1, building.constructionProgress || 0)) * 4))) as 0|1|2|3|4),
       state: renderState,
       selected: false,
       hovered: false,
       statusIcons,
       effectFlags,
-      inputFill: Math.min(1, Math.max(0, Object.values(building.inputBuffer).reduce((acc, val) => acc + (val ?? 0), 0) / DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit)),
-      outputFill: Math.min(1, Math.max(0, Object.values(building.outputBuffer).reduce((acc, val) => acc + (val ?? 0), 0) / DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit)),
+      inputFill: Math.max(0, Math.min(1, Math.max(...Object.values(building.inputBuffer).map(val => (val ?? 0) / DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit), 0))),
+      outputFill: Math.max(0, Math.min(1, Math.max(...Object.values(building.outputBuffer).map(val => (val ?? 0) / DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit), 0))),
     });
   }
 
