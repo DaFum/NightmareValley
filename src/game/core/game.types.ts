@@ -27,6 +27,7 @@ export interface BuildingInstance {
   currentRecipeId?: string;
   progressSec: number;
   isActive: boolean;
+  constructionProgress?: number;
   liturgy?: string;
   corruption?: number;
 }

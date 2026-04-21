@@ -3,7 +3,7 @@ import { SimulationConfig } from "./balancing.constants";
 import { BuildingInstance } from "../core/game.types";
 import { BuildingDefinition } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
-import { cloneState, requiresRoad, hasAssignedWorkersForBuilding } from "../core/economy.simulation";
+import { requiresRoad, hasAssignedWorkersForBuilding, clamp } from "../core/economy.simulation";
 import { getResourceAmount, addResource } from "./stockpile.logic";
 
 export function processExtraction(
@@ -11,15 +11,13 @@ export function processExtraction(
   deltaSec: number,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
-  for (const building of Object.values(next.buildings)) {
+  for (const building of Object.values(state.buildings)) {
     if (!building.isActive) continue;
     if (!building.connectedToRoad && requiresRoad(building.type)) continue;
 
     const def = BUILDING_DEFINITIONS[building.type];
     if (!def.extraction) continue;
-    if (!hasAssignedWorkersForBuilding(next, building)) continue;
+    if (!hasAssignedWorkersForBuilding(state, building)) continue;
 
     const cycleTime = getExtractionCycleTime(building, def, config);
     if (!Number.isFinite(cycleTime) || cycleTime <= 0) {
@@ -51,11 +49,11 @@ export function processExtraction(
         amountToAdd
       );
 
-      building.corruption = (building.corruption ?? 0) + 0.1;
+      building.corruption = clamp((building.corruption ?? 0) + 0.1, 0, 100);
     }
   }
 
-  return next;
+  return state;
 }
 
 export function getExtractionCycleTime(

@@ -4,6 +4,7 @@ import { tileToScreen } from "../iso/iso.project";
 import { getEntityZIndex } from "../iso/iso.depth";
 import { getBuildingDefinition, getWorkerDefinition } from "../core/economy.data";
 import { RECIPES } from "../economy/recipes.data";
+import { DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 
 const TILE_WIDTH = 64;
 const TILE_HEIGHT = 32;
@@ -105,14 +106,14 @@ export function mapEconomyStateToIsoWorld(
       zIndex: getEntityZIndex({ footX: sx, footY: footY }),
       spriteKey: `building_${building.type}`,
       variant,
-      buildStage: building.level >= 1 ? 4 : 0, // simplified mapping
+      buildStage: building.level >= 1 ? 4 : (building.constructionProgress !== undefined ? Math.floor(building.constructionProgress * 4) as 0|1|2|3|4 : 0),
       state: renderState,
       selected: false,
       hovered: false,
       statusIcons,
       effectFlags,
-      inputFill: Object.keys(building.inputBuffer).length > 0 ? 0.5 : 0,
-      outputFill: Object.keys(building.outputBuffer).length > 0 ? 0.5 : 0,
+      inputFill: Math.min(1, Math.max(0, Object.values(building.inputBuffer).reduce((acc, val) => acc + (val ?? 0), 0) / DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit)),
+      outputFill: Math.min(1, Math.max(0, Object.values(building.outputBuffer).reduce((acc, val) => acc + (val ?? 0), 0) / DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit)),
     });
   }
 

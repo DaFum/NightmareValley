@@ -33,7 +33,7 @@ export function BloodSmelteryStorage({
           draw={(g: any) => {
             g.clear();
             for (let i = 0; i < ore + 2; i++) {
-              g.circle(i * 5, -i, 4 + ore).fill({ color: 0x7b3c3c, alpha: 0.95 });
+              g.beginFill(0x7b3c3c, 0.95).drawCircle(i * 5, -i, 4 + ore).endFill();
             }
           }}
         />
@@ -46,7 +46,7 @@ export function BloodSmelteryStorage({
           draw={(g: any) => {
             g.clear();
             for (let i = 0; i < coal + 2; i++) {
-              g.circle(i * 4, -i, 3 + coal).fill({ color: 0x2a2a2a, alpha: 1 });
+              g.beginFill(0x2a2a2a, 1).drawCircle(i * 4, -i, 3 + coal).endFill();
             }
           }}
         />
@@ -59,10 +59,7 @@ export function BloodSmelteryStorage({
           draw={(g: any) => {
             g.clear();
             for (let i = 0; i < bars + 1; i++) {
-              g.roundRect(i * 6, -i * 3, 14, 5, 1).fill({
-                color: 0xd7a048,
-                alpha: 0.98,
-              });
+              g.beginFill(0xd7a048, 0.98).drawRoundedRect(i * 6, -i * 3, 14, 5, 1).endFill();
             }
           }}
         />
