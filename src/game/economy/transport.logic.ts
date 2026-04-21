@@ -78,7 +78,7 @@ export function generateTransportJobs(
         if (neededAmount <= 0) continue;
 
         const carrierCapacity = WORKER_DEFINITIONS["burdenThrall"].carryCapacity;
-        const amountToMove = Math.min(config.maxJobBatchSize || carrierCapacity, amountAvailable, neededAmount);
+        const amountToMove = Math.min(config.maxJobBatchSize ?? carrierCapacity, carrierCapacity, amountAvailable, neededAmount);
         if (amountToMove <= 0) continue;
 
         const signature = `${source.id}->${target.id}:${resourceType}`;
@@ -239,7 +239,7 @@ export function assignCarrierTasks(
       return src && src.ownerId === carrier.ownerId;
     });
 
-    const bestJob = findBestJobForCarrier(state, carrier, ownerJobs);
+    const bestJob = findBestJobForCarrier(state, carrier, ownerJobs, config);
     if (!bestJob) continue;
 
     bestJob.status = "claimed";
@@ -265,7 +265,8 @@ export function assignCarrierTasks(
 export function findBestJobForCarrier(
   state: EconomySimulationState,
   carrier: WorkerInstance,
-  jobs: TransportJob[]
+  jobs: TransportJob[],
+  config: SimulationConfig
 ): TransportJob | null {
   let best: TransportJob | null = null;
   let bestScore = -Infinity;
@@ -277,7 +278,7 @@ export function findBestJobForCarrier(
     const target = state.buildings[job.toBuildingId];
     if (!source || !target) continue;
 
-    const targetNeed = getBuildingResourceNeed(target, job.resourceType, DEFAULT_SIMULATION_CONFIG);
+    const targetNeed = getBuildingResourceNeed(target, job.resourceType, config);
     if (targetNeed <= 0) continue;
 
     let totalReserved = 0;

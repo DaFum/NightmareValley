@@ -41,28 +41,33 @@ export async function loadSpritesheets(): Promise<void> {
 
   const baseTextureMap = new Map<string, PIXI.BaseTexture>();
 
-  for (const file of Array.from(sheetFiles)) {
-    const url = assetUrl(file);
-    const baseTex = PIXI.BaseTexture.from(url, { scaleMode: PIXI.SCALE_MODES.NEAREST });
+  await Promise.all(
+    Array.from(sheetFiles).map((file) => {
+      const url = assetUrl(file);
+      const baseTex = PIXI.BaseTexture.from(url, { scaleMode: PIXI.SCALE_MODES.NEAREST });
 
-    if (!baseTex.valid) {
-      await new Promise<void>((resolve, reject) => {
-        baseTex.on("loaded", () => resolve());
-        baseTex.on("error", (err) => reject(err));
+      const loadPromise = new Promise<void>((resolve, reject) => {
+        if (baseTex.valid) {
+          resolve();
+        } else {
+          baseTex.once("loaded", () => resolve());
+          baseTex.once("error", (err) => reject(err));
+          // Check again in case it loaded synchronously between the check and adding listeners
+          if (baseTex.valid) resolve();
+        }
       });
-    }
-    baseTextureMap.set(file, baseTex);
-  }
+
+      baseTextureMap.set(file, baseTex);
+      return loadPromise;
+    })
+  );
 
   function keyFromFilePath(path: string) {
     return path.replace(/\//g, "_").replace(/\.[^.]+$/, "");
   }
 
   function registerTexture(key: string, tex: PIXI.Texture) {
-    (PIXI.utils as any).TextureCache = (PIXI.utils as any).TextureCache || (PIXI as any).TextureCache || {};
-    (PIXI.utils as any).TextureCache[key] = tex;
-    (PIXI as any).TextureCache = (PIXI as any).TextureCache || {};
-    (PIXI as any).TextureCache[key] = tex;
+    PIXI.Texture.addToCache(tex, key);
   }
 
   function handleEntry(file: string, box: Rect, explicitKey?: string) {
@@ -116,8 +121,8 @@ export async function loadSpritesheets(): Promise<void> {
         if (stage.assigned) {
           for (const logicalName of Object.keys(stage.assigned)) {
             const entry = stage.assigned[logicalName];
-            // Match the render adapter's exact expectation
-            const fullKey = `${topKey}_${stageKey}_${logicalName}`;
+            // Match the render adapter's exact expectation (topKey + logicalName for logic resolution, omitting stageKey)
+            const fullKey = `${topKey}_${logicalName}`;
             handleEntry(entry.file, entry.box, fullKey);
           }
         }
