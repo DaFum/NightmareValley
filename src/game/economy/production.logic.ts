@@ -2,7 +2,7 @@ import { PlayerState, BuildingInstance } from "../core/game.types";
 import { BuildingType, BuildingCost, ResourceType, ResourceInventory, BuildingDefinition } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
 import { hasEnoughResources, removeResource, getResourceAmount, addResource } from "./stockpile.logic";
-import { EconomySimulationState, cloneState, requiresRoad, hasAssignedWorkersForBuilding } from "../core/economy.simulation";
+import { EconomySimulationState, clamp, requiresRoad, hasAssignedWorkersForBuilding } from "../core/economy.simulation";
 import { SimulationConfig } from "./balancing.constants";
 import { ProductionRecipe } from "./recipes.types";
 import { RECIPES } from "./recipes.data";
@@ -68,15 +68,13 @@ export function processProduction(
   deltaSec: number,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
-  for (const building of Object.values(next.buildings)) {
+  for (const building of Object.values(state.buildings)) {
     if (!building.isActive) continue;
     if (!building.connectedToRoad && requiresRoad(building.type)) continue;
 
     const def = BUILDING_DEFINITIONS[building.type];
     if (!def.recipeIds?.length) continue;
-    if (!hasAssignedWorkersForBuilding(next, building)) continue;
+    if (!hasAssignedWorkersForBuilding(state, building)) continue;
 
     const recipe = chooseRecipeForBuilding(building, def);
     if (!recipe) continue;
@@ -113,11 +111,11 @@ export function processProduction(
       building.progressSec -= cycleTime;
       building.inputBuffer = subtractRecipeInputs(building.inputBuffer, recipe);
       building.outputBuffer = addRecipeOutputs(building.outputBuffer, recipe);
-      building.corruption = (building.corruption ?? 0) + 0.15;
+      building.corruption = clamp((building.corruption ?? 0) + 0.15, 0, 100);
     }
   }
 
-  return next;
+  return state;
 }
 
 export function chooseRecipeForBuilding(

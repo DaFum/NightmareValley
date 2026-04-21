@@ -17,9 +17,9 @@ export function BloodSmelterySparks({
       y={-62}
       draw={(g: any) => {
         g.clear();
-        g.circle(-6, -3, 1.4).fill({ color: 0xffaa33, alpha: 0.9 });
-        g.circle(3, -8, 1.1).fill({ color: 0xffdd88, alpha: 0.75 });
-        g.circle(10, -2, 1.2).fill({ color: 0xff7722, alpha: 0.85 });
+        g.beginFill(0xffaa33, 0.9).drawCircle(-6, -3, 1.4).endFill();
+        g.beginFill(0xffdd88, 0.75).drawCircle(3, -8, 1.1).endFill();
+        g.beginFill(0xff7722, 0.85).drawCircle(10, -2, 1.2).endFill();
       }}
     />
   );

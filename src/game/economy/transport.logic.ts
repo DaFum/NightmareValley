@@ -1,7 +1,7 @@
 import { BuildingId, WorkerId } from "../core/entity.ids";
 import { Position, BuildingInstance, WorkerInstance } from "../core/game.types";
 import { ResourceType, WorkerDefinition } from "../core/economy.types";
-import { EconomySimulationState, cloneState, createId, distance, clamp, getNonZeroResources } from "../core/economy.simulation";
+import { EconomySimulationState, createId, distance, clamp, getNonZeroResources } from "../core/economy.simulation";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "./balancing.constants";
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "../core/economy.data";
 import { RECIPES } from "./recipes.data";
@@ -53,16 +53,14 @@ export function generateTransportJobs(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
   let created = 0;
   const existingJobSignatures = new Set(
-    Object.values(next.transport.jobs)
+    Object.values(state.transport.jobs)
       .filter((j) => j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled")
       .map(makeTransportSignature)
   );
 
-  const buildings = Object.values(next.buildings);
+  const buildings = Object.values(state.buildings);
 
   for (const source of buildings) {
     if (created >= config.maxJobsPerTick) break;
@@ -71,7 +69,7 @@ export function generateTransportJobs(
       const amountAvailable = getResourceAmount(source.outputBuffer, resourceType);
       if (amountAvailable <= 0) continue;
 
-      const targets = findTargetBuildingsForResource(next, source, resourceType, config);
+      const targets = findTargetBuildingsForResource(state, source, resourceType, config);
 
       for (const target of targets) {
         if (created >= config.maxJobsPerTick) break;
@@ -79,14 +77,15 @@ export function generateTransportJobs(
         const neededAmount = getBuildingResourceNeed(target, resourceType, config);
         if (neededAmount <= 0) continue;
 
-        const amountToMove = Math.min(1, amountAvailable, neededAmount);
+        const carrierCapacity = WORKER_DEFINITIONS["burdenThrall"].carryCapacity;
+        const amountToMove = Math.min(config.maxJobBatchSize || carrierCapacity, amountAvailable, neededAmount);
         if (amountToMove <= 0) continue;
 
-        const signature = `${source.id}->${target.id}:${resourceType}:${amountToMove}`;
+        const signature = `${source.id}->${target.id}:${resourceType}`;
         if (existingJobSignatures.has(signature)) continue;
 
         const jobId = createId("job");
-        next.transport.jobs[jobId] = {
+        state.transport.jobs[jobId] = {
           id: jobId,
           fromBuildingId: source.id,
           toBuildingId: target.id,
@@ -105,7 +104,7 @@ export function generateTransportJobs(
     }
   }
 
-  return next;
+  return state;
 }
 
 export function findTargetBuildingsForResource(
@@ -214,7 +213,7 @@ export function getTransportPriority(
 }
 
 export function makeTransportSignature(job: TransportJob): string {
-  return `${job.fromBuildingId}->${job.toBuildingId}:${job.resourceType}:${job.amount}`;
+  return `${job.fromBuildingId}->${job.toBuildingId}:${job.resourceType}`;
 }
 
 // =========================
@@ -225,24 +224,22 @@ export function assignCarrierTasks(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
-  const queuedJobs = Object.values(next.transport.jobs)
+  const queuedJobs = Object.values(state.transport.jobs)
     .filter((job) => job.status === "queued")
     .sort((a, b) => b.priority - a.priority);
 
-  const carriers = Object.values(next.workers)
+  const carriers = Object.values(state.workers)
     .filter((w) => w.type === "burdenThrall")
     .filter((w) => w.isIdle);
 
   for (const carrier of carriers) {
     // Only allow carriers to pick jobs owned by their player
     const ownerJobs = queuedJobs.filter(j => {
-      const src = next.buildings[j.fromBuildingId];
+      const src = state.buildings[j.fromBuildingId];
       return src && src.ownerId === carrier.ownerId;
     });
 
-    const bestJob = findBestJobForCarrier(next, carrier, ownerJobs);
+    const bestJob = findBestJobForCarrier(state, carrier, ownerJobs);
     if (!bestJob) continue;
 
     bestJob.status = "claimed";
@@ -258,11 +255,11 @@ export function assignCarrierTasks(
       progress: 0,
     };
 
-    next.transport.activeCarrierTasks[carrier.id] = task;
+    state.transport.activeCarrierTasks[carrier.id] = task;
     carrier.isIdle = false;
   }
 
-  return next;
+  return state;
 }
 
 export function findBestJobForCarrier(
@@ -279,6 +276,9 @@ export function findBestJobForCarrier(
     const source = state.buildings[job.fromBuildingId];
     const target = state.buildings[job.toBuildingId];
     if (!source || !target) continue;
+
+    const targetNeed = getBuildingResourceNeed(target, job.resourceType, DEFAULT_SIMULATION_CONFIG);
+    if (targetNeed <= 0) continue;
 
     let totalReserved = 0;
     for (const otherJob of Object.values(state.transport.jobs)) {
@@ -315,13 +315,11 @@ export function moveCarrierTasks(
   deltaSec: number,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
-  for (const [workerId, task] of Object.entries(next.transport.activeCarrierTasks)) {
-    const carrier = next.workers[workerId];
-    const source = next.buildings[task.pickupBuildingId];
-    const target = next.buildings[task.dropoffBuildingId];
-    const job = next.transport.jobs[task.jobId];
+  for (const [workerId, task] of Object.entries(state.transport.activeCarrierTasks)) {
+    const carrier = state.workers[workerId];
+    const source = state.buildings[task.pickupBuildingId];
+    const target = state.buildings[task.dropoffBuildingId];
+    const job = state.transport.jobs[task.jobId];
 
     if (!carrier || !source || !target || !job) {
       if (job) {
@@ -336,7 +334,7 @@ export function moveCarrierTasks(
       if (carrier) {
         carrier.isIdle = true;
       }
-      delete next.transport.activeCarrierTasks[workerId];
+      delete state.transport.activeCarrierTasks[workerId];
       continue;
     }
 
@@ -354,7 +352,7 @@ export function moveCarrierTasks(
     }
   }
 
-  return next;
+  return state;
 }
 
 export function getCarrierSpeed(
@@ -373,15 +371,13 @@ export function deliverCarrierTasks(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
-  for (const [workerId, task] of Object.entries(next.transport.activeCarrierTasks)) {
+  for (const [workerId, task] of Object.entries(state.transport.activeCarrierTasks)) {
     if (task.progress < 1) continue;
 
-    const carrier = next.workers[workerId];
-    const source = next.buildings[task.pickupBuildingId];
-    const target = next.buildings[task.dropoffBuildingId];
-    const job = next.transport.jobs[task.jobId];
+    const carrier = state.workers[workerId];
+    const source = state.buildings[task.pickupBuildingId];
+    const target = state.buildings[task.dropoffBuildingId];
+    const job = state.transport.jobs[task.jobId];
 
     if (!carrier || !source || !target || !job) {
       if (job) {
@@ -396,7 +392,7 @@ export function deliverCarrierTasks(
       if (carrier) {
         carrier.isIdle = true;
       }
-      delete next.transport.activeCarrierTasks[workerId];
+      delete state.transport.activeCarrierTasks[workerId];
       continue;
     }
 
@@ -417,7 +413,13 @@ export function deliverCarrierTasks(
       job.delivered += moved;
       job.status = "delivered";
     } else {
-      job.status = "lost";
+      if (targetNeed === 0) {
+        job.status = "lost"; // Treating "lost" as terminal per types, but meaning "cancelled"
+      } else if (availableFromSource === 0) {
+        job.status = "queued";
+      } else {
+        job.status = "lost";
+      }
     }
 
     // Safely clear reservation upon completion or failure
@@ -426,10 +428,10 @@ export function deliverCarrierTasks(
     carrier.position = { ...target.position };
     carrier.isIdle = true;
 
-    delete next.transport.activeCarrierTasks[workerId];
+    delete state.transport.activeCarrierTasks[workerId];
   }
 
-  return next;
+  return state;
 }
 
 // =========================
@@ -440,30 +442,28 @@ export function updateTransportMetrics(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
+  const queued = Object.values(state.transport.jobs).filter((j) => j.status === "queued").length;
+  const active = Object.keys(state.transport.activeCarrierTasks).length;
 
-  const queued = Object.values(next.transport.jobs).filter((j) => j.status === "queued").length;
-  const active = Object.keys(next.transport.activeCarrierTasks).length;
-
-  next.transport.networkStress =
+  state.transport.networkStress =
     queued * config.stressPerQueuedJob + active * config.stressPerActiveCarrier;
 
-  const claimedOrQueued = Object.values(next.transport.jobs).filter(
+  const claimedOrQueued = Object.values(state.transport.jobs).filter(
     (j) => j.status === "queued" || j.status === "claimed"
   );
 
   if (claimedOrQueued.length === 0) {
-    next.transport.averageLatencySec = 0;
+    state.transport.averageLatencySec = 0;
   } else {
     const sumDistance = claimedOrQueued.reduce((sum, job) => {
-      const from = next.buildings[job.fromBuildingId];
-      const to = next.buildings[job.toBuildingId];
+      const from = state.buildings[job.fromBuildingId];
+      const to = state.buildings[job.toBuildingId];
       if (!from || !to) return sum;
       return sum + distance(from.position, to.position);
     }, 0);
 
-    next.transport.averageLatencySec = sumDistance / claimedOrQueued.length;
+    state.transport.averageLatencySec = sumDistance / claimedOrQueued.length;
   }
 
-  return next;
+  return state;
 }

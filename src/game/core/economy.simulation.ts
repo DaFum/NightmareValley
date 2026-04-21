@@ -79,6 +79,9 @@ export function isTileBuildableForPlayer(
 // =========================
 
 export function cloneState(state: EconomySimulationState): EconomySimulationState {
+  if (typeof structuredClone === "function") {
+    return structuredClone(state);
+  }
   return {
     ...state,
     players: deepClone(state.players),
@@ -368,9 +371,7 @@ export function updateWorkersPassiveState(
   deltaSec: number,
   config: SimulationConfig
 ): EconomySimulationState {
-  const next = cloneState(state);
-
-  for (const worker of Object.values(next.workers)) {
+  for (const worker of Object.values(state.workers)) {
     if (worker.isIdle) {
       worker.morale = clamp(
         worker.morale + config.workerMoraleRecoveryIdlePerTick * deltaSec,
@@ -386,8 +387,8 @@ export function updateWorkersPassiveState(
     }
 
     let homeBuilding: BuildingInstance | undefined = undefined;
-    if (worker.currentBuildingId) homeBuilding = next.buildings[worker.currentBuildingId];
-    else if (worker.homeBuildingId) homeBuilding = next.buildings[worker.homeBuildingId];
+    if (worker.currentBuildingId) homeBuilding = state.buildings[worker.currentBuildingId];
+    else if (worker.homeBuildingId) homeBuilding = state.buildings[worker.homeBuildingId];
 
     const localCorruption = homeBuilding?.corruption ?? 0;
 
@@ -398,25 +399,23 @@ export function updateWorkersPassiveState(
     );
   }
 
-  return next;
+  return state;
 }
 
 export function updateWorldPulse(state: EconomySimulationState): EconomySimulationState {
-  const next = cloneState(state);
-
-  const totalCorruption = Object.values(next.buildings).reduce(
+  const totalCorruption = Object.values(state.buildings).reduce(
     (sum, b) => sum + (b.corruption ?? 0),
     0
   );
 
-  const totalInfection = Object.values(next.workers).reduce(
+  const totalInfection = Object.values(state.workers).reduce(
     (sum, w) => sum + (w.infection ?? 0),
     0
   );
 
-  next.worldPulse = totalCorruption * 0.1 + totalInfection * 0.05 + next.transport.networkStress;
+  state.worldPulse = totalCorruption * 0.1 + totalInfection * 0.05 + state.transport.networkStress;
 
- return next;
+ return state;
 }
 
 // =========================
@@ -429,7 +428,7 @@ export function simulateTick(
   config: SimulationConfig = DEFAULT_SIMULATION_CONFIG
 ): EconomySimulationState {
   if (!Number.isFinite(deltaSec) || deltaSec <= 0) {
-    return state;
+    throw new Error(`Invalid deltaSec: ${deltaSec}`);
   }
 
   let next = cloneState(state);

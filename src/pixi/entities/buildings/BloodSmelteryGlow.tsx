@@ -10,17 +10,21 @@ export function BloodSmelteryGlow({
 }: {
   intensity: number;
 }) {
-  if (intensity <= 0) return null;
-
-  const blur = React.useMemo(() => new BlurFilter({ strength: 0 }), []);
+  const blur = React.useMemo(() => {
+    const f = new BlurFilter();
+    f.blur = 0;
+    return f;
+  }, []);
 
   React.useEffect(() => {
-    blur.strength = 10 * intensity;
+    blur.blur = 10 * intensity;
   }, [intensity, blur]);
 
   React.useEffect(() => {
     return () => blur.destroy();
   }, [blur]);
+
+  if (intensity <= 0) return null;
 
   return (
     <Container x={10} y={-56} // @ts-ignore
@@ -28,14 +32,12 @@ export function BloodSmelteryGlow({
       <Graphics
         draw={(g: any) => {
           g.clear();
-          g.ellipse(0, 0, 18 + intensity * 10, 8 + intensity * 4).fill({
-            color: 0xff7a1a,
-            alpha: 0.35 + intensity * 0.4,
-          });
-          g.ellipse(0, 0, 9 + intensity * 5, 4 + intensity * 2).fill({
-            color: 0xffd060,
-            alpha: 0.5 + intensity * 0.3,
-          });
+          g.beginFill(0xff7a1a, 0.35 + intensity * 0.4)
+           .drawEllipse(0, 0, 18 + intensity * 10, 8 + intensity * 4)
+           .endFill();
+          g.beginFill(0xffd060, 0.5 + intensity * 0.3)
+           .drawEllipse(0, 0, 9 + intensity * 5, 4 + intensity * 2)
+           .endFill();
         }}
       />
     </Container>

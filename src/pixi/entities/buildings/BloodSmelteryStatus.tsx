@@ -26,8 +26,8 @@ export function BloodSmelteryStatus({
       <Graphics
         draw={(g: any) => {
           g.clear();
-          g.roundRect(-26, -10, 52, 20, 6).fill({ color: 0x111111, alpha: 0.85 });
-          g.roundRect(-26, -10, 52, 20, 6).stroke({ color: 0xff5533, width: 1 });
+          g.lineStyle(1, 0xff5533, 1);
+          g.beginFill(0x111111, 0.85).drawRoundedRect(-26, -10, 52, 20, 6).endFill();
         }}
       />
       <Text
