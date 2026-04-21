@@ -93,7 +93,7 @@ export function processProduction(
     }
 
     const cycleTime = getRecipeCycleTime(building, recipe, config);
-    if (cycleTime <= 0) {
+    if (!Number.isFinite(cycleTime) || cycleTime <= 0) {
       building.progressSec = 0;
       continue;
     }

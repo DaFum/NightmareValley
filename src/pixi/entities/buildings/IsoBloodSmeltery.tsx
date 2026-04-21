@@ -19,26 +19,32 @@ type Props = {
 };
 
 export function IsoBloodSmeltery({ building, baseTexture }: Props) {
+  const isFinished = building.buildStage >= 4 && building.state !== "destroyed";
+
   return (
     <Container x={building.x} y={building.y} zIndex={building.zIndex}>
       <BloodSmelteryShadow />
 
-      <Sprite
-        texture={baseTexture}
-        anchor={{ x: 0.5, y: 1 }}
-        y={-96}
-        tint={building.state === "damaged" ? 0xddaaaa : 0xffffff}
-      />
+      {isFinished && (
+        <>
+          <Sprite
+            // @ts-ignore
+    texture={baseTexture}
+            anchor={{ x: 0.5, y: 1 }}
+            y={-96}
+            tint={building.state === "damaged" ? 0xddaaaa : 0xffffff}
+          />
+          <BloodSmelteryStorage
+            oreFill={building.oreFill}
+            coalFill={building.coalFill}
+            outputFill={building.outputFill}
+          />
+          <BloodSmelteryGlow intensity={building.fireIntensity} />
+          <BloodSmelterySmoke intensity={building.smokeIntensity} />
+          <BloodSmelterySparks intensity={building.fireIntensity} />
+        </>
+      )}
 
-      <BloodSmelteryStorage
-        oreFill={building.oreFill}
-        coalFill={building.coalFill}
-        outputFill={building.outputFill}
-      />
-
-      <BloodSmelteryGlow intensity={building.fireIntensity} />
-      <BloodSmelterySmoke intensity={building.smokeIntensity} />
-      <BloodSmelterySparks intensity={building.fireIntensity} />
       <BloodSmelteryStatus state={building.state} />
     </Container>
   );

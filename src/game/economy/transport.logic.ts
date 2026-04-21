@@ -71,7 +71,7 @@ export function generateTransportJobs(
       const amountAvailable = getResourceAmount(source.outputBuffer, resourceType);
       if (amountAvailable <= 0) continue;
 
-      const targets = findTargetBuildingsForResource(next, source, resourceType);
+      const targets = findTargetBuildingsForResource(next, source, resourceType, config);
 
       for (const target of targets) {
         if (created >= config.maxJobsPerTick) break;
@@ -111,7 +111,8 @@ export function generateTransportJobs(
 export function findTargetBuildingsForResource(
   state: EconomySimulationState,
   source: BuildingInstance,
-  resourceType: ResourceType
+  resourceType: ResourceType,
+  config: SimulationConfig
 ): BuildingInstance[] {
   const buildings = Object.values(state.buildings)
     .filter((b) => b.ownerId === source.ownerId)
@@ -119,8 +120,8 @@ export function findTargetBuildingsForResource(
     .filter((b) => buildingAcceptsResource(b, resourceType));
 
   return buildings.sort((a, b) => {
-    const aNeed = getBuildingResourceNeed(a, resourceType, DEFAULT_SIMULATION_CONFIG);
-    const bNeed = getBuildingResourceNeed(b, resourceType, DEFAULT_SIMULATION_CONFIG);
+    const aNeed = getBuildingResourceNeed(a, resourceType, config);
+    const bNeed = getBuildingResourceNeed(b, resourceType, config);
     const aDistance = distance(source.position, a.position);
     const bDistance = distance(source.position, b.position);
 
@@ -235,7 +236,13 @@ export function assignCarrierTasks(
     .filter((w) => w.isIdle);
 
   for (const carrier of carriers) {
-    const bestJob = findBestJobForCarrier(next, carrier, queuedJobs);
+    // Only allow carriers to pick jobs owned by their player
+    const ownerJobs = queuedJobs.filter(j => {
+      const src = next.buildings[j.fromBuildingId];
+      return src && src.ownerId === carrier.ownerId;
+    });
+
+    const bestJob = findBestJobForCarrier(next, carrier, ownerJobs);
     if (!bestJob) continue;
 
     bestJob.status = "claimed";
@@ -318,8 +325,13 @@ export function moveCarrierTasks(
 
     if (!carrier || !source || !target || !job) {
       if (job) {
-        job.status = "queued";
-        job.reserved = Math.max(0, job.reserved - task.amount);
+        if (!source || !target) {
+          job.status = "lost"; // Terminal state, no source/target exists to fulfill it
+          job.reserved = Math.max(0, job.reserved - task.amount);
+        } else {
+          job.status = "queued";
+          job.reserved = Math.max(0, job.reserved - task.amount);
+        }
       }
       if (carrier) {
         carrier.isIdle = true;
@@ -358,7 +370,8 @@ export function getCarrierSpeed(
 // =========================
 
 export function deliverCarrierTasks(
-  state: EconomySimulationState
+  state: EconomySimulationState,
+  config: SimulationConfig
 ): EconomySimulationState {
   const next = cloneState(state);
 
@@ -372,8 +385,13 @@ export function deliverCarrierTasks(
 
     if (!carrier || !source || !target || !job) {
       if (job) {
-        job.status = "queued";
-        job.reserved = Math.max(0, job.reserved - task.amount);
+        if (!source || !target) {
+          job.status = "lost";
+          job.reserved = Math.max(0, job.reserved - task.amount);
+        } else {
+          job.status = "queued";
+          job.reserved = Math.max(0, job.reserved - task.amount);
+        }
       }
       if (carrier) {
         carrier.isIdle = true;
@@ -382,8 +400,10 @@ export function deliverCarrierTasks(
       continue;
     }
 
-    const available = getResourceAmount(source.outputBuffer, task.resourceType);
-    const moved = Math.min(task.amount, available);
+    const availableFromSource = getResourceAmount(source.outputBuffer, task.resourceType);
+    const targetNeed = getBuildingResourceNeed(target, task.resourceType, config);
+
+    const moved = Math.min(task.amount, availableFromSource, targetNeed);
 
     if (moved > 0) {
       source.outputBuffer = removeResource(source.outputBuffer, task.resourceType, moved);
@@ -399,6 +419,9 @@ export function deliverCarrierTasks(
     } else {
       job.status = "lost";
     }
+
+    // Safely clear reservation upon completion or failure
+    job.reserved = Math.max(0, job.reserved - task.amount);
 
     carrier.position = { ...target.position };
     carrier.isIdle = true;

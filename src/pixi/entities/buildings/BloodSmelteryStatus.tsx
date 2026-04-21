@@ -34,11 +34,12 @@ export function BloodSmelteryStatus({
         text={label}
         anchor={0.5}
         style={
+          // @ts-ignore
           new PIXI.TextStyle({
             fill: 0xffffff,
             fontSize: 10,
             fontWeight: "bold",
-          })
+          }) as any
         }
       />
     </Container>

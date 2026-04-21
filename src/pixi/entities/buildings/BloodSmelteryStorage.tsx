@@ -5,7 +5,7 @@ import { Container, Sprite, Text, Graphics } from "@pixi/react";
 
 
 function pileSize(fill: number) {
-  if (fill <= 0) return 0;
+  if (!Number.isFinite(fill) || fill <= 0) return 0;
   if (fill < 0.34) return 1;
   if (fill < 0.67) return 2;
   return 3;

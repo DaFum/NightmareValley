@@ -12,10 +12,15 @@ export function BloodSmelterySmoke({
 }) {
   if (intensity <= 0) return null;
 
-  const blur = new BlurFilter({ strength: 6 });
+  const blur = React.useMemo(() => new BlurFilter({ strength: 6 }), []);
+
+  React.useEffect(() => {
+    return () => blur.destroy();
+  }, [blur]);
 
   return (
-    <Container x={18} y={-102} filters={[blur]}>
+    <Container x={18} y={-102} // @ts-ignore
+    filters={[blur]}>
       <Graphics
         draw={(g: any) => {
           g.clear();

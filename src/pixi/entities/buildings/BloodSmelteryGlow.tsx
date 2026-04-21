@@ -12,12 +12,19 @@ export function BloodSmelteryGlow({
 }) {
   if (intensity <= 0) return null;
 
-  const blur = new BlurFilter({
-    strength: 10 * intensity,
-  });
+  const blur = React.useMemo(() => new BlurFilter({ strength: 0 }), []);
+
+  React.useEffect(() => {
+    blur.strength = 10 * intensity;
+  }, [intensity, blur]);
+
+  React.useEffect(() => {
+    return () => blur.destroy();
+  }, [blur]);
 
   return (
-    <Container x={10} y={-56} filters={[blur]}>
+    <Container x={10} y={-56} // @ts-ignore
+    filters={[blur]}>
       <Graphics
         draw={(g: any) => {
           g.clear();

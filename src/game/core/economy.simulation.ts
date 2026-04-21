@@ -186,8 +186,8 @@ export function spawnWorker(
     id: workerId,
     type: workerType,
     ownerId,
-    homeBuildingId,
-    currentBuildingId: homeBuildingId,
+    homeBuildingId: undefined, // Let assignWorkerToBuilding handle this safely
+    currentBuildingId: undefined,
     position: { ...position },
     isIdle: true,
     morale: 100,
@@ -198,9 +198,14 @@ export function spawnWorker(
   next.players[ownerId].workers.push(workerId);
 
   if (homeBuildingId) {
-    const home = next.buildings[homeBuildingId];
-    if (home) {
-      home.assignedWorkers.push(workerId);
+    try {
+      // Delegate assignment and validations to the proper flow
+      return assignWorkerToBuilding(next, workerId, homeBuildingId);
+    } catch (err) {
+      // Rollback on failure
+      delete next.workers[workerId];
+      next.players[ownerId].workers = next.players[ownerId].workers.filter((id) => id !== workerId);
+      throw err;
     }
   }
 
@@ -322,6 +327,10 @@ export function assignWorkerToBuilding(
     throw new Error("Cannot assign worker to building of different owner");
   }
 
+  if (building.assignedWorkers.includes(workerId)) {
+    return next; // Idempotent: already assigned
+  }
+
   const def = BUILDING_DEFINITIONS[building.type];
   const allowedSlots = def.workerSlots[worker.type] ?? 0;
   const currentAssignedSameType = building.assignedWorkers
@@ -434,7 +443,7 @@ export function simulateTick(
   next = generateTransportJobs(next, config);
   next = assignCarrierTasks(next, config);
   next = moveCarrierTasks(next, deltaSec, config);
-  next = deliverCarrierTasks(next);
+  next = deliverCarrierTasks(next, config);
   next = updateTransportMetrics(next, config);
   next = updateWorldPulse(next);
 

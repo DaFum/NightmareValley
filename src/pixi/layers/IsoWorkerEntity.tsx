@@ -28,32 +28,36 @@ export const IsoWorkerEntity: React.FC<IsoWorkerEntityProps> = ({ data }) => {
   const getCarryTexture = () => {
     if (!carrying) return null;
 
-    // Group logic could be mapped here (e.g. "wood-like", "stone-like")
-    // For now we just map the raw resource type or a group based on it
-    if (carrying.includes("Timber") || carrying.includes("Plank")) {
-        return `carry_wood_${dir}`;
-    }
-    if (carrying.includes("Stone") || carrying.includes("Ore")) {
-        return `carry_stone_${dir}`;
-    }
-    return `carry_generic_${dir}`;
+    const CARRY_MAP: Record<string, string> = {
+      sinewTimber: "wood",
+      toothPlanks: "wood",
+      sepulcherStone: "stone",
+      veinIronOre: "stone",
+      cathedralGoldOre: "stone",
+      veinIronBar: "stone",
+      haloGoldBar: "stone",
+      graveCoal: "stone"
+    };
+
+    const group = CARRY_MAP[carrying] || "generic";
+    return `carry_${group}_${dir}`;
   };
 
   const getToolTexture = () => {
     if (!tool) return null;
-    // Tools are only visibly held during certain animations
     if (animation === "work" || animation === "walk") {
       return `tool_${tool}_${dir}`;
     }
     return null;
   };
 
+  const toolTex = getToolTexture();
+  const carryTex = getCarryTexture();
+
   return (
     <Container x={screenX} y={screenY} zIndex={zIndex} sortableChildren={true}>
-      {/* 1. Shadow Layer */}
       <Sprite image="generic_worker_shadow" anchor={0.5} y={5} zIndex={0} alpha={0.3} />
 
-      {/* 2. Selection Marker */}
       {selected && (
         <Sprite image="selection_ellipse_worker" anchor={0.5} y={5} zIndex={1} />
       )}
@@ -61,17 +65,14 @@ export const IsoWorkerEntity: React.FC<IsoWorkerEntityProps> = ({ data }) => {
         <Sprite image="hover_ellipse_worker" anchor={0.5} y={5} zIndex={1} alpha={0.5} />
       )}
 
-      {/* 3. Main Body Layer */}
       <Sprite image={baseTexture} anchor={0.5} zIndex={2} />
 
-      {/* 4. Tool Layer */}
-      {getToolTexture() && (
-        <Sprite image={getToolTexture()!} anchor={0.5} zIndex={3} />
+      {toolTex && (
+        <Sprite image={toolTex} anchor={0.5} zIndex={3} />
       )}
 
-      {/* 5. Carry Layer */}
-      {getCarryTexture() && (
-        <Sprite image={getCarryTexture()!} anchor={0.5} zIndex={4} />
+      {carryTex && (
+        <Sprite image={carryTex} anchor={0.5} zIndex={4} />
       )}
     </Container>
   );

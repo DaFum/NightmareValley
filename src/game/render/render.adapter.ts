@@ -78,7 +78,7 @@ export function mapEconomyStateToIsoWorld(
           for (const [resType, requiredAmt] of Object.entries(activeRecipe.inputs)) {
             if ((requiredAmt as number) > 0) {
               const currentAmt = building.inputBuffer[resType as keyof typeof building.inputBuffer] ?? 0;
-              if (currentAmt <= 0) {
+              if (Number(currentAmt) < Number(requiredAmt)) {
                 renderState = "waitingForInput";
                 statusIcons.push("missing_input");
                 break;
@@ -140,11 +140,7 @@ export function mapEconomyStateToIsoWorld(
       carrying = activeTask.resourceType;
 
       const dropoffBuilding = state.buildings[activeTask.dropoffBuildingId];
-      const pickupBuilding = state.buildings[activeTask.pickupBuildingId];
-      // simplified target logic: target dropoff if already carrying, else pickup
-      const targetBuilding = worker.position.x === pickupBuilding?.position.x && worker.position.y === pickupBuilding?.position.y
-                             ? dropoffBuilding
-                             : pickupBuilding;
+      const targetBuilding = dropoffBuilding;
 
       if (targetBuilding) {
         const dx = targetBuilding.position.x - worker.position.x;

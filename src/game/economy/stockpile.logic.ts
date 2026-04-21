@@ -50,6 +50,9 @@ export function hasEnoughResources(
   cost: Partial<Record<ResourceType, number>>
 ): boolean {
   return Object.entries(cost).every(([resource, amount]) => {
+    if (amount !== undefined && (!Number.isFinite(amount) || amount < 0)) {
+      return false; // Fast-fail invalid negative/NaN values
+    }
     const key = resource as ResourceType;
     return (inventory[key] ?? 0) >= (amount ?? 0);
   });

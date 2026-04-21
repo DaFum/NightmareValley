@@ -22,6 +22,11 @@ export function processExtraction(
     if (!hasAssignedWorkersForBuilding(next, building)) continue;
 
     const cycleTime = getExtractionCycleTime(building, def, config);
+    if (!Number.isFinite(cycleTime) || cycleTime <= 0) {
+      building.progressSec = 0; // Prevent stalls/loops on invalid times
+      continue;
+    }
+
     building.progressSec += deltaSec;
 
     while (building.progressSec >= cycleTime) {
