@@ -13,22 +13,9 @@ export interface GameStore {
   advanceTick: (deltaSec: number) => void;
 }
 
-const initialGameState: EconomySimulationState = {
-  tick: 0,
-  ageOfTeeth: 0,
-  players: {},
-  buildings: {},
-  workers: {},
-  territory: { tiles: {} },
-  transport: {
-    roadNodes: {},
-    jobs: {},
-    activeCarrierTasks: {},
-    networkStress: 0,
-    averageLatencySec: 0,
-  },
-  worldPulse: 0,
-};
+import { generateInitialWorld } from '../game/world/world.generator';
+
+const initialGameState: EconomySimulationState = generateInitialWorld();
 
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: initialGameState,
