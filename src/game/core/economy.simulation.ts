@@ -105,22 +105,30 @@ export function hasAssignedWorkersForBuilding(
   building: BuildingInstance
 ): boolean {
   const def = BUILDING_DEFINITIONS[building.type];
+  const slots = def.workerSlots;
 
-  const requiredWorkerTypes = Object.entries(def.workerSlots)
-    .filter(([, amount]) => (amount ?? 0) > 0)
-    .map(([workerType]) => workerType as WorkerType);
+  // Early exit if no workers are required
+  const hasRequirements = Object.values(slots).some((amount) => (amount ?? 0) > 0);
+  if (!hasRequirements) return true;
 
-  if (requiredWorkerTypes.length === 0) return true;
+  // Count assigned workers by type in one pass
+  const counts: Partial<Record<WorkerType, number>> = {};
+  for (const id of building.assignedWorkers) {
+    const worker = state.workers[id];
+    if (worker) {
+      counts[worker.type] = (counts[worker.type] ?? 0) + 1;
+    }
+  }
 
-  for (const workerType of requiredWorkerTypes) {
-    const requiredCount = def.workerSlots[workerType] ?? 0;
-    const assignedCount = building.assignedWorkers
-      .map((id) => state.workers[id])
-      .filter(Boolean)
-      .filter((w) => w.type === workerType).length;
-
-    if (assignedCount < requiredCount) {
-      return false;
+  // Check against requirements
+  for (const type in slots) {
+    const workerType = type as WorkerType;
+    const requiredCount = slots[workerType] ?? 0;
+    if (requiredCount > 0) {
+      const assigned = counts[workerType] ?? 0;
+      if (assigned < requiredCount) {
+        return false;
+      }
     }
   }
 
@@ -336,10 +344,14 @@ export function assignWorkerToBuilding(
 
   const def = BUILDING_DEFINITIONS[building.type];
   const allowedSlots = def.workerSlots[worker.type] ?? 0;
-  const currentAssignedSameType = building.assignedWorkers
-    .map((id) => next.workers[id])
-    .filter(Boolean)
-    .filter((w) => w.type === worker.type).length;
+
+  let currentAssignedSameType = 0;
+  for (const id of building.assignedWorkers) {
+    const w = next.workers[id];
+    if (w && w.type === worker.type) {
+      currentAssignedSameType++;
+    }
+  }
 
   if (allowedSlots <= currentAssignedSameType) {
     throw new Error(`${building.type} has no free slot for ${worker.type}`);
