@@ -41,28 +41,47 @@ export async function loadSpritesheets(): Promise<void> {
 
   const baseTextureMap = new Map<string, PIXI.BaseTexture>();
 
-  for (const file of Array.from(sheetFiles)) {
-    const url = assetUrl(file);
-    const baseTex = PIXI.BaseTexture.from(url, { scaleMode: PIXI.SCALE_MODES.NEAREST });
+  await Promise.all(
+    Array.from(sheetFiles).map((file) => {
+      const url = assetUrl(file);
+      const baseTex = PIXI.BaseTexture.from(url, { scaleMode: PIXI.SCALE_MODES.NEAREST });
 
-    if (!baseTex.valid) {
-      await new Promise<void>((resolve, reject) => {
-        baseTex.on("loaded", () => resolve());
-        baseTex.on("error", (err) => reject(err));
+      const loadPromise = new Promise<void>((resolve, reject) => {
+        if (baseTex.valid) {
+          resolve();
+        } else {
+          function onLoaded() {
+            baseTex.off("error", onError);
+            resolve();
+          }
+          function onError(err: any) {
+            baseTex.off("loaded", onLoaded);
+            reject(err);
+          }
+
+          baseTex.once("loaded", onLoaded);
+          baseTex.once("error", onError);
+
+          // Check again in case it loaded synchronously between the check and adding listeners
+          if (baseTex.valid) {
+            baseTex.off("loaded", onLoaded);
+            baseTex.off("error", onError);
+            resolve();
+          }
+        }
       });
-    }
-    baseTextureMap.set(file, baseTex);
-  }
+
+      baseTextureMap.set(file, baseTex);
+      return loadPromise;
+    })
+  );
 
   function keyFromFilePath(path: string) {
     return path.replace(/\//g, "_").replace(/\.[^.]+$/, "");
   }
 
   function registerTexture(key: string, tex: PIXI.Texture) {
-    (PIXI.utils as any).TextureCache = (PIXI.utils as any).TextureCache || (PIXI as any).TextureCache || {};
-    (PIXI.utils as any).TextureCache[key] = tex;
-    (PIXI as any).TextureCache = (PIXI as any).TextureCache || {};
-    (PIXI as any).TextureCache[key] = tex;
+    PIXI.Texture.addToCache(tex, key);
   }
 
   function handleEntry(file: string, box: Rect, explicitKey?: string) {

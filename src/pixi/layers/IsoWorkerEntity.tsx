@@ -22,8 +22,9 @@ export const IsoWorkerEntity: React.FC<IsoWorkerEntityProps> = ({ data }) => {
     variant,
   } = data;
 
-  // The base texture name depends on type, variant, animation, and direction
-  const baseTexture = `worker_${type}_v${variant}_${animation}_${dir}`;
+  // Since the manifest doesn't register detailed variants/animations for workers,
+  // we look up the base worker name statically registered in the registry.
+  const baseTexture = `worker_${type}`;
 
   const getCarryTexture = () => {
     if (!carrying) return null;
