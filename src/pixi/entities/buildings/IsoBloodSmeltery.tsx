@@ -1,6 +1,5 @@
 import React from "react";
 
-// @ts-ignore
 import { Container, Sprite, Text, Graphics } from "@pixi/react";
 
 import { Texture } from "pixi.js";
@@ -28,7 +27,6 @@ export function IsoBloodSmeltery({ building, baseTexture }: Props) {
       {isFinished && (
         <>
           <Sprite
-            // @ts-ignore
     texture={baseTexture}
             anchor={{ x: 0.5, y: 1 }}
             y={-96}

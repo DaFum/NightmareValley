@@ -1,5 +1,4 @@
 import React from "react";
-// @ts-ignore
 import { Container, Sprite } from "@pixi/react";
 import { IsoWorkerRenderData } from "../../game/iso/iso.types";
 
