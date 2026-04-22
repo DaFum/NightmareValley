@@ -2,19 +2,17 @@ import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
 export function ResourceBar() {
-  // Try to use real data from the store, but fall back to thematic placeholder if store structure isn't ready
-  const resources = useGameStore((state) => {
+  const player = useGameStore(state => {
     const playerIds = Object.keys(state.gameState.players);
-    if (playerIds.length > 0) {
-      const player = state.gameState.players[playerIds[0]];
-      return {
-        teeth: player.stock.toothPlanks ?? 666,
-        marrow: player.stock.marrowGrain ?? 42,
-        bile: player.stock.amnioticWater ?? 13,
-      };
-    }
-    return { teeth: 666, marrow: 42, bile: 13 };
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]];
+    return undefined;
   });
+
+  const resources = {
+    teeth: player?.stock.toothPlanks ?? 666,
+    marrow: player?.stock.marrowGrain ?? 42,
+    bile: player?.stock.amnioticWater ?? 13,
+  };
 
   return (
     <div className="macabre-panel animate-bleed-in delay-1" style={{ padding: '16px 24px', minWidth: '280px' }}>

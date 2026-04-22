@@ -16,10 +16,68 @@ export interface GameStore {
 const initialGameState: EconomySimulationState = {
   tick: 0,
   ageOfTeeth: 0,
-  players: {},
-  buildings: {},
-  workers: {},
-  territory: { tiles: {} },
+  players: {
+    "player_1": {
+      id: "player_1",
+      name: "Player 1",
+      stock: {
+        toothPlanks: 666,
+        marrowGrain: 42,
+        amnioticWater: 13,
+      },
+      buildings: ["building_1"],
+      workers: ["worker_1"],
+      territoryTileIds: ["tile_1"],
+      populationLimit: 20,
+      doctrine: "industry",
+      dread: 0,
+      holinessDebt: 0
+    }
+  },
+  buildings: {
+    "building_1": {
+      id: "building_1",
+      type: "organHarvester",
+      ownerId: "player_1",
+      level: 1,
+      integrity: 100,
+      position: { x: 0, y: 0 },
+      connectedToRoad: true,
+      inputBuffer: {},
+      outputBuffer: {},
+      internalStorage: {},
+      assignedWorkers: ["worker_1"],
+      progressSec: 0,
+      isActive: true,
+      corruption: 0,
+      constructionProgress: 100,
+    }
+  },
+  workers: {
+    "worker_1": {
+      id: "worker_1",
+      type: "burdenThrall",
+      ownerId: "player_1",
+      homeBuildingId: "building_1",
+      currentBuildingId: "building_1",
+      position: { x: 0, y: 0 },
+      isIdle: true,
+      morale: 100,
+      infection: 0,
+      scars: 0,
+    }
+  },
+  territory: {
+    tiles: {
+      "tile_1": {
+        id: "tile_1",
+        position: { x: 0, y: 0 },
+        terrain: "scarredEarth",
+        ownerId: "player_1",
+        buildingId: "building_1",
+      }
+    }
+  },
   transport: {
     roadNodes: {},
     jobs: {},
