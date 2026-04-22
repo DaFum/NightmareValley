@@ -18,16 +18,8 @@ function hashStringToInt(s: string): number {
   return Math.abs(hash);
 }
 
-export function mapEconomyStateToIsoWorld(
-  state: EconomySimulationState
-): IsoRenderWorld {
-  const world: IsoRenderWorld = {
-    tiles: [],
-    buildings: [],
-    workers: [],
-  };
-
-  // Convert map tiles
+function mapTiles(state: EconomySimulationState): IsoRenderWorld["tiles"] {
+  const tiles: IsoRenderWorld["tiles"] = [];
   for (const [tileId, mapTile] of Object.entries(state.territory.tiles)) {
     const { x: sx, y: sy } = tileToScreen(
       mapTile.position.x,
@@ -36,7 +28,7 @@ export function mapEconomyStateToIsoWorld(
       TILE_HEIGHT
     );
 
-    world.tiles.push({
+    tiles.push({
       id: tileId,
       screenX: sx,
       screenY: sy,
@@ -44,8 +36,11 @@ export function mapEconomyStateToIsoWorld(
       chunkId: "0,0", // simplified
     });
   }
+  return tiles;
+}
 
-  // Convert buildings
+function mapBuildings(state: EconomySimulationState): IsoRenderWorld["buildings"] {
+  const buildings: IsoRenderWorld["buildings"] = [];
   for (const building of Object.values(state.buildings)) {
     const { x: sx, y: sy } = tileToScreen(
       building.position.x,
@@ -90,7 +85,7 @@ export function mapEconomyStateToIsoWorld(
       }
     }
 
-    world.buildings.push({
+    buildings.push({
       id: building.id,
       type: building.type,
       tileX: building.position.x,
@@ -116,8 +111,11 @@ export function mapEconomyStateToIsoWorld(
       outputFill: Math.max(0, Math.min(1, Math.max(...Object.values(building.outputBuffer).map(val => (val ?? 0) / DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit), 0))),
     });
   }
+  return buildings;
+}
 
-  // Convert workers
+function mapWorkers(state: EconomySimulationState): IsoRenderWorld["workers"] {
+  const workers: IsoRenderWorld["workers"] = [];
   for (const worker of Object.values(state.workers)) {
     const { x: sx, y: sy } = tileToScreen(
       worker.position.x,
@@ -161,7 +159,7 @@ export function mapEconomyStateToIsoWorld(
     if (worker.type === "fleshMason") tool = "hammer";
     if (worker.type === "graveToothBreaker") tool = "pickaxe";
 
-    world.workers.push({
+    workers.push({
       id: worker.id,
       type: worker.type,
       worldX: worker.position.x,
@@ -183,6 +181,15 @@ export function mapEconomyStateToIsoWorld(
       variant,
     });
   }
+  return workers;
+}
 
-  return world;
+export function mapEconomyStateToIsoWorld(
+  state: EconomySimulationState
+): IsoRenderWorld {
+  return {
+    tiles: mapTiles(state),
+    buildings: mapBuildings(state),
+    workers: mapWorkers(state),
+  };
 }
