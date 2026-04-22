@@ -1,22 +1,32 @@
-import React from 'react';
-
-import { Container, Sprite } from '@pixi/react';
-import { useTextures } from './utils/textureRegistry';
+import React, { useEffect } from 'react';
+import { Container } from '@pixi/react';
+import { WorldViewport } from './world/WorldViewport';
+import { WorldRoot } from './world/WorldRoot';
+import { useGameLoop } from './hooks/useGameLoop';
+import { useIsoCamera } from './hooks/useIsoCamera';
+import { useGameStore } from '../store/game.store';
+import { useCameraStore } from '../store/camera.store';
 
 export function GameStage() {
-  const { registry } = useTextures();
+  // Setup logic hooks
+  useGameLoop();
+  useIsoCamera();
 
-  const buildingTex = registry.getTexture('buildings_stage4_organHarvester');
+  const togglePlayPause = useGameStore((state) => state.togglePlayPause);
+  const isRunning = useGameStore((state) => state.isRunning);
+  const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
+
+  useEffect(() => {
+    // Start simulation immediately if not running
+    if (!isRunning) togglePlayPause();
+
+    // Center camera on screen initialization
+    setCameraPosition(window.innerWidth / 2, window.innerHeight / 2);
+  }, []);
 
   return (
-    <Container x={window.innerWidth / 2} y={window.innerHeight / 2}>
-      {buildingTex && (
-        <Sprite
-
-          texture={buildingTex}
-          anchor={{ x: 0.5, y: 0.5 }}
-        />
-      )}
-    </Container>
+    <WorldViewport>
+      <WorldRoot />
+    </WorldViewport>
   );
 }

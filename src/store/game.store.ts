@@ -19,7 +19,18 @@ const initialGameState: EconomySimulationState = {
   players: {},
   buildings: {},
   workers: {},
-  territory: { tiles: {} },
+  territory: {
+    tiles: (() => {
+      const t: Record<string, any> = {};
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const id = `tile_${x}_${y}`;
+          t[id] = { id, position: { x, y }, terrain: "scarredEarth" };
+        }
+      }
+      return t;
+    })()
+  },
   transport: {
     roadNodes: {},
     jobs: {},
