@@ -56,7 +56,7 @@ const initialGameState: EconomySimulationState = {
   workers: {
     "worker_1": {
       id: "worker_1",
-      type: "burdenThrall",
+      type: "timberExecutioner",
       ownerId: "player_1",
       homeBuildingId: "building_1",
       currentBuildingId: "building_1",
