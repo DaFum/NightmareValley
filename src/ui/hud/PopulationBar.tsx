@@ -2,7 +2,18 @@ import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
 export function PopulationBar() {
-  const population = useGameStore((state: any) => state.population) || { active: 13, max: 20, idle: 2 };
+  const population = useGameStore((state) => {
+    const playerIds = Object.keys(state.gameState.players);
+    if (playerIds.length > 0) {
+      const player = state.gameState.players[playerIds[0]];
+      return {
+        active: player.workers.length,
+        max: player.populationLimit,
+        idle: 0,
+      };
+    }
+    return { active: 13, max: 20, idle: 2 };
+  });
 
   return (
     <div className="macabre-panel animate-bleed-in delay-2" style={{ padding: '12px 24px', minWidth: '280px' }}>
@@ -41,7 +52,7 @@ export function PopulationBar() {
           top: 0,
           left: 0,
           height: '100%',
-          width: `${((population.active ?? 13) / (population.max ?? 20)) * 100}%`,
+          width: `${(population.max ?? 20) > 0 ? ((population.active ?? 13) / (population.max ?? 20)) * 100 : 0}%`,
           backgroundColor: 'var(--fresh-blood)',
           boxShadow: '0 0 8px var(--fresh-blood)'
         }} />
