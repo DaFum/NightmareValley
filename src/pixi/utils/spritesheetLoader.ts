@@ -1,3 +1,4 @@
+import imageMap from "./vite-asset-loader";
 import * as PIXI from "pixi.js";
 import manifest from "../../assets/spritesheets/manifest.json";
 
@@ -9,12 +10,7 @@ function rectFromBox(box: Rect) {
 }
 
 function assetUrl(relPath: string) {
-  // Try to use URL correctly depending on the bundler environment
-  try {
-    return new URL(`../../assets/spritesheets/${relPath}`, (typeof document !== 'undefined' ? document.baseURI : 'http://localhost/')).href;
-  } catch (e) {
-    return `/src/assets/spritesheets/${relPath}`;
-  }
+  return imageMap[relPath] || `/src/assets/spritesheets/${relPath}`;
 }
 
 export async function loadSpritesheets(): Promise<void> {
@@ -91,7 +87,24 @@ export async function loadSpritesheets(): Promise<void> {
       return;
     }
     const r = rectFromBox(box);
-    const frame = new PIXI.Rectangle(r.x, r.y, r.width, r.height);
+
+    let frameX = r.x;
+    let frameY = r.y;
+
+    // If the loaded base texture matches the target width/height exactly,
+    // it means we loaded an individual extracted file rather than a spritesheet.
+    if (baseTex.width === r.width && baseTex.height === r.height) {
+      frameX = 0;
+      frameY = 0;
+    } else if (baseTex.width > 0 && baseTex.height > 0) {
+      // Also fallback if frame goes out of bounds
+      if (frameX + r.width > baseTex.width || frameY + r.height > baseTex.height) {
+         frameX = 0;
+         frameY = 0;
+      }
+    }
+
+    const frame = new PIXI.Rectangle(frameX, frameY, r.width, r.height);
     const tex = new PIXI.Texture(baseTex, frame);
 
     const key = explicitKey || keyFromFilePath(file);
