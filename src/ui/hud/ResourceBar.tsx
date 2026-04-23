@@ -32,6 +32,12 @@ export function ResourceBar() {
     return 0;
   });
 
+  const resources = {
+    teeth: player?.stock.toothPlanks ?? 666,
+    marrow: player?.stock.marrowGrain ?? 42,
+    bile: player?.stock.amnioticWater ?? 13,
+  };
+
   return (
     <div className="macabre-panel animate-bleed-in delay-1" style={{ padding: '16px 24px', minWidth: '280px' }}>
       <h2 style={{

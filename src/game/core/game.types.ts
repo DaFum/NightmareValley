@@ -43,6 +43,7 @@ export interface WorkerInstance {
   morale: number;
   infection: number;
   scars: number;
+  path?: Position[];
 }
 
 export interface MapTile {

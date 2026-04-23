@@ -17,6 +17,12 @@ export function PopulationBar() {
     return { active: 13, max: 20, idle: 2 };
   }));
 
+  const population = {
+    active: player?.workers.length ?? 13,
+    max: player?.populationLimit ?? 20,
+    idle: 0,
+  };
+
   return (
     <div className="macabre-panel animate-bleed-in delay-2" style={{ padding: '12px 24px', minWidth: '280px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
