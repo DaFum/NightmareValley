@@ -9,7 +9,6 @@ describe('Providers and ErrorBoundary', () => {
   test('AppProviders imports without throwing', async () => {
     const path = await import('path');
     const providersPath = path.resolve(process.cwd(), 'src', 'app', 'providers', 'AppProviders');
-    jest.doMock(providersPath, () => ({ AppProviders: () => null }));
     const { AppProviders } = await import('../../src/app/providers/AppProviders');
     expect(AppProviders).toBeDefined();
   });

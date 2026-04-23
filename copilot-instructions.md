@@ -35,7 +35,6 @@ Apply these rules to source and asset files, including but not limited to: `*.ts
 Assets & spritesheets
 ----------------------
 - Use the asset loader and manifest flow (`src/pixi/utils/vite-asset-loader.ts` + `spritesheetLoader.ts`) so Vite can resolve files.
-- Use the asset loader and manifest flow (`src/pixi/utils/vite-asset-loader.ts` + `spritesheetLoader.ts`) so Vite can resolve files.
 - **Required:** Ensure new asset files are discoverable by `import.meta.glob` (see [src/pixi/utils/vite-asset-loader.ts](src/pixi/utils/vite-asset-loader.ts#L1)) and update `manifest.json`.
 - Update `src/assets/spritesheets/manifest.json` for any new or renamed spritesheets.
 - **Test:** Mock `vite-asset-loader` in Node tests or add a lightweight adapter in test setup to avoid Vite-only APIs leaking into Jest.

@@ -37,12 +37,12 @@ export function PixiAppProvider({ children, mountChildrenWhileLoading = false }:
       return (
         <>
           {children}
-          <div style={overlayStyle}>Loading Textures...</div>
+          <div style={overlayStyle} role="status" aria-live="polite" aria-busy="true">Loading Textures...</div>
         </>
       );
     }
 
-    return <div style={overlayStyle}>Loading Textures...</div>;
+    return <div style={overlayStyle} role="status" aria-live="polite" aria-busy="true">Loading Textures...</div>;
   }
 
   return <>{children}</>;

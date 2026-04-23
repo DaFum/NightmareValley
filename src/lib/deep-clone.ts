@@ -54,9 +54,15 @@ export function deepClone<T>(value: T): T {
 		}
 
 		if (ArrayBuffer.isView(obj)) {
+			const bufferCopy = obj.buffer.slice(0);
+			if (obj instanceof DataView || obj.constructor.name === 'DataView') {
+				const copy = new DataView(bufferCopy, obj.byteOffset, obj.byteLength);
+				visited.set(obj, copy);
+				return copy as any;
+			}
 			try {
 				const ctor = (obj as any).constructor;
-				const copy = new ctor(obj as any);
+				const copy = new ctor(bufferCopy, obj.byteOffset, (obj as any).length);
 				visited.set(obj, copy);
 				return copy as any;
 			} catch (e) {
@@ -79,9 +85,13 @@ export function deepClone<T>(value: T): T {
 		const out = Object.create(proto);
 		visited.set(obj, out);
 
+		// Note: Accessor properties (getters/setters) are NOT preserved to avoid leaking closures
 		for (const key of Reflect.ownKeys(obj)) {
 			const desc = Object.getOwnPropertyDescriptor(obj, key as any);
 			if (!desc) continue;
+			if (desc.get || desc.set) {
+				continue;
+			}
 			if ('value' in desc) desc.value = _clone(desc.value);
 			Object.defineProperty(out, key, desc);
 		}
