@@ -142,5 +142,6 @@ vite.config.ts.timestamp-*
 .vscode/
 
 # Generated spritesheet assets and build output
-src/assets/spritesheets/**
+src/assets/spritesheets/**/*.png
+src/assets/spritesheets/**/*.jpg
 public/build/

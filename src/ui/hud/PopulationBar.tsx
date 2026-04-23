@@ -11,12 +11,11 @@ export function PopulationBar() {
       return {
         active: player.workers.length,
         max: player.populationLimit,
-        idle: 0,
       };
     }
-    return { active: 13, max: 20, idle: 2 };
+    return { active: 13, max: 20 };
   }));
-  const { active, max, idle } = population;
+  const { active, max } = population;
 
   return (
     <div className="macabre-panel animate-bleed-in delay-2" style={{ padding: '12px 24px', minWidth: '280px' }}>

@@ -74,6 +74,9 @@ export function LocalStage({
     };
 
     // Listen for render requests emitted by the pixi reconciler and perform a render.
+    // `__REACT_PIXI_REQUEST_RENDER__` is an internal, reconciler-emitted @pixi/react event;
+    // because this is not a public API, future @pixi/react versions may rename, remove,
+    // or otherwise change it, which would require updating this compatibility hook.
     app.stage.on("__REACT_PIXI_REQUEST_RENDER__", renderStage);
 
     // Do an initial render so the canvas shows the initial tree.

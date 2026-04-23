@@ -21,7 +21,7 @@ export function GameStage() {
 
   useEffect(() => {
     // Simple game loop
-    let lastTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    let lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
     let animationFrameId: number;
 
     const loop = (time: number) => {
