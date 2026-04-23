@@ -6,9 +6,18 @@ import { IsoBuildingLayer } from './layers/IsoBuildingLayer';
 import { IsoWorkerLayer } from './layers/IsoWorkerLayer';
 
 import { useGameStore } from '../store/game.store';
+import { useUIStore } from '../store/ui.store';
+import { getIsoHit } from '../game/iso/iso.hit-test';
+import { useRenderWorld } from './hooks/useRenderWorld';
 
 export function GameStage() {
-  const { advanceTick, togglePlayPause, isRunning } = useGameStore();
+  const advanceTick = useGameStore(state => state.advanceTick);
+  const togglePlayPause = useGameStore(state => state.togglePlayPause);
+  const placeBuildingAt = useGameStore(state => state.placeBuildingAt);
+  const selectedBuildingToPlace = useUIStore(state => state.selectedBuildingToPlace);
+  const selectBuildingToPlace = useUIStore(state => state.selectBuildingToPlace);
+
+  const world = useRenderWorld();
 
   useEffect(() => {
     // Simple game loop
@@ -43,15 +52,40 @@ export function GameStage() {
     }
   }, [togglePlayPause]);
 
+  const handlePointerDown = (e: any) => {
+    if (!selectedBuildingToPlace) return;
+
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 4;
+
+    const hit = getIsoHit(
+      e.data.global.x,
+      e.data.global.y,
+      world,
+      centerX,
+      centerY,
+      1, // zoom
+      64, // tileWidth
+      32  // tileHeight
+    );
+
+    if (hit.tileId && !hit.buildingId && !hit.workerId) {
+      placeBuildingAt("player_1", selectedBuildingToPlace, hit.tileId);
+      selectBuildingToPlace(null);
+    }
+  };
+
   return (
     <Container
        x={window.innerWidth / 2}
        y={window.innerHeight / 4} // adjust to center iso map better
        sortableChildren={true}
+       interactive={true}
+       pointerdown={handlePointerDown}
     >
-        <IsoTerrainLayer />
-        <IsoBuildingLayer />
-        <IsoWorkerLayer />
+        <IsoTerrainLayer tiles={world.tiles} />
+        <IsoBuildingLayer buildings={world.buildings} />
+        <IsoWorkerLayer workers={world.workers} />
     </Container>
   );
 }

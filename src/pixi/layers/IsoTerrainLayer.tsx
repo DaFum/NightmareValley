@@ -1,29 +1,29 @@
 import React from 'react';
 import { Container, Sprite } from '@pixi/react';
-import { useRenderWorld } from '../hooks/useRenderWorld';
 import { useTextures } from '../utils/textureRegistry';
+import { IsoRenderWorld } from '../../game/render/render.types';
 
-export function IsoTerrainLayer() {
-  const world = useRenderWorld();
+interface IsoTerrainLayerProps {
+  tiles: IsoRenderWorld['tiles'];
+}
+
+export function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
   const { registry } = useTextures();
 
   return (
     <Container>
-      {world.tiles.map((tile) => {
+      {tiles.map((tile) => {
         // Fallback for missing textures based on terrain type
         let textureKey = tile.textureKey;
         if (!registry.hasTexture(textureKey)) {
            // Provide basic colored fallback textures or just first frame if available
-           if (textureKey.includes("bloodWater")) {
-               textureKey = "terrain_bloodWater";
+           if (textureKey.includes("placentaLake")) {
+               textureKey = "terrain_placentaLake";
            } else if (textureKey.includes("weepingForest")) {
                textureKey = "terrain_weepingForest";
            } else {
                textureKey = "terrain_scarredEarth"; // Default
            }
-
-           // If even the base is missing, we might not render, but we'll try to find it
-           // In this simplified app, we'll try to just grab any texture if the specific one is missing
         }
 
         const texture = registry.getTexture(textureKey);

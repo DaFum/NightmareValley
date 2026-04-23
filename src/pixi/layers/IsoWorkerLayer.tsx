@@ -1,20 +1,26 @@
 import React from 'react';
 import { Container, Sprite } from '@pixi/react';
-import { useRenderWorld } from '../hooks/useRenderWorld';
 import { useTextures } from '../utils/textureRegistry';
+import { IsoRenderWorld } from '../../game/render/render.types';
 
-export function IsoWorkerLayer() {
-  const world = useRenderWorld();
+interface IsoWorkerLayerProps {
+  workers: IsoRenderWorld['workers'];
+}
+
+export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
   const { registry } = useTextures();
 
-  // Sort by zIndex
-  const sortedWorkers = [...world.workers].sort((a, b) => a.zIndex - b.zIndex);
+  // No need to sort if the parent Container has sortableChildren=true,
+  // but we must set the zIndex on the sprites.
 
   return (
-    <Container>
-      {sortedWorkers.map((worker) => {
-        // Fallback for worker texture
-        const texture = registry.getTexture(`workers_${worker.type}_idle_SE_01`) || registry.getTexture('workers_burdenThrall_idle_SE_01');
+    <>
+      {workers.map((worker) => {
+        // Build the specific texture key, fallback to a safe default
+        const computedKey = `workers_${worker.type}_${worker.animation}_${worker.dir}_01`;
+        const defaultKey = 'workers_burdenThrall_idle_SE_01';
+
+        const texture = registry.getTexture(computedKey) || registry.getTexture(defaultKey);
 
         if (!texture) return null;
 
@@ -24,10 +30,11 @@ export function IsoWorkerLayer() {
             texture={texture}
             x={worker.screenX}
             y={worker.screenY}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={{ x: 0.5, y: 1.0 }}
+            zIndex={worker.zIndex}
           />
         );
       })}
-    </Container>
+    </>
   );
 }

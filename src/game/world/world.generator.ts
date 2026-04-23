@@ -69,6 +69,7 @@ export function generateInitialWorld(): EconomySimulationState {
   };
   player.buildings.push(millId);
   tiles[`tile_10_10`].buildingId = millId;
+  tiles[`tile_10_10`].terrain = "scarredEarth"; // Ensure terrain is valid for buildings
 
   const dustMillerId = createId("worker");
   workers[dustMillerId] = {
@@ -107,6 +108,7 @@ export function generateInitialWorld(): EconomySimulationState {
   };
   player.buildings.push(bakeryId);
   tiles[`tile_14_10`].buildingId = bakeryId;
+  tiles[`tile_14_10`].terrain = "scarredEarth"; // Ensure terrain is valid for buildings
 
   const acolyteId = createId("worker");
   workers[acolyteId] = {
