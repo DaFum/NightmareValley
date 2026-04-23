@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { EconomySimulationState, simulateTick } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
+import { loadInitialMap } from '../game/map/map.loader';
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -60,24 +61,14 @@ const initialGameState: EconomySimulationState = {
       ownerId: "player_1",
       homeBuildingId: "building_1",
       currentBuildingId: "building_1",
-      position: { x: 0, y: 0 },
+      position: { x: 4, y: 4 }, // Start roughly in middle of 10x10 map
       isIdle: true,
       morale: 100,
       infection: 0,
       scars: 0,
     }
   },
-  territory: {
-    tiles: {
-      "tile_1": {
-        id: "tile_1",
-        position: { x: 0, y: 0 },
-        terrain: "scarredEarth",
-        ownerId: "player_1",
-        buildingId: "building_1",
-      }
-    }
-  },
+  territory: loadInitialMap(),
   transport: {
     roadNodes: {},
     jobs: {},

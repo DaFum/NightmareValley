@@ -17,10 +17,9 @@ export function GameStage() {
   return (
     <Container x={window.innerWidth / 2} y={window.innerHeight / 2}>
       {Object.values(buildings).map((building) => {
-        // e.g. buildings_stage4_organHarvester
-        const stage = building.constructionProgress && building.constructionProgress < 100
-          ? `stage${Math.floor((building.constructionProgress / 100) * 3)}`
-          : 'stage4';
+        const clampedProgress = Math.max(0, Math.min(100, building.constructionProgress ?? 0));
+        const stageIndex = clampedProgress === 100 ? 4 : Math.floor((clampedProgress / 100) * 4);
+        const stage = `stage${stageIndex}`;
 
         const textureKey = `buildings_${stage}_${building.type}`;
         const tex = registry.getTexture(textureKey);

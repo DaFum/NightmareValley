@@ -25,6 +25,8 @@ import {
   updateTransportMetrics
 } from "../economy/transport.logic";
 
+import { updateWorkersAI } from "../entities/workers/worker.logic";
+
 export interface EconomySimulationState {
   tick: number;
   ageOfTeeth: number;
@@ -457,6 +459,9 @@ export function simulateTick(
   next = deliverCarrierTasks(next, config);
   next = updateTransportMetrics(next, config);
   next = updateWorldPulse(next);
+
+  // Apply Worker AI (movement)
+  next = updateWorkersAI(next, deltaSec, config);
 
   return next;
 }
