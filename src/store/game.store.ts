@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { EconomySimulationState, simulateTick } from '../game/core/economy.simulation';
+import { EconomySimulationState, simulateTick, placeBuilding } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
-import { loadInitialMap } from '../game/map/map.loader';
+import { MapTile } from "../game/core/game.types";
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -12,23 +12,31 @@ export interface GameStore {
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
   advanceTick: (deltaSec: number) => void;
+  placeBuildingAt: (ownerId: string, buildingType: string, tileId: string) => void;
 }
+
+
+import { createId } from '../game/core/economy.simulation';
+
+const player1Id = createId('player');
+const millId = createId('bld');
+const ovenId = createId('bld');
+const millerId = createId('wrk');
+const acolyteId = createId('wrk');
+const carrier1Id = createId('wrk');
+const carrier2Id = createId('wrk');
 
 const initialGameState: EconomySimulationState = {
   tick: 0,
   ageOfTeeth: 0,
   players: {
-    "player_1": {
-      id: "player_1",
-      name: "Player 1",
-      stock: {
-        toothPlanks: 666,
-        marrowGrain: 42,
-        amnioticWater: 13,
-      },
-      buildings: ["building_1"],
-      workers: ["worker_1"],
-      territoryTileIds: ["tile_1"],
+    [player1Id]: {
+      id: player1Id,
+      name: "The First Ascendant",
+      stock: { toothPlanks: 666, marrowGrain: 100, amnioticWater: 100, boneDust: 0, funeralLoaf: 0 },
+      buildings: [millId, ovenId],
+      workers: [millerId, acolyteId, carrier1Id, carrier2Id],
+      territoryTileIds: [],
       populationLimit: 20,
       doctrine: "industry",
       dread: 0,
@@ -36,41 +44,103 @@ const initialGameState: EconomySimulationState = {
     }
   },
   buildings: {
-    "building_1": {
-      id: "building_1",
-      type: "organHarvester",
-      ownerId: "player_1",
+    [millId]: {
+      id: millId,
+      type: "dustCathedralMill",
+      ownerId: player1Id,
       level: 1,
       integrity: 100,
-      position: { x: 0, y: 0 },
+      position: { x: 3, y: 3 },
       connectedToRoad: true,
-      inputBuffer: {},
+      inputBuffer: { marrowGrain: 10 },
       outputBuffer: {},
       internalStorage: {},
-      assignedWorkers: ["worker_1"],
+      assignedWorkers: [millerId],
+      currentRecipeId: "grindMarrowGrain",
       progressSec: 0,
-      isActive: true,
-      corruption: 0,
-      constructionProgress: 100,
+      isActive: true
+    },
+    [ovenId]: {
+      id: ovenId,
+      type: "ovenOfLastBread",
+      ownerId: player1Id,
+      level: 1,
+      integrity: 100,
+      position: { x: 7, y: 3 },
+      connectedToRoad: true,
+      inputBuffer: { amnioticWater: 10 }, // Missing bone dust to start, which the mill should provide
+      outputBuffer: {},
+      internalStorage: {},
+      assignedWorkers: [acolyteId],
+      currentRecipeId: "bakeFuneralLoaf",
+      progressSec: 0,
+      isActive: true
     }
   },
   workers: {
-    "worker_1": {
-      id: "worker_1",
-      type: "timberExecutioner",
-      ownerId: "player_1",
-      homeBuildingId: "building_1",
-      currentBuildingId: "building_1",
-      position: { x: 4, y: 4 }, // Start roughly in middle of 10x10 map
+    [millerId]: {
+      id: millerId,
+      type: "dustMiller",
+      ownerId: player1Id,
+      homeBuildingId: millId,
+      position: { x: 3, y: 3 },
+      isIdle: false,
+      morale: 100,
+      infection: 0,
+      scars: 0
+    },
+    [acolyteId]: {
+      id: acolyteId,
+      type: "ovenAcolyte",
+      ownerId: player1Id,
+      homeBuildingId: ovenId,
+      position: { x: 7, y: 3 },
+      isIdle: false,
+      morale: 100,
+      infection: 0,
+      scars: 0
+    },
+    [carrier1Id]: {
+      id: carrier1Id,
+      type: "burdenThrall",
+      ownerId: player1Id,
+      position: { x: 5, y: 5 },
       isIdle: true,
       morale: 100,
       infection: 0,
-      scars: 0,
+      scars: 0
+    },
+    [carrier2Id]: {
+      id: carrier2Id,
+      type: "burdenThrall",
+      ownerId: player1Id,
+      position: { x: 5, y: 6 },
+      isIdle: true,
+      morale: 100,
+      infection: 0,
+      scars: 0
     }
   },
-  territory: loadInitialMap(),
+  territory: {
+    tiles: (() => {
+      const t: Record<string, MapTile> = {};
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const id = `tile_${x}_${y}`;
+          t[id] = { id, position: { x, y }, terrain: "scarredEarth" };
+        }
+      }
+      return t;
+    })()
+  },
   transport: {
-    roadNodes: {},
+    roadNodes: {
+      "road_3_3": { id: "road_3_3", position: { x: 3, y: 3 }, connectedNodeIds: ["road_4_3"] },
+      "road_4_3": { id: "road_4_3", position: { x: 4, y: 3 }, connectedNodeIds: ["road_3_3", "road_5_3"] },
+      "road_5_3": { id: "road_5_3", position: { x: 5, y: 3 }, connectedNodeIds: ["road_4_3", "road_6_3"] },
+      "road_6_3": { id: "road_6_3", position: { x: 6, y: 3 }, connectedNodeIds: ["road_5_3", "road_7_3"] },
+      "road_7_3": { id: "road_7_3", position: { x: 7, y: 3 }, connectedNodeIds: ["road_6_3"] },
+    },
     jobs: {},
     activeCarrierTasks: {},
     networkStress: 0,
@@ -107,6 +177,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) {
       console.error("Simulation tick failed:", error);
       set({ isRunning: false, lastError: error });
+    }
+  },
+
+  placeBuildingAt: (ownerId, buildingType, tileId) => {
+    try {
+      const { gameState } = get();
+      const nextState = placeBuilding(gameState, ownerId, buildingType as BuildingType, tileId);
+      set({ gameState: nextState });
+    } catch (error) {
+      console.error("Failed to place building:", error);
+      set({ lastError: error });
     }
   },
 }));

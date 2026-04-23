@@ -1,3 +1,11 @@
+
+export type IsoTileRenderData = {
+  id: string;
+  screenX: number;
+  screenY: number;
+  textureKey: string;
+  chunkId: string;
+};
 import { IsoBuildingRenderData, IsoWorkerRenderData } from "../iso/iso.types";
 
 export type RenderBloodSmeltery = {
@@ -33,13 +41,7 @@ export type RenderBloodSmeltery = {
 };
 
 export type IsoRenderWorld = {
-  tiles: Array<{
-    id: string;
-    screenX: number;
-    screenY: number;
-    textureKey: string;
-    chunkId: string;
-  }>;
+  tiles: IsoTileRenderData[];
   buildings: IsoBuildingRenderData[];
   workers: IsoWorkerRenderData[];
 };

@@ -1,11 +1,35 @@
 import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
+import { useShallow } from 'zustand/react/shallow';
+
 export function ResourceBar() {
-  const player = useGameStore(state => {
+  // Try to use real data from the store, but fall back to thematic placeholder if store structure isn't ready
+
+  const teeth = useGameStore((state) => {
     const playerIds = Object.keys(state.gameState.players);
-    if (playerIds.length > 0) return state.gameState.players[playerIds[0]];
-    return undefined;
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.toothPlanks ?? 0;
+    return 0;
+  });
+  const marrow = useGameStore((state) => {
+    const playerIds = Object.keys(state.gameState.players);
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.marrowGrain ?? 0;
+    return 0;
+  });
+  const bile = useGameStore((state) => {
+    const playerIds = Object.keys(state.gameState.players);
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.amnioticWater ?? 0;
+    return 0;
+  });
+  const loaf = useGameStore((state) => {
+    const playerIds = Object.keys(state.gameState.players);
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.funeralLoaf ?? 0;
+    return 0;
+  });
+  const dust = useGameStore((state) => {
+    const playerIds = Object.keys(state.gameState.players);
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.boneDust ?? 0;
+    return 0;
   });
 
   const resources = {
@@ -33,21 +57,35 @@ export function ResourceBar() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span style={{ color: 'var(--bone)', fontSize: '18px', fontWeight: 'bold' }}>Teeth</span>
           <span className="macabre-text-glow" style={{ color: 'var(--bone)', fontFamily: 'monospace', fontSize: '20px' }}>
-            {resources.teeth ?? 666}
+            {teeth}
           </span>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--marrow)', fontSize: '18px' }}>Marrow</span>
+          <span style={{ color: 'var(--marrow)', fontSize: '18px' }}>Marrow Grain</span>
           <span style={{ color: 'var(--marrow)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {resources.marrow ?? 42}
+            {marrow}
           </span>
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--bile)', fontSize: '18px' }}>Bile</span>
+          <span style={{ color: 'var(--bone)', fontSize: '18px' }}>Bone Dust</span>
+          <span style={{ color: 'var(--bone)', fontFamily: 'monospace', fontSize: '18px' }}>
+            {dust}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ color: 'var(--bile)', fontSize: '18px' }}>Amniotic Bile</span>
           <span style={{ color: 'var(--bile)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {resources.bile ?? 13}
+            {bile}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ color: 'var(--flesh)', fontSize: '18px' }}>Funeral Loaf</span>
+          <span style={{ color: 'var(--flesh)', fontFamily: 'monospace', fontSize: '18px' }}>
+            {loaf}
           </span>
         </div>
       </div>
