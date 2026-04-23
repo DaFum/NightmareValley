@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useCameraStore } from "../../store/camera.store";
 
 export function useIsoCamera() {
-  const { x, y, setCameraPosition, setZoom, zoom } = useCameraStore();
+  const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
+  const setZoom = useCameraStore((state) => state.setZoom);
 
   useEffect(() => {
     let isDragging = false;
@@ -42,10 +43,11 @@ export function useIsoCamera() {
     };
 
     const handleWheel = (e: WheelEvent) => {
-       const currentZoom = useCameraStore.getState().zoom;
-       const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
-       const newZoom = Math.max(0.2, Math.min(3, currentZoom + zoomDelta));
-       setZoom(newZoom);
+      if (!(e.target instanceof HTMLCanvasElement)) return;
+      const currentZoom = useCameraStore.getState().zoom;
+      const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
+      const newZoom = Math.max(0.2, Math.min(3, currentZoom + zoomDelta));
+      setZoom(newZoom);
     };
 
     window.addEventListener("pointerdown", handlePointerDown);

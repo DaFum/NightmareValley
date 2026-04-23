@@ -4,13 +4,23 @@ import { mapEconomyStateToIsoWorld } from "../../game/render/render.adapter";
 import { IsoRenderWorld } from "../../game/render/render.types";
 
 export function useRenderWorld(): IsoRenderWorld {
-  const gameState = useGameStore((state) => state.gameState);
+  // Use specific states to prevent re-rendering when other states change
+  const territory = useGameStore((state) => state.gameState.territory);
+  const buildings = useGameStore((state) => state.gameState.buildings);
+  const workers = useGameStore((state) => state.gameState.workers);
 
   // Memoize the mapped render world so we don't recreate the entire IsoRenderWorld
-  // object tree if the gameState object reference hasn't changed.
+  // object tree if the game state object hasn't changed conceptually.
   const renderWorld = useMemo(() => {
-    return mapEconomyStateToIsoWorld(gameState);
-  }, [gameState]);
+    // Construct a partial state with the things needed for mapping
+    const partialState = {
+      ...useGameStore.getState().gameState,
+      territory,
+      buildings,
+      workers,
+    };
+    return mapEconomyStateToIsoWorld(partialState as any);
+  }, [territory, buildings, workers]);
 
   return renderWorld;
 }

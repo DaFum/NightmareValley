@@ -18,11 +18,15 @@ export function GameStage() {
 
   useEffect(() => {
     // Start simulation immediately if not running
-    if (!isRunning) togglePlayPause();
+    // Use useGameStore.getState() to avoid dependency on isRunning/togglePlayPause in the useEffect
+    const currentState = useGameStore.getState();
+    if (!currentState.isRunning) {
+      currentState.togglePlayPause();
+    }
 
     // Center camera on screen initialization
     setCameraPosition(window.innerWidth / 2, window.innerHeight / 2);
-  }, []);
+  }, [setCameraPosition]);
 
   return (
     <WorldViewport>
