@@ -8,17 +8,19 @@ export function runAiTick(state: AiState | undefined, world: any): { state: AiSt
 	const current = state ?? createAiState();
 	const rng = createSeededRng(current.seed + current.tick);
 
+	const safeWorld = world ?? { player: {}, frontier: [], enemies: [] };
+
 	const actions: any[] = [];
 
 	// economy
-	actions.push(...decideEconomyActions({ player: world.player }, rng));
+	actions.push(...decideEconomyActions({ player: safeWorld.player, frontier: safeWorld.frontier }, rng));
 
 	// expansion
-	const exp = decideExpansion({ frontier: world.frontier }, rng);
+	const exp = decideExpansion({ frontier: safeWorld.frontier }, rng);
 	if (exp) actions.push(exp);
 
 	// military
-	actions.push(...decideMilitaryActions({ enemiesNearby: world.enemies || [] }, rng));
+	actions.push(...decideMilitaryActions({ enemiesNearby: safeWorld.enemies || [], frontier: safeWorld.frontier }, rng));
 
 	const nextState = advanceTick(current);
 

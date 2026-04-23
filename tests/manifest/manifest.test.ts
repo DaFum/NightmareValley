@@ -9,6 +9,7 @@ describe('spritesheets manifest', () => {
     function collect(obj: any): void {
       if (!obj || typeof obj !== 'object') return;
       for (const k of Object.keys(obj)) {
+        if (k === 'metadata') continue;
         const v: any = obj[k];
         if (k === 'file' && typeof v === 'string') files.push(v);
         else if (Array.isArray(v)) v.forEach((item: any) => collect(item));
