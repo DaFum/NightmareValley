@@ -1,18 +1,21 @@
 import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
-export function PopulationBar() {
-  const active = useGameStore((state) => {
-    const playerIds = Object.keys(state.gameState.players);
-    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].workers.length;
-    return 13;
-  });
+import { useShallow } from 'zustand/react/shallow';
 
-  const max = useGameStore((state) => {
+export function PopulationBar() {
+  const population = useGameStore(useShallow((state) => {
     const playerIds = Object.keys(state.gameState.players);
-    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].populationLimit;
-    return 20;
-  });
+    if (playerIds.length > 0) {
+      const player = state.gameState.players[playerIds[0]];
+      return {
+        active: player.workers.length,
+        max: player.populationLimit,
+        idle: 0,
+      };
+    }
+    return { active: 13, max: 20, idle: 2 };
+  }));
 
   return (
     <div className="macabre-panel animate-bleed-in delay-2" style={{ padding: '12px 24px', minWidth: '280px' }}>

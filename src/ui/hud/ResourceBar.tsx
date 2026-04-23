@@ -1,6 +1,8 @@
 import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
+import { useShallow } from 'zustand/react/shallow';
+
 export function ResourceBar() {
   // Try to use real data from the store, but fall back to thematic placeholder if store structure isn't ready
 

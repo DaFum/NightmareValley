@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { EconomySimulationState, simulateTick } from '../game/core/economy.simulation';
+import { EconomySimulationState, simulateTick, placeBuilding } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { MapTile } from "../game/core/game.types";
 
@@ -12,6 +12,7 @@ export interface GameStore {
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
   advanceTick: (deltaSec: number) => void;
+  placeBuildingAt: (ownerId: string, buildingType: string, tileId: string) => void;
 }
 
 
@@ -176,6 +177,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) {
       console.error("Simulation tick failed:", error);
       set({ isRunning: false, lastError: error });
+    }
+  },
+
+  placeBuildingAt: (ownerId, buildingType, tileId) => {
+    try {
+      const { gameState } = get();
+      const nextState = placeBuilding(gameState, ownerId, buildingType as BuildingType, tileId);
+      set({ gameState: nextState });
+    } catch (error) {
+      console.error("Failed to place building:", error);
+      set({ lastError: error });
     }
   },
 }));
