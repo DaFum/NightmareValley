@@ -176,7 +176,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   placeBuildingAt: (ownerId, buildingType, tileId) => {
     try {
       const { gameState } = get();
-      const nextState = placeBuilding(gameState, ownerId, buildingType as BuildingType, tileId);
+      const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
       set({ gameState: nextState });
     } catch (error) {
       console.error("Failed to place building:", error);

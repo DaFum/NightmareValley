@@ -92,9 +92,14 @@ export function mapEconomyStateToIsoWorld(
 
     const buildStage = building.level >= 1 ? 4 : (Math.max(0, Math.min(4, Math.floor(Math.max(0, Math.min(1, building.constructionProgress || 0)) * 4))) as 0|1|2|3|4);
 
-    // Use the manifest-registered key format for building sprites so the
-    // texture loader's keys (e.g. `buildings_stage4_organHarvester`) match
-    // what the renderer asks for.
+    // Building textures are registered in the manifest/loader using the key
+    // pattern `buildings_stage${buildStage}_${type}`. This is a breaking change
+    // from the older `building_${type}` format: `buildings` matches the manifest
+    // collection/prefix, `stage${buildStage}` selects the construction/upgrade
+    // sprite variant, and `${building.type}` must match the building type entry
+    // used by the asset manifest (for example `buildings_stage4_organHarvester`).
+    // Keep this string format aligned with the manifest structure so renderer
+    // lookups resolve the same keys that the texture loader registers.
     const spriteKey = `buildings_stage${buildStage}_${building.type}`;
 
     world.buildings.push({

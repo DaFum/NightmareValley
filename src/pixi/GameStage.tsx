@@ -70,7 +70,7 @@ export function GameStage() {
   };
 
   return (
-    <Container x={centerX} y={centerY} sortableChildren={true} eventMode={'static'} pointerdown={handlePointerDown}>
+    <Container x={centerX} y={centerY} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown}>
       <IsoTerrainLayer tiles={world.tiles} />
       <IsoBuildingLayer buildings={world.buildings} />
       <IsoWorkerLayer workers={world.workers} />
