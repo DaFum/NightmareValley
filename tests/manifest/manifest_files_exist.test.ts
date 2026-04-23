@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import manifest from '../../src/assets/spritesheets/manifest.json';
+import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 
 jest.resetModules();
 

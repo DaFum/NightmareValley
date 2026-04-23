@@ -1,4 +1,8 @@
+
 import React from 'react';
+// Ensure jest types are available
+
+import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 jest.resetModules();
 
 describe('GameLayout server render', () => {

@@ -1,3 +1,4 @@
+import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 jest.resetModules();
 
 describe('TextureRegistry.initTextures', () => {
