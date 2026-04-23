@@ -20,15 +20,9 @@ export class PathCache {
 	}
 
 	invalidateForTile(tx: number, ty: number) {
-		const target = `${tx},${ty}`;
-		for (const k of Array.from(this.cache.keys())) {
-			const parts = k.split('->');
-			if (parts.length !== 2) continue;
-			const [startStr, goalStr] = parts;
-			if (startStr === target || goalStr === target) {
-				this.cache.delete(k);
-			}
-		}
+		// A tile change can affect any cached path that traverses that tile.
+		// Clearing the entire cache is the simplest safe approach.
+		this.clear();
 	}
 }
 

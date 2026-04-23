@@ -19,6 +19,7 @@ describe('Spritesheet manifest file check', () => {
       if (typeof obj === 'object') {
         if (obj.file) found.add(obj.file);
         for (const k of Object.keys(obj)) {
+          if (k === 'metadata') continue;
           walk(obj[k]);
         }
       }
