@@ -20,9 +20,14 @@ export class PathCache {
 	}
 
 	invalidateForTile(tx: number, ty: number) {
-		const prefix = `${tx},${ty}`;
+		const target = `${tx},${ty}`;
 		for (const k of Array.from(this.cache.keys())) {
-			if (k.includes(prefix)) this.cache.delete(k);
+			const parts = k.split('->');
+			if (parts.length !== 2) continue;
+			const [startStr, goalStr] = parts;
+			if (startStr === target || goalStr === target) {
+				this.cache.delete(k);
+			}
 		}
 	}
 }

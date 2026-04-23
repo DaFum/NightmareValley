@@ -12,7 +12,7 @@ describe('Tiled adapter', () => {
     // Count non-zero tiles in the Terrain layer
     const terrainLayer = mapData.layers.find((l: any) => l.name === 'Terrain' && l.type === 'tilelayer');
     expect(terrainLayer).toBeDefined();
-    const nonZeroCount = terrainLayer.data.filter((v: number) => v && v !== 0).length;
+    const nonZeroCount = terrainLayer!.data.filter((v: number) => v && v !== 0).length;
 
     const territory = parseTiledMap(mapData as any);
     const parsedCount = Object.keys(territory.tiles || {}).length;

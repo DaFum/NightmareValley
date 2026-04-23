@@ -8,12 +8,53 @@ export function buildFlowfield(goal: { x: number; y: number }, grid: PathingGrid
 
 	const q: Array<{ x: number; y: number }> = [];
 	if (inBounds(goal.x, goal.y)) {
-		dist[idx(goal.x, goal.y)] = 0;
-		q.push({ x: goal.x, y: goal.y });
+		const gi = idx(goal.x, goal.y);
+		if (nodes[gi] !== 0) {
+			dist[gi] = 0;
+			q.push({ x: goal.x, y: goal.y });
+		} else {
+			// goal cell is blocked — find nearest walkable fallback (BFS)
+			const visited = new Array(width * height).fill(false);
+			const fbq: Array<{ x: number; y: number }> = [{ x: goal.x, y: goal.y }];
+			visited[gi] = true;
+			let fhead = 0;
+			let found: { x: number; y: number } | null = null;
+			while (fhead < fbq.length) {
+				const p = fbq[fhead++]!;
+				const neighbors = [
+					{ x: p.x + 1, y: p.y },
+					{ x: p.x - 1, y: p.y },
+					{ x: p.x, y: p.y + 1 },
+					{ x: p.x, y: p.y - 1 },
+				];
+				for (const n of neighbors) {
+					if (!inBounds(n.x, n.y)) continue;
+					const ni = idx(n.x, n.y);
+					if (visited[ni]) continue;
+					visited[ni] = true;
+					if (nodes[ni] !== 0) {
+						found = n;
+						break;
+					}
+					fbq.push(n);
+				}
+				if (found) break;
+			}
+			if (found) {
+				const fi = idx(found.x, found.y);
+				dist[fi] = 0;
+				q.push(found);
+			} else {
+				// no walkable tile found — return empty field that respects obstacles
+				const field: Array<{ x: number; y: number } | null> = new Array(width * height).fill(null);
+				return { dist, field, width, height };
+			}
+		}
 	}
 
-	while (q.length > 0) {
-		const p = q.shift()!;
+	let head = 0;
+	while (head < q.length) {
+		const p = q[head++]!;
 		const d = dist[idx(p.x, p.y)];
 		const neighbors = [
 			{ x: p.x + 1, y: p.y },

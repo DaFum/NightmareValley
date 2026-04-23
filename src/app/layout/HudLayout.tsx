@@ -1,7 +1,7 @@
 import React from 'react'
 import type { ReactNode } from 'react'
 
-export function HudLayout({ children }: { children?: ReactNode }): JSX.Element | null {
+export const HudLayout: React.FC<{ children?: ReactNode }> = ({ children }) => {
 	return <>{children ?? null}</>
 }
 

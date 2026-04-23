@@ -20,11 +20,14 @@ export async function loadSpritesheets(): Promise<void> {
     if (!obj) return;
     if (Array.isArray(obj)) {
       for (const v of obj) {
-        if (v.file) sheetFiles.add(v.file);
+        if (v && typeof v === "object" && v.file) sheetFiles.add(v.file);
       }
       return;
     }
     for (const k of Object.keys(obj)) {
+      // Skip metadata/notes blocks so JSON refs there aren't treated as
+      // spritesheet image files (e.g. metadata.buildings_sheet.file).
+      if (k === "metadata" || k === "notes") continue;
       const v = obj[k];
       if (v && typeof v === "object") {
         if (v.file) sheetFiles.add(v.file);
@@ -192,7 +195,7 @@ export async function loadSpritesheets(): Promise<void> {
 
   for (const topKey of Object.keys(manifest)) {
     const group = (manifest as any)[topKey];
-    if (!group || topKey === "notes") continue;
+    if (!group || topKey === "notes" || topKey === "metadata") continue;
 
     if (group.assigned && typeof group.assigned === "object") {
       // Flat (e.g. resources, workers)

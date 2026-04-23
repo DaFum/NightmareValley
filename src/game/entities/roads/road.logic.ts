@@ -1,19 +1,30 @@
 import { RoadNetwork, RoadSegment } from './road.types';
 
-export function addRoadSegment(network: RoadNetwork, x: number, y: number) {
+export function addRoadSegment(network: RoadNetwork, x: number, y: number): RoadNetwork {
 	const id = `road_${x}_${y}`;
 	if (network.segments[id]) return network;
-	network.segments[id] = { id, position: { x, y }, connections: [] } as RoadSegment;
-	return network;
+	return {
+		...network,
+		segments: {
+			...network.segments,
+			[id]: { id, position: { x, y }, connections: [] } as RoadSegment,
+		},
+	};
 }
 
-export function removeRoadSegment(network: RoadNetwork, id: string) {
-	delete network.segments[id];
-	for (const s of Object.values(network.segments)) {
-		const i = s.connections.indexOf(id);
-		if (i >= 0) s.connections.splice(i, 1);
+export function removeRoadSegment(network: RoadNetwork, id: string): RoadNetwork {
+	if (!network.segments[id]) return network;
+	const newSegments: Record<string, RoadSegment> = {};
+	for (const [segId, seg] of Object.entries(network.segments)) {
+		if (segId === id) continue;
+		const filteredConnections = seg.connections.filter(c => c !== id);
+		newSegments[segId] =
+			filteredConnections.length === seg.connections.length ? seg : { ...seg, connections: filteredConnections };
 	}
-	return network;
+	return {
+		...network,
+		segments: newSegments,
+	};
 }
 
 
