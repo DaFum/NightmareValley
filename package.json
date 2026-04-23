@@ -7,7 +7,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest"
+    "test": "jest",
+    "dev": "vite",
+    "build:vite": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",

@@ -6,6 +6,7 @@ import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "./balancing.constan
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "../core/economy.data";
 import { RECIPES } from "./recipes.data";
 import { getResourceAmount, addResource, removeResource } from "./stockpile.logic";
+import { findPath, calculatePathDistance } from "../pathing/path.a-star";
 
 export interface RoadNode {
   id: string;
@@ -121,10 +122,14 @@ export function findTargetBuildingsForResource(
   return buildings.sort((a, b) => {
     const aNeed = getBuildingResourceNeed(a, resourceType, config);
     const bNeed = getBuildingResourceNeed(b, resourceType, config);
-    const aDistance = distance(source.position, a.position);
-    const bDistance = distance(source.position, b.position);
 
     if (bNeed !== aNeed) return bNeed - aNeed;
+
+    const aPath = findPath(source.position, a.position, state);
+    const bPath = findPath(source.position, b.position, state);
+    const aDistance = calculatePathDistance(aPath);
+    const bDistance = calculatePathDistance(bPath);
+
     return aDistance - bDistance;
   });
 }
@@ -293,9 +298,12 @@ export function findBestJobForCarrier(
 
     if (available < job.amount) continue;
 
+    const carrierToSourcePath = findPath(carrier.position, source.position, state);
+    const sourceToTargetPath = findPath(source.position, target.position, state);
+
     const dist =
-      distance(carrier.position, source.position) +
-      distance(source.position, target.position);
+      calculatePathDistance(carrierToSourcePath) +
+      calculatePathDistance(sourceToTargetPath);
 
     const score = job.priority * 100 - dist;
     if (score > bestScore) {
@@ -340,8 +348,8 @@ export function moveCarrierTasks(
     }
 
     const workerDef = WORKER_DEFINITIONS[carrier.type];
-    const totalDistance =
-      distance(source.position, target.position) + 1;
+    const sourceToTargetPath = findPath(source.position, target.position, state);
+    const totalDistance = calculatePathDistance(sourceToTargetPath) + 1;
 
     const speed = getCarrierSpeed(workerDef, deltaSec, config);
     task.progress += speed / totalDistance;

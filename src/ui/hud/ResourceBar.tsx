@@ -1,9 +1,11 @@
 import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
+import { useShallow } from 'zustand/react/shallow';
+
 export function ResourceBar() {
   // Try to use real data from the store, but fall back to thematic placeholder if store structure isn't ready
-  const resources = useGameStore((state) => {
+  const resources = useGameStore(useShallow((state) => {
     const playerIds = Object.keys(state.gameState.players);
     if (playerIds.length > 0) {
       const player = state.gameState.players[playerIds[0]];
@@ -14,7 +16,7 @@ export function ResourceBar() {
       };
     }
     return { teeth: 666, marrow: 42, bile: 13 };
-  });
+  }));
 
   return (
     <div className="macabre-panel animate-bleed-in delay-1" style={{ padding: '16px 24px', minWidth: '280px' }}>
