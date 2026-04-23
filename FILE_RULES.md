@@ -1,5 +1,9 @@
 # FILE_RULES (file-specific TODOs)
 
+> NOTE: The TODO entries below are implementation tasks for production code.
+> Each TODO should drive changes in the referenced production source file(s).
+> Do not treat these as instructions to generate tests; implement or update the prod code instead.
+
 ## src/App.tsx
 
 - **TODO:** Add a smoke code for that mounts `src/App.tsx` and verifies providers/routes render; include a minimal usage example in `README.md`.
