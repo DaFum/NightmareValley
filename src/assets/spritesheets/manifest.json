@@ -1,4 +1,13 @@
 {
+  "metadata": {
+    "generatedBy": "scripts/validate-manifest",
+    "note": "Added minimal origin/license metadata for tooling. Please replace with canonical license info if available.",
+    "buildings_sheet": {
+      "file": "buildings-sheet.json",
+      "license": "unspecified",
+      "origin": "src/assets/spritesheets/buildings"
+    }
+  },
   "buildings": {
     "stage0": {
       "count_found": 32,

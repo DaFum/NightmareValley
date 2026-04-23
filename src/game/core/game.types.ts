@@ -38,12 +38,19 @@ export interface WorkerInstance {
   ownerId: OwnerId;
   homeBuildingId?: BuildingId;
   currentBuildingId?: BuildingId;
+  currentJob?: Job;
   position: Position;
   isIdle: boolean;
   morale: number;
   infection: number;
   scars: number;
   path?: Position[];
+}
+
+export interface Job {
+  id: string;
+  type: string;
+  target?: any;
 }
 
 export interface MapTile {

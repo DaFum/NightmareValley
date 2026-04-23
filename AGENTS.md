@@ -37,6 +37,8 @@ When modifying or replacing agent automation, update these `package.json` script
 - **Stack:** React + TypeScript + Vite; rendering uses Pixi.js via `@pixi/react`.
 - **Key areas:** `src/pixi` (render, stage, textures), `src/game` (game logic & AI), `src/assets/spritesheets` (images + `manifest.json`), `src/store` (zustand stores), `lib` (utilities).
 - **Asset loading:** spritesheets are resolved by `src/pixi/utils/vite-asset-loader.ts` (uses `import.meta.glob(..., ?url)`) and registered by `src/pixi/utils/spritesheetLoader.ts`. When changing assets, update `src/assets/spritesheets` and the manifest; ensure files are discoverable by Vite.
+- **Update & verify manifest:** after adding or renaming sprites, update [src/assets/spritesheets/manifest.json](src/assets/spritesheets/manifest.json#L1) and run the manifest tests [tests/manifest/manifest_files_exist.test.ts](tests/manifest/manifest_files_exist.test.ts#L1).
+- **CI checks for assets:** include `npm test` and `npm run build:vite` in CI so Vite can validate that assets are resolvable during the build step.
 - **Texture handling:** `src/pixi/utils/textureRegistry.ts` wraps the loader and exposes `useTextures()`; the loader adds a 1x1 fallback texture on load error — avoid leaving silent failures.
 - **Pixi conventions:** prefer `eventMode` (over `interactive`) and `renderer.events` (over `renderer.plugins.interaction`) for Pixi v7+ compatibility. Search for `.interactive`, `eventMode`, or `renderer.plugins.interaction` when editing Pixi code.
 - **Global error handling:** `src/main.tsx` installs `unhandledrejection` and `error` listeners for debugging; include concise reproduction steps in PRs if making runtime changes.

@@ -1,3 +1,4 @@
+import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 jest.resetModules();
 
 describe('TextureRegistry.initTextures', () => {
@@ -7,7 +8,7 @@ describe('TextureRegistry.initTextures', () => {
 
   test('resolves when spritesheet loader rejects', async () => {
     // Mock the spritesheet loader to reject
-    const mockLoader = jest.fn().mockRejectedValue(new Error('loader fail'));
+    const mockLoader = jest.fn<() => Promise<never>>().mockRejectedValue(new Error('loader fail'));
     jest.doMock('../../src/pixi/utils/spritesheetLoader', () => ({ loadSpritesheets: mockLoader }));
 
     // Provide a minimal mock for pixi.js so importing the registry doesn't blow up in Node
