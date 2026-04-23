@@ -12,9 +12,10 @@ export function computePriority(weights: Record<string, number>, inputs: Record<
 
 export function chooseHighest<T>(items: T[], scoreFn: (t: T) => number): T | null {
 	if (!items || items.length === 0) return null;
-	let best: T | null = null;
-	let bestScore = -Infinity;
-	for (const it of items) {
+	let best: T | null = items[0];
+	let bestScore = scoreFn(items[0]);
+	for (let i = 1; i < items.length; i++) {
+		const it = items[i];
 		const s = scoreFn(it);
 		if (s > bestScore) {
 			bestScore = s;
