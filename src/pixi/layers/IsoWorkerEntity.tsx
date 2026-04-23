@@ -1,5 +1,5 @@
 import React from "react";
-// @ts-ignore
+
 import { Container, Sprite } from "@pixi/react";
 import { IsoWorkerRenderData } from "../../game/iso/iso.types";
 
@@ -56,7 +56,7 @@ export const IsoWorkerEntity: React.FC<IsoWorkerEntityProps> = ({ data }) => {
   const carryTex = getCarryTexture();
 
   return (
-    <Container x={screenX} y={screenY} zIndex={zIndex} sortableChildren={true}>
+    <Container x={screenX} y={screenY} zIndex={zIndex} sortableChildren={true} eventMode="none">
       <Sprite image="generic_worker_shadow" anchor={0.5} y={5} zIndex={0} alpha={0.3} />
 
       {selected && (

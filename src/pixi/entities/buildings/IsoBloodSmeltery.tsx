@@ -1,7 +1,7 @@
 import React from "react";
 
-// @ts-ignore
-import { Container, Sprite, Text, Graphics } from "@pixi/react";
+
+import { Container, Sprite } from "@pixi/react";
 
 import { Texture } from "pixi.js";
 import { RenderBloodSmeltery } from "../../../game/render/render.types";
@@ -22,13 +22,13 @@ export function IsoBloodSmeltery({ building, baseTexture }: Props) {
   const isFinished = building.buildStage >= 4 && building.state !== "destroyed";
 
   return (
-    <Container x={building.x} y={building.y} zIndex={building.zIndex}>
+    <Container x={building.x} y={building.y} zIndex={building.zIndex} eventMode="none">
       <BloodSmelteryShadow />
 
       {isFinished && (
         <>
           <Sprite
-            // @ts-ignore
+            
     texture={baseTexture}
             anchor={{ x: 0.5, y: 1 }}
             y={-96}

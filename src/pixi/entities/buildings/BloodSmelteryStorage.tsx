@@ -1,6 +1,6 @@
 import React from "react";
 
-// @ts-ignore
+
 import { Container, Sprite, Text, Graphics } from "@pixi/react";
 
 
@@ -25,7 +25,7 @@ export function BloodSmelteryStorage({
   const bars = pileSize(outputFill);
 
   return (
-    <Container>
+    <Container eventMode="none">
       {ore > 0 && (
         <Graphics
           x={-34}

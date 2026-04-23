@@ -1,6 +1,6 @@
 import React from "react";
 
-// @ts-ignore
+
 import { Container, Sprite, Text, Graphics } from "@pixi/react";
 
 import * as PIXI from "pixi.js";
@@ -22,7 +22,7 @@ export function BloodSmelteryStatus({
   if (!label) return null;
 
   return (
-    <Container y={-112}>
+    <Container y={-112} eventMode="none">
       <Graphics
         draw={(g: any) => {
           g.clear();
@@ -34,7 +34,7 @@ export function BloodSmelteryStatus({
         text={label}
         anchor={0.5}
         style={
-          // @ts-ignore
+          
           new PIXI.TextStyle({
             fill: 0xffffff,
             fontSize: 10,

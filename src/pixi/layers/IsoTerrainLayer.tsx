@@ -11,7 +11,7 @@ export function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
   const { registry } = useTextures();
 
   return (
-    <Container>
+    <Container eventMode="none">
       {tiles.map((tile) => {
         // Fallback for missing textures based on terrain type
         let textureKey = tile.textureKey;

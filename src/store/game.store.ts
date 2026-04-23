@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { EconomySimulationState, simulateTick, placeBuilding } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { MapTile } from "../game/core/game.types";
+import { BuildingType } from "../game/core/economy.types";
+import { loadInitialMap } from "../game/map/map.loader";
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -12,7 +14,7 @@ export interface GameStore {
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
   advanceTick: (deltaSec: number) => void;
-  placeBuildingAt: (ownerId: string, buildingType: string, tileId: string) => void;
+  placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => void;
 }
 
 
@@ -26,6 +28,8 @@ const acolyteId = createId('wrk');
 const carrier1Id = createId('wrk');
 const carrier2Id = createId('wrk');
 
+const initialTerritory = loadInitialMap();
+
 const initialGameState: EconomySimulationState = {
   tick: 0,
   ageOfTeeth: 0,
@@ -36,7 +40,7 @@ const initialGameState: EconomySimulationState = {
       stock: { toothPlanks: 666, marrowGrain: 100, amnioticWater: 100, boneDust: 0, funeralLoaf: 0 },
       buildings: [millId, ovenId],
       workers: [millerId, acolyteId, carrier1Id, carrier2Id],
-      territoryTileIds: [],
+      territoryTileIds: Object.keys(initialTerritory.tiles),
       populationLimit: 20,
       doctrine: "industry",
       dread: 0,
@@ -121,18 +125,7 @@ const initialGameState: EconomySimulationState = {
       scars: 0
     }
   },
-  territory: {
-    tiles: (() => {
-      const t: Record<string, MapTile> = {};
-      for (let y = 0; y < 10; y++) {
-        for (let x = 0; x < 10; x++) {
-          const id = `tile_${x}_${y}`;
-          t[id] = { id, position: { x, y }, terrain: "scarredEarth" };
-        }
-      }
-      return t;
-    })()
-  },
+  territory: initialTerritory,
   transport: {
     roadNodes: {
       "road_3_3": { id: "road_3_3", position: { x: 3, y: 3 }, connectedNodeIds: ["road_4_3"] },
@@ -183,7 +176,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   placeBuildingAt: (ownerId, buildingType, tileId) => {
     try {
       const { gameState } = get();
-      const nextState = placeBuilding(gameState, ownerId, buildingType as BuildingType, tileId);
+      const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
       set({ gameState: nextState });
     } catch (error) {
       console.error("Failed to place building:", error);

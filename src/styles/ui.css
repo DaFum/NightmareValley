@@ -1,0 +1,41 @@
+/* UI helpers & controls for HUD, focus mode, and compact buttons */
+
+:root {
+  --hud-panel-alpha: 0.82;
+  --hud-accent: var(--fresh-blood);
+  --hud-button-bg: rgba(255,255,255,0.04);
+  --hud-button-border: rgba(255,255,255,0.06);
+  --noise-opacity: 0.02;
+}
+
+/* Tweak the global noise overlay opacity for clarity */
+body::after { opacity: var(--noise-opacity); }
+
+/* Focus mode increases canvas brightness and reduces UI noise */
+body.ui--focus::after { opacity: 0.01; }
+body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); }
+
+/* HUD compact helpers */
+.top-hud-container { pointer-events: none; box-sizing: border-box; z-index: 100; }
+.top-hud-inner { pointer-events: auto; display:flex; justify-content:space-between; align-items:flex-start; padding:24px 32px; }
+
+.hud-panel { padding: 12px 16px; min-width: 260px; background: rgba(8,6,7,var(--hud-panel-alpha)); border: 1px solid rgba(90,12,19,0.7); box-shadow: 0 8px 30px rgba(0,0,0,0.6); backdrop-filter: blur(6px); }
+
+.hud-title { margin: 0 0 8px 0; font-family: var(--font-display); color: var(--hud-accent); letter-spacing: 1px; text-transform: uppercase; font-size: 18px; }
+.hud-subtitle { margin: 0; color: var(--bone); font-size: 13px; }
+
+.hud-controls { display:flex; gap:8px; align-items:center; background: rgba(0,0,0,0.28); padding:6px; border-radius:6px; border:1px solid rgba(255,255,255,0.03); }
+.hud-button { background: var(--hud-button-bg); border: 1px solid var(--hud-button-border); color: var(--bone); padding:6px 10px; border-radius:4px; cursor:pointer; font-weight:600; }
+.hud-button.active { background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); box-shadow: inset 0 -2px 0 rgba(0,0,0,0.35); }
+
+/* Small UI helpers to hide HUD for screenshot/observation */
+body.hud-hidden .top-hud-container { display: none; }
+
+/* Resource value styling */
+.resource-value { font-family: monospace; font-weight:700; color: var(--bone); font-size: 20px; }
+
+/* Slightly lift macabre-panel to be friendlier */
+.macabre-panel { border-radius: 6px; }
+
+/* Make small config toggles nicer */
+.hud-toggle { display:inline-flex; gap:6px; align-items:center; }

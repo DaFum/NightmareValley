@@ -14,7 +14,7 @@ export const WorldViewport: React.FC<WorldViewportProps> = ({ children }) => {
   // We place the camera at the center of the screen initially in the GameStage
   // so this container is just applying pan offsets and zoom.
   return (
-    <Container position={[x, y]} scale={[zoom, zoom]}>
+    <Container position={[x, y]} scale={[zoom, zoom]} eventMode="none">
       {children}
     </Container>
   );

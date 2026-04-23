@@ -1,0 +1,1432 @@
+{
+	"knownSymbols": {
+		"defineConfig": [
+			{
+				"name": "defineConfig",
+				"module": "vite",
+				"isDefault": false
+			},
+			{
+				"name": "defineConfig",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\vite.config.ts",
+				"isDefault": true
+			}
+		],
+		"react": [
+			{
+				"name": "react",
+				"module": "@vitejs/plugin-react",
+				"isDefault": true
+			}
+		],
+		"React": [
+			{
+				"name": "React",
+				"module": "react",
+				"isDefault": true
+			}
+		],
+		"create": [
+			{
+				"name": "create",
+				"module": "zustand",
+				"isDefault": false
+			}
+		],
+		"declare": [
+			{
+				"name": "declare",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\dist\\game\\core\\economy.data.d.ts",
+				"isDefault": false
+			}
+		],
+		"PIXI": [
+			{
+				"name": "PIXI",
+				"module": "pixi.js",
+				"isDefault": true,
+				"asDefinition": "* as PIXI"
+			}
+		],
+		"useState": [
+			{
+				"name": "useState",
+				"module": "react",
+				"isDefault": true
+			}
+		],
+		"useEffect": [
+			{
+				"name": "useEffect",
+				"module": "react",
+				"isDefault": false
+			}
+		],
+		"{ ReactNode": [
+			{
+				"name": "{ ReactNode",
+				"module": "react",
+				"isDefault": true
+			}
+		],
+		"Container": [
+			{
+				"name": "Container",
+				"module": "@pixi/react",
+				"isDefault": false
+			}
+		],
+		"Sprite": [
+			{
+				"name": "Sprite",
+				"module": "@pixi/react",
+				"isDefault": false
+			}
+		],
+		"{ useEffect": [
+			{
+				"name": "{ useEffect",
+				"module": "react",
+				"isDefault": true
+			}
+		],
+		"Stage": [
+			{
+				"name": "Stage",
+				"module": "@pixi/react",
+				"isDefault": false
+			}
+		],
+		"useMemo": [
+			{
+				"name": "useMemo",
+				"module": "react",
+				"isDefault": false
+			}
+		],
+		"Text": [
+			{
+				"name": "Text",
+				"module": "@pixi/react",
+				"isDefault": false
+			}
+		],
+		"Graphics": [
+			{
+				"name": "Graphics",
+				"module": "@pixi/react",
+				"isDefault": false
+			}
+		],
+		"Texture": [
+			{
+				"name": "Texture",
+				"module": "pixi.js",
+				"isDefault": false
+			}
+		],
+		"BlurFilter": [
+			{
+				"name": "BlurFilter",
+				"module": "pixi.js",
+				"isDefault": false
+			}
+		],
+		"createRoot": [
+			{
+				"name": "createRoot",
+				"module": "react-dom/client",
+				"isDefault": false
+			}
+		],
+		"ReactNode": [
+			{
+				"name": "ReactNode",
+				"module": "react",
+				"isDefault": false
+			}
+		],
+		"map": [
+			{
+				"name": "map",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\utils\\vite-asset-loader.ts",
+				"isDefault": true
+			}
+		],
+		"IsoWorkerEntityProps": [
+			{
+				"name": "IsoWorkerEntityProps",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\layers\\IsoWorkerEntity.tsx",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"IsoFootprint": [
+			{
+				"name": "IsoFootprint",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"BuildingFootprint": [
+			{
+				"name": "BuildingFootprint",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"VisualState": [
+			{
+				"name": "VisualState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"IsoBuildingRenderData": [
+			{
+				"name": "IsoBuildingRenderData",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"IsoWorkerRenderData": [
+			{
+				"name": "IsoWorkerRenderData",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"ProductionRecipe": [
+			{
+				"name": "ProductionRecipe",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\recipes.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"EconomySnapshot": [
+			{
+				"name": "EconomySnapshot",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\economy.snapshot.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"SimulationConfig": [
+			{
+				"name": "SimulationConfig",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\balancing.constants.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"OwnerId": [
+			{
+				"name": "OwnerId",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\entity.ids.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"BuildingId": [
+			{
+				"name": "BuildingId",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\entity.ids.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"WorkerId": [
+			{
+				"name": "WorkerId",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\entity.ids.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"TileId": [
+			{
+				"name": "TileId",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\entity.ids.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"ResourceType": [
+			{
+				"name": "ResourceType",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"BuildingType": [
+			{
+				"name": "BuildingType",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"WorkerType": [
+			{
+				"name": "WorkerType",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"TerrainType": [
+			{
+				"name": "TerrainType",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"ResourceStack": [
+			{
+				"name": "ResourceStack",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"ResourceInventory": [
+			{
+				"name": "ResourceInventory",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"BuildingCost": [
+			{
+				"name": "BuildingCost",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"ExtractionRule": [
+			{
+				"name": "ExtractionRule",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"BuildingDefinition": [
+			{
+				"name": "BuildingDefinition",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"WorkerDefinition": [
+			{
+				"name": "WorkerDefinition",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"useTick": [
+			{
+				"name": "useTick",
+				"module": "@pixi/react",
+				"isDefault": false
+			}
+		],
+		"useRef": [
+			{
+				"name": "useRef",
+				"module": "react",
+				"isDefault": false
+			}
+		],
+		"{ useCallback": [
+			{
+				"name": "{ useCallback",
+				"module": "react",
+				"isDefault": true
+			}
+		],
+		"useShallow": [
+			{
+				"name": "useShallow",
+				"module": "zustand/react/shallow",
+				"isDefault": false
+			}
+		],
+		"BuildingMenu": [
+			{
+				"name": "BuildingMenu",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\ui\\panels\\BuildingMenu.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"WorldPulseBar": [
+			{
+				"name": "WorldPulseBar",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\ui\\hud\\WorldPulseBar.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"UIStore": [
+			{
+				"name": "UIStore",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\store\\ui.store.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"useUIStore": [
+			{
+				"name": "useUIStore",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\store\\ui.store.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"TextureRegistry": [
+			{
+				"name": "TextureRegistry",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\utils\\textureRegistry.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"useTextures": [
+			{
+				"name": "useTextures",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\utils\\textureRegistry.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"async": [
+			{
+				"name": "async",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\utils\\spritesheetLoader.ts",
+				"isDefault": false
+			}
+		],
+		"App": [
+			{
+				"name": "App",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\App.tsx",
+				"type": "function",
+				"isDefault": true
+			}
+		],
+		"PixiAppProvider": [
+			{
+				"name": "PixiAppProvider",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\PixiAppProvider.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"IsoWorkerLayer": [
+			{
+				"name": "IsoWorkerLayer",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\layers\\IsoWorkerLayer.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"IsoWorkerEntity": [
+			{
+				"name": "IsoWorkerEntity",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\layers\\IsoWorkerEntity.tsx",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"IsoTerrainLayer": [
+			{
+				"name": "IsoTerrainLayer",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\layers\\IsoTerrainLayer.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"GameCanvas": [
+			{
+				"name": "GameCanvas",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\GameCanvas.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"GameStage": [
+			{
+				"name": "GameStage",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\GameStage.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"GameLayout": [
+			{
+				"name": "GameLayout",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\app\\layout\\GameLayout.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"IsoBloodSmeltery": [
+			{
+				"name": "IsoBloodSmeltery",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\IsoBloodSmeltery.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BloodSmelteryStorage": [
+			{
+				"name": "BloodSmelteryStorage",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\BloodSmelteryStorage.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BloodSmelteryStatus": [
+			{
+				"name": "BloodSmelteryStatus",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\BloodSmelteryStatus.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BloodSmelterySparks": [
+			{
+				"name": "BloodSmelterySparks",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\BloodSmelterySparks.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BloodSmelterySmoke": [
+			{
+				"name": "BloodSmelterySmoke",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\BloodSmelterySmoke.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BloodSmelteryShadow": [
+			{
+				"name": "BloodSmelteryShadow",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\BloodSmelteryShadow.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BloodSmelteryGlow": [
+			{
+				"name": "BloodSmelteryGlow",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\buildings\\BloodSmelteryGlow.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"tileToScreen": [
+			{
+				"name": "tileToScreen",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.project.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"screenToTile": [
+			{
+				"name": "screenToTile",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.inverse.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"screenToIsoTile": [
+			{
+				"name": "screenToIsoTile",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.inverse.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"HitResult": [
+			{
+				"name": "HitResult",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.hit-test.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"getIsoHit": [
+			{
+				"name": "getIsoHit",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.hit-test.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getIsoDepth": [
+			{
+				"name": "getIsoDepth",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.depth.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getEntityZIndex": [
+			{
+				"name": "getEntityZIndex",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\iso\\iso.depth.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"BUILDING_DEFINITIONS": [
+			{
+				"name": "BUILDING_DEFINITIONS",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.data.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"WORKER_DEFINITIONS": [
+			{
+				"name": "WORKER_DEFINITIONS",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.data.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"getBuildingDefinition": [
+			{
+				"name": "getBuildingDefinition",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.data.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getWorkerDefinition": [
+			{
+				"name": "getWorkerDefinition",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.data.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"generateInitialWorld": [
+			{
+				"name": "generateInitialWorld",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\world\\world.generator.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getResourceAmount": [
+			{
+				"name": "getResourceAmount",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\stockpile.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"addResource": [
+			{
+				"name": "addResource",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\stockpile.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"removeResource": [
+			{
+				"name": "removeResource",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\stockpile.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"hasEnoughResources": [
+			{
+				"name": "hasEnoughResources",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\stockpile.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"applyResourceDelta": [
+			{
+				"name": "applyResourceDelta",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\stockpile.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"RECIPES": [
+			{
+				"name": "RECIPES",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\recipes.data.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"canAffordBuilding": [
+			{
+				"name": "canAffordBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"payBuildingCost": [
+			{
+				"name": "payBuildingCost",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"canUpgradeBuilding": [
+			{
+				"name": "canUpgradeBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getUpgradeCost": [
+			{
+				"name": "getUpgradeCost",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"canAffordUpgrade": [
+			{
+				"name": "canAffordUpgrade",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"processProduction": [
+			{
+				"name": "processProduction",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"chooseRecipeForBuilding": [
+			{
+				"name": "chooseRecipeForBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getRecipeCycleTime": [
+			{
+				"name": "getRecipeCycleTime",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"subtractRecipeInputs": [
+			{
+				"name": "subtractRecipeInputs",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"addRecipeOutputs": [
+			{
+				"name": "addRecipeOutputs",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"canStoreRecipeOutputs": [
+			{
+				"name": "canStoreRecipeOutputs",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\production.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"processExtraction": [
+			{
+				"name": "processExtraction",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\extraction.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getExtractionCycleTime": [
+			{
+				"name": "getExtractionCycleTime",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\extraction.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"createEconomySnapshot": [
+			{
+				"name": "createEconomySnapshot",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\economy.snapshot.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"DEFAULT_SIMULATION_CONFIG": [
+			{
+				"name": "DEFAULT_SIMULATION_CONFIG",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\balancing.constants.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"mapEconomyStateToIsoWorld": [
+			{
+				"name": "mapEconomyStateToIsoWorld",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\render\\render.adapter.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"IsoTileRenderData": [
+			{
+				"name": "IsoTileRenderData",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\render\\render.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"RenderBloodSmeltery": [
+			{
+				"name": "RenderBloodSmeltery",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\render\\render.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"IsoRenderWorld": [
+			{
+				"name": "IsoRenderWorld",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\render\\render.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"WorldViewportProps": [
+			{
+				"name": "WorldViewportProps",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\world\\WorldViewport.tsx",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"WorldViewport": [
+			{
+				"name": "WorldViewport",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\world\\WorldViewport.tsx",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"WorldRoot": [
+			{
+				"name": "WorldRoot",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\world\\WorldRoot.tsx",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"CameraState": [
+			{
+				"name": "CameraState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\store\\camera.store.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"useCameraStore": [
+			{
+				"name": "useCameraStore",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\store\\camera.store.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"IsoBuildingLayerProps": [
+			{
+				"name": "IsoBuildingLayerProps",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\layers\\IsoBuildingLayer.tsx",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"IsoBuildingLayer": [
+			{
+				"name": "IsoBuildingLayer",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\layers\\IsoBuildingLayer.tsx",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"useGameLoop": [
+			{
+				"name": "useGameLoop",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\hooks\\useGameLoop.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"useIsoCamera": [
+			{
+				"name": "useIsoCamera",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\hooks\\useIsoCamera.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"useRenderWorld": [
+			{
+				"name": "useRenderWorld",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\hooks\\useRenderWorld.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"IsoTileSpriteProps": [
+			{
+				"name": "IsoTileSpriteProps",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\terrain\\IsoTileSprite.tsx",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"IsoTileSprite": [
+			{
+				"name": "IsoTileSprite",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\pixi\\entities\\terrain\\IsoTileSprite.tsx",
+				"type": "const",
+				"isDefault": false
+			}
+		],
+		"TopHud": [
+			{
+				"name": "TopHud",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\ui\\hud\\TopHud.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"Position": [
+			{
+				"name": "Position",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"BuildingInstance": [
+			{
+				"name": "BuildingInstance",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"WorkerInstance": [
+			{
+				"name": "WorkerInstance",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"MapTile": [
+			{
+				"name": "MapTile",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TerritoryState": [
+			{
+				"name": "TerritoryState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"DoctrineType": [
+			{
+				"name": "DoctrineType",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "type",
+				"isDefault": false
+			}
+		],
+		"PlayerState": [
+			{
+				"name": "PlayerState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\game.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"EconomySimulationState": [
+			{
+				"name": "EconomySimulationState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"createBuildingInstance": [
+			{
+				"name": "createBuildingInstance",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"isTileBuildableForPlayer": [
+			{
+				"name": "isTileBuildableForPlayer",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"cloneState": [
+			{
+				"name": "cloneState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"deepClone": [
+			{
+				"name": "deepClone",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"requiresRoad": [
+			{
+				"name": "requiresRoad",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"hasAssignedWorkersForBuilding": [
+			{
+				"name": "hasAssignedWorkersForBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getNonZeroResources": [
+			{
+				"name": "getNonZeroResources",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"distance": [
+			{
+				"name": "distance",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"clamp": [
+			{
+				"name": "clamp",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"mergeInventoryInto": [
+			{
+				"name": "mergeInventoryInto",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"createId": [
+			{
+				"name": "createId",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"spawnWorker": [
+			{
+				"name": "spawnWorker",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"placeBuilding": [
+			{
+				"name": "placeBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"connectBuildingToRoad": [
+			{
+				"name": "connectBuildingToRoad",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"upgradeBuilding": [
+			{
+				"name": "upgradeBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"assignWorkerToBuilding": [
+			{
+				"name": "assignWorkerToBuilding",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"updateWorkersPassiveState": [
+			{
+				"name": "updateWorkersPassiveState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"updateWorldPulse": [
+			{
+				"name": "updateWorldPulse",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"simulateTick": [
+			{
+				"name": "simulateTick",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\core\\economy.simulation.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"Path": [
+			{
+				"name": "Path",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\pathing\\path.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"PathingGrid": [
+			{
+				"name": "PathingGrid",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\pathing\\path.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"createGridFromTerritory": [
+			{
+				"name": "createGridFromTerritory",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\pathing\\path.grid.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"parseTiledMap": [
+			{
+				"name": "parseTiledMap",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\tiled.adapter.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"TiledMapData": [
+			{
+				"name": "TiledMapData",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\map.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TiledLayer": [
+			{
+				"name": "TiledLayer",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\map.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TiledTileset": [
+			{
+				"name": "TiledTileset",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\map.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TiledTileDef": [
+			{
+				"name": "TiledTileDef",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\map.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TiledProperty": [
+			{
+				"name": "TiledProperty",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\map.types.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"loadInitialMap": [
+			{
+				"name": "loadInitialMap",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\map\\map.loader.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"updateWorkersAI": [
+			{
+				"name": "updateWorkersAI",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\entities\\workers\\worker.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"RoadNode": [
+			{
+				"name": "RoadNode",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TransportJob": [
+			{
+				"name": "TransportJob",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"CarrierTask": [
+			{
+				"name": "CarrierTask",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"TransportState": [
+			{
+				"name": "TransportState",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"generateTransportJobs": [
+			{
+				"name": "generateTransportJobs",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"findTargetBuildingsForResource": [
+			{
+				"name": "findTargetBuildingsForResource",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"buildingAcceptsResource": [
+			{
+				"name": "buildingAcceptsResource",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getBuildingResourceNeed": [
+			{
+				"name": "getBuildingResourceNeed",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getTransportPriority": [
+			{
+				"name": "getTransportPriority",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"makeTransportSignature": [
+			{
+				"name": "makeTransportSignature",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"assignCarrierTasks": [
+			{
+				"name": "assignCarrierTasks",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"findBestJobForCarrier": [
+			{
+				"name": "findBestJobForCarrier",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"moveCarrierTasks": [
+			{
+				"name": "moveCarrierTasks",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"getCarrierSpeed": [
+			{
+				"name": "getCarrierSpeed",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"deliverCarrierTasks": [
+			{
+				"name": "deliverCarrierTasks",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"updateTransportMetrics": [
+			{
+				"name": "updateTransportMetrics",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\economy\\transport.logic.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"ResourceBar": [
+			{
+				"name": "ResourceBar",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\ui\\hud\\ResourceBar.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"PopulationBar": [
+			{
+				"name": "PopulationBar",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\ui\\hud\\PopulationBar.tsx",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"findPathAStar": [
+			{
+				"name": "findPathAStar",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\pathing\\path.a-star.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"findPath": [
+			{
+				"name": "findPath",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\pathing\\path.a-star.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"calculatePathDistance": [
+			{
+				"name": "calculatePathDistance",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\game\\pathing\\path.a-star.ts",
+				"type": "function",
+				"isDefault": false
+			}
+		],
+		"GameStore": [
+			{
+				"name": "GameStore",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\store\\game.store.ts",
+				"type": "interface",
+				"isDefault": false
+			}
+		],
+		"useGameStore": [
+			{
+				"name": "useGameStore",
+				"path": "c:\\Users\\andre.oswald\\Code\\NightmareValley\\src\\store\\game.store.ts",
+				"type": "const",
+				"isDefault": false
+			}
+		]
+	}
+}
