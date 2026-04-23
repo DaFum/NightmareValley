@@ -1,8 +1,12 @@
 import { TerritoryState, MapTile } from '../core/game.types';
 
 export function getTileAt(territory: TerritoryState, tx: number, ty: number): MapTile | null {
-	const id = `tile_${tx}_${ty}`;
-	return territory.tiles[id] ?? null;
+	// Tile IDs are not guaranteed to follow a `tile_${x}_${y}` scheme
+	// (e.g. `parseTiledMap` uses randomly generated IDs). Look up by position.
+	for (const tile of Object.values(territory.tiles)) {
+		if (tile.position.x === tx && tile.position.y === ty) return tile;
+	}
+	return null;
 }
 
 export function neighbors(tx: number, ty: number) {

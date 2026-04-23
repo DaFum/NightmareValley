@@ -1,16 +1,17 @@
 import { TerritoryState } from '../../core/game.types';
-import { footprintTiles } from '../../map/map.building-slots';
+import { getTileAt } from '../../map/map.query';
 
 export function canPlaceBuilding(territory: TerritoryState, tx: number, ty: number, width = 1, height = 1) {
+	let originTileId: string | undefined;
 	for (let y = ty; y < ty + height; y++) {
 		for (let x = tx; x < tx + width; x++) {
-			const id = `tile_${x}_${y}`;
-			const t = territory.tiles[id];
+			const t = getTileAt(territory, x, y);
 			if (!t) return { ok: false, reason: 'out_of_bounds' };
 			if (t.buildingId) return { ok: false, reason: 'occupied' };
+			if (x === tx && y === ty) originTileId = t.id;
 		}
 	}
-	return { ok: true, tileId: `tile_${tx}_${ty}` } as const;
+	return { ok: true, tileId: originTileId! } as const;
 }
 
 
