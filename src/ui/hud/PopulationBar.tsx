@@ -31,11 +31,11 @@ export function PopulationBar() {
 
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
           <span className="text-flicker" style={{ color: 'var(--bone)', fontFamily: 'monospace', fontSize: '24px', fontWeight: 'bold' }}>
-            {population.active ?? 13}
+            {active ?? 13}
           </span>
           <span style={{ color: 'rgba(227, 220, 211, 0.4)', fontFamily: 'monospace', fontSize: '16px' }}>/</span>
           <span style={{ color: 'var(--coagulated-blood)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {population.max ?? 20}
+            {max ?? 20}
           </span>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function PopulationBar() {
           top: 0,
           left: 0,
           height: '100%',
-          width: `${(population.max ?? 20) > 0 ? ((population.active ?? 13) / (population.max ?? 20)) * 100 : 0}%`,
+          width: `${(max ?? 20) > 0 ? ((active ?? 13) / (max ?? 20)) * 100 : 0}%`,
           backgroundColor: 'var(--fresh-blood)',
           boxShadow: '0 0 8px var(--fresh-blood)'
         }} />

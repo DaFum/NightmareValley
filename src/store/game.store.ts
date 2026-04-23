@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { EconomySimulationState, simulateTick, placeBuilding } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
-import { BuildingType } from '../game/core/economy.types';
+import { MapTile } from "../game/core/game.types";
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -15,9 +15,139 @@ export interface GameStore {
   placeBuildingAt: (ownerId: string, buildingType: string, tileId: string) => void;
 }
 
-import { generateInitialWorld } from '../game/world/world.generator';
 
-const initialGameState: EconomySimulationState = generateInitialWorld();
+import { createId } from '../game/core/economy.simulation';
+
+const player1Id = createId('player');
+const millId = createId('bld');
+const ovenId = createId('bld');
+const millerId = createId('wrk');
+const acolyteId = createId('wrk');
+const carrier1Id = createId('wrk');
+const carrier2Id = createId('wrk');
+
+const initialGameState: EconomySimulationState = {
+  tick: 0,
+  ageOfTeeth: 0,
+  players: {
+    [player1Id]: {
+      id: player1Id,
+      name: "The First Ascendant",
+      stock: { toothPlanks: 666, marrowGrain: 100, amnioticWater: 100, boneDust: 0, funeralLoaf: 0 },
+      buildings: [millId, ovenId],
+      workers: [millerId, acolyteId, carrier1Id, carrier2Id],
+      territoryTileIds: [],
+      populationLimit: 20,
+      doctrine: "industry",
+      dread: 0,
+      holinessDebt: 0
+    }
+  },
+  buildings: {
+    [millId]: {
+      id: millId,
+      type: "dustCathedralMill",
+      ownerId: player1Id,
+      level: 1,
+      integrity: 100,
+      position: { x: 3, y: 3 },
+      connectedToRoad: true,
+      inputBuffer: { marrowGrain: 10 },
+      outputBuffer: {},
+      internalStorage: {},
+      assignedWorkers: [millerId],
+      currentRecipeId: "grindMarrowGrain",
+      progressSec: 0,
+      isActive: true
+    },
+    [ovenId]: {
+      id: ovenId,
+      type: "ovenOfLastBread",
+      ownerId: player1Id,
+      level: 1,
+      integrity: 100,
+      position: { x: 7, y: 3 },
+      connectedToRoad: true,
+      inputBuffer: { amnioticWater: 10 }, // Missing bone dust to start, which the mill should provide
+      outputBuffer: {},
+      internalStorage: {},
+      assignedWorkers: [acolyteId],
+      currentRecipeId: "bakeFuneralLoaf",
+      progressSec: 0,
+      isActive: true
+    }
+  },
+  workers: {
+    [millerId]: {
+      id: millerId,
+      type: "dustMiller",
+      ownerId: player1Id,
+      homeBuildingId: millId,
+      position: { x: 3, y: 3 },
+      isIdle: false,
+      morale: 100,
+      infection: 0,
+      scars: 0
+    },
+    [acolyteId]: {
+      id: acolyteId,
+      type: "ovenAcolyte",
+      ownerId: player1Id,
+      homeBuildingId: ovenId,
+      position: { x: 7, y: 3 },
+      isIdle: false,
+      morale: 100,
+      infection: 0,
+      scars: 0
+    },
+    [carrier1Id]: {
+      id: carrier1Id,
+      type: "burdenThrall",
+      ownerId: player1Id,
+      position: { x: 5, y: 5 },
+      isIdle: true,
+      morale: 100,
+      infection: 0,
+      scars: 0
+    },
+    [carrier2Id]: {
+      id: carrier2Id,
+      type: "burdenThrall",
+      ownerId: player1Id,
+      position: { x: 5, y: 6 },
+      isIdle: true,
+      morale: 100,
+      infection: 0,
+      scars: 0
+    }
+  },
+  territory: {
+    tiles: (() => {
+      const t: Record<string, MapTile> = {};
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const id = `tile_${x}_${y}`;
+          t[id] = { id, position: { x, y }, terrain: "scarredEarth" };
+        }
+      }
+      return t;
+    })()
+  },
+  transport: {
+    roadNodes: {
+      "road_3_3": { id: "road_3_3", position: { x: 3, y: 3 }, connectedNodeIds: ["road_4_3"] },
+      "road_4_3": { id: "road_4_3", position: { x: 4, y: 3 }, connectedNodeIds: ["road_3_3", "road_5_3"] },
+      "road_5_3": { id: "road_5_3", position: { x: 5, y: 3 }, connectedNodeIds: ["road_4_3", "road_6_3"] },
+      "road_6_3": { id: "road_6_3", position: { x: 6, y: 3 }, connectedNodeIds: ["road_5_3", "road_7_3"] },
+      "road_7_3": { id: "road_7_3", position: { x: 7, y: 3 }, connectedNodeIds: ["road_6_3"] },
+    },
+    jobs: {},
+    activeCarrierTasks: {},
+    networkStress: 0,
+    averageLatencySec: 0,
+  },
+  worldPulse: 0,
+};
 
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: initialGameState,
