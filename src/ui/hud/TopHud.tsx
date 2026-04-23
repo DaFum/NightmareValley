@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ResourceBar } from './ResourceBar';
 import { PopulationBar } from './PopulationBar';
 import { WorldPulseBar } from './WorldPulseBar';
@@ -10,64 +10,60 @@ export function TopHud() {
   const togglePlayPause = useGameStore(state => state.togglePlayPause);
   const setTickRate = useGameStore(state => state.setTickRate);
 
+  const [focusMode, setFocusMode] = useState<boolean>(() => {
+    try { return !!localStorage.getItem('ui:focus'); } catch { return false; }
+  });
+
+  const [hudHidden, setHudHidden] = useState<boolean>(() => {
+    try { return !!localStorage.getItem('ui:hudHidden'); } catch { return false; }
+  });
+
+  useEffect(() => {
+    document.body.classList.toggle('ui--focus', focusMode);
+    try { if (focusMode) localStorage.setItem('ui:focus', '1'); else localStorage.removeItem('ui:focus'); } catch {}
+  }, [focusMode]);
+
+  useEffect(() => {
+    document.body.classList.toggle('hud-hidden', hudHidden);
+    try { if (hudHidden) localStorage.setItem('ui:hudHidden', '1'); else localStorage.removeItem('ui:hudHidden'); } catch {}
+  }, [hudHidden]);
+
   return (
-    <div style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      padding: '24px 32px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      pointerEvents: 'none',
-      boxSizing: 'border-box',
-      zIndex: 100
-    }}>
-      {/* Left side: Resources */}
-      <div style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div className="macabre-panel animate-bleed-in" style={{ padding: '16px', minWidth: '300px' }}>
-          <h2 className="macabre-text-glow text-flicker" style={{ margin: '0 0 12px 0', fontSize: '24px', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--fresh-blood)', fontFamily: 'var(--font-display)' }}>Imperial Coffers</h2>
-          <ResourceBar />
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--coagulated-blood)' }}>
-             <PopulationBar />
+    <div className="top-hud-container" style={{ position: 'absolute', top: 0, left: 0, width: '100%' }}>
+      <div className="top-hud-inner">
+        {/* Left side: Resources */}
+        <div style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="macabre-panel animate-bleed-in hud-panel">
+            <h2 className="macabre-text-glow text-flicker hud-title">Imperial Coffers</h2>
+            <ResourceBar />
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--coagulated-blood)' }}>
+              <PopulationBar />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Center Controls: Play/Pause/Speed */}
-      <div style={{ pointerEvents: 'auto', display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.5)', padding: '8px', borderRadius: '4px' }}>
-        <button
-          onClick={togglePlayPause}
-          style={{ cursor: 'pointer', background: '#333', color: '#fff', border: '1px solid #555', padding: '4px 8px' }}
-        >
-          {isRunning ? 'Pause' : 'Play'}
-        </button>
-        <button
-          onClick={() => setTickRate(1)}
-          style={{ cursor: 'pointer', background: tickRate === 1 ? '#555' : '#333', color: '#fff', border: '1px solid #555', padding: '4px 8px' }}
-        >
-          1x
-        </button>
-        <button
-          onClick={() => setTickRate(2)}
-          style={{ cursor: 'pointer', background: tickRate === 2 ? '#555' : '#333', color: '#fff', border: '1px solid #555', padding: '4px 8px' }}
-        >
-          2x
-        </button>
-        <button
-          onClick={() => setTickRate(5)}
-          style={{ cursor: 'pointer', background: tickRate === 5 ? '#555' : '#333', color: '#fff', border: '1px solid #555', padding: '4px 8px' }}
-        >
-          5x
-        </button>
-      </div>
+        {/* Center Controls: Play/Pause/Speed + UI toggles */}
+        <div style={{ pointerEvents: 'auto' }}>
+          <div className="hud-controls">
+            <button className={`hud-button ${isRunning ? 'active' : ''}`} onClick={togglePlayPause}>{isRunning ? 'Pause' : 'Play'}</button>
+            <button className={`hud-button ${tickRate === 1 ? 'active' : ''}`} onClick={() => setTickRate(1)}>1x</button>
+            <button className={`hud-button ${tickRate === 2 ? 'active' : ''}`} onClick={() => setTickRate(2)}>2x</button>
+            <button className={`hud-button ${tickRate === 5 ? 'active' : ''}`} onClick={() => setTickRate(5)}>5x</button>
 
-      {/* Right side: World Pulse */}
-      <div style={{ pointerEvents: 'auto' }}>
-        <div className="macabre-panel animate-bleed-in delay-2" style={{ padding: '16px', minWidth: '250px' }}>
-          <h2 className="macabre-text-glow" style={{ margin: '0 0 12px 0', fontSize: '20px', letterSpacing: '1px', color: 'var(--bone)', fontFamily: 'var(--font-display)' }}>Pulse of the World</h2>
-          <WorldPulseBar />
+            <div style={{ width: 12 }} />
+            <div className="hud-toggle">
+              <button className={`hud-button ${focusMode ? 'active' : ''}`} onClick={() => setFocusMode(s => !s)} title="Focus world (increase contrast)">Focus</button>
+              <button className={`hud-button ${hudHidden ? 'active' : ''}`} onClick={() => setHudHidden(s => !s)} title="Hide HUD for unobstructed view">Hide HUD</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side: World Pulse */}
+        <div style={{ pointerEvents: 'auto' }}>
+          <div className="macabre-panel animate-bleed-in delay-2 hud-panel">
+            <h2 className="macabre-text-glow hud-title">Pulse of the World</h2>
+            <WorldPulseBar />
+          </div>
         </div>
       </div>
     </div>

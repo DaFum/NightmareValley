@@ -10,7 +10,7 @@ export const WorldRoot: React.FC = () => {
   const renderWorld = useRenderWorld();
 
   return (
-    <Container sortableChildren={true}>
+    <Container sortableChildren={true} eventMode="none">
       <IsoTerrainLayer tiles={renderWorld.tiles} />
       <IsoBuildingLayer buildings={renderWorld.buildings} />
       <IsoWorkerLayer workers={renderWorld.workers} />

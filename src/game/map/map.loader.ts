@@ -1,9 +1,8 @@
-import mapData from "../../assets/maps/nightmare_valley.json";
 import { parseTiledMap } from "./tiled.adapter";
 import { TerritoryState } from "../core/game.types";
-import { TiledMapData } from "./map.types";
+import { generateProceduralTiledMap } from "./procedural";
 
 export function loadInitialMap(): TerritoryState {
-  // Cast JSON data to our type to satisfy TS compiler
-  return parseTiledMap(mapData as TiledMapData);
+  const map = generateProceduralTiledMap({ width: 64, height: 64 });
+  return parseTiledMap(map);
 }

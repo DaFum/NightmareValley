@@ -137,3 +137,10 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Editor and workspace
+.vscode/
+
+# Generated spritesheet assets and build output
+src/assets/spritesheets/**
+public/build/

@@ -1,0 +1,10 @@
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  border-radius: var(--nv-radius-md);
+  padding: var(--nv-space-3);
+  border: 1px solid var(--nv-border);
+  color: var(--nv-text-primary);
+  font-family: var(--nv-font-ui);
+}
+.header { font-family: var(--nv-font-display); font-size: 1.05rem; margin-bottom: 8px; }
+.body { font-size: 0.95rem; color: var(--nv-text-muted); }

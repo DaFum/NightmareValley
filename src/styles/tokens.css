@@ -1,0 +1,34 @@
+:root{
+  /* Colors */
+  --nv-color-bg: #07070A;
+  --nv-color-surface: #0F1416;
+  --nv-color-primary-500: #D4A373;
+  --nv-color-primary-600: #B78F5D;
+  --nv-color-accent-400: #6BD3FF;
+  --nv-color-muted-300: #8F9AA0;
+
+  /* Text */
+  --nv-text-primary: #FFFFFF;
+  --nv-text-muted: #C9D1D9;
+  --nv-text-on-primary: #0B0B0B;
+
+  /* UI */
+  --nv-border: rgba(255,255,255,0.06);
+  --nv-radius-sm: 6px;
+  --nv-radius-md: 10px;
+
+  /* Spacing scale (example) */
+  --nv-space-1: 4px;
+  --nv-space-2: 8px;
+  --nv-space-3: 12px;
+  --nv-space-4: 20px;
+
+  /* Type tokens */
+  --nv-font-display: 'Playfair Display', serif;
+  --nv-font-ui: 'Rubik', sans-serif;
+  --nv-font-size-base: 16px;
+}
+
+/* Utility helpers (optional) */
+.nv-text-muted { color: var(--nv-text-muted); }
+.nv-bg-surface { background: var(--nv-color-surface); }

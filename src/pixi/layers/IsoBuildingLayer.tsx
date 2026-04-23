@@ -36,6 +36,7 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
             y={screenY}
             zIndex={zIndex}
             sortableChildren={true}
+            eventMode="none"
           >
             {shadowTex ? (
               <Sprite texture={shadowTex} anchor={0.5} y={10} zIndex={0} alpha={0.3} />

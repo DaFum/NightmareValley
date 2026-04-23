@@ -1,7 +1,6 @@
 import React from "react";
 
-// @ts-ignore
-import { Container, Sprite, Text, Graphics } from "@pixi/react";
+import { Container, Graphics } from "@pixi/react";
 
 import { BlurFilter } from "pixi.js";
 
@@ -27,8 +26,7 @@ export function BloodSmelteryGlow({
   if (intensity <= 0) return null;
 
   return (
-    <Container x={10} y={-56} // @ts-ignore
-    filters={[blur]}>
+    <Container x={10} y={-56} filters={[blur]} eventMode="none">
       <Graphics
         draw={(g: any) => {
           g.clear();

@@ -1,9 +1,10 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "es2022",
     "module": "esnext",
-    "moduleResolution": "node",
-    "types": ["vite/client", "jest"],
+    "moduleResolution": "bundler",
+    "types": ["vite/client", "jest", "node"],
     "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,

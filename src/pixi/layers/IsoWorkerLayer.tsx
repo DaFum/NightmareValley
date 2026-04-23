@@ -16,11 +16,13 @@ export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
   return (
     <>
       {workers.map((worker) => {
-        // Build the specific texture key, fallback to a safe default
-        const computedKey = `workers_${worker.type}_${worker.animation}_${worker.dir}_01`;
-        const defaultKey = 'workers_burdenThrall_idle_SE_01';
+        // The manifest registers workers as `worker_<type>` (flat files),
+        // so prefer that base key. Animated variant keys are not available
+        // in the current sheets, so fall back to the base worker texture.
+        const baseKey = `worker_${worker.type}`;
+        const fallbackKey = 'worker_burdenThrall';
 
-        const texture = registry.getTexture(computedKey) || registry.getTexture(defaultKey);
+        const texture = registry.getTexture(baseKey) || registry.getTexture(fallbackKey);
 
         if (!texture) return null;
 

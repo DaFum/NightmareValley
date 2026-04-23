@@ -1,5 +1,6 @@
-import { Position } from "../core/game.types";
+import { Position, TerritoryState } from "../core/game.types";
 import { Path, PathingGrid } from "./path.types";
+import { createGridFromTerritory } from "./path.grid";
 
 interface AStarNode {
   x: number;
@@ -122,4 +123,27 @@ export function findPathAStar(
 
   // No path found
   return { points: [], cost: 0, isComplete: false };
+}
+
+export function findPath(start: Position, goal: Position, state: any): Path {
+  const tiles = state?.territory ? Object.values(state.territory.tiles) : [];
+
+  let width = 10;
+  let height = 10;
+  if (tiles && tiles.length > 0) {
+    const maxX = Math.max(...tiles.map((t: any) => t.position.x));
+    const maxY = Math.max(...tiles.map((t: any) => t.position.y));
+    width = maxX + 1;
+    height = maxY + 1;
+  }
+
+  const grid = createGridFromTerritory((state?.territory ?? { tiles: {} }) as TerritoryState, width, height);
+  return findPathAStar(grid, start, goal);
+}
+
+export function calculatePathDistance(path: Path): number {
+  if (!path) return Number.POSITIVE_INFINITY;
+  if (!path.isComplete) return Number.POSITIVE_INFINITY;
+  if (typeof path.cost === 'number' && path.cost >= 0) return path.cost;
+  return Math.max(0, (path.points?.length ?? 0) - 1);
 }

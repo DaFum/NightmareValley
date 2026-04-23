@@ -1,0 +1,33 @@
+.btn {
+  font-family: var(--nv-font-ui);
+  font-size: 0.95rem;
+  padding: calc(var(--nv-space-2) * 1.5) var(--nv-space-3);
+  border-radius: var(--nv-radius-sm);
+  border: 1px solid var(--nv-border);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.primary {
+  background: var(--nv-color-primary-500);
+  color: var(--nv-text-on-primary);
+  box-shadow: 0 6px 18px rgba(11,11,11,0.35);
+}
+.primary:hover { background: var(--nv-color-primary-600); }
+.ghost {
+  background: transparent;
+  color: var(--nv-text-primary);
+  border-color: rgba(255,255,255,0.06);
+}
+
+.btn:focus {
+  outline: 3px solid rgba(107,211,255,0.16);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .primary { transition: none; animation: none; }
+}

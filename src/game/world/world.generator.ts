@@ -2,27 +2,40 @@ import { EconomySimulationState } from "../core/economy.simulation";
 import { TileId } from "../core/entity.ids";
 import { MapTile, PlayerState, BuildingInstance, WorkerInstance } from "../core/game.types";
 import { TerrainType } from "../core/economy.types";
+import { generateProceduralTiledMap } from "../map/procedural";
 import { createId } from "../core/economy.simulation";
 
 export function generateInitialWorld(): EconomySimulationState {
   const tiles: Record<TileId, MapTile> = {};
 
-  // Generate a map (e.g. 20x20)
-  for (let y = 0; y < 20; y++) {
-    for (let x = 0; x < 20; x++) {
-      const id = `tile_${x}_${y}`;
-      let terrain: TerrainType = "scarredEarth";
-      if (Math.random() < 0.1) {
-        terrain = "placentaLake";
-      } else if (Math.random() < 0.2) {
-        terrain = "weepingForest";
-      }
+  // Generate a procedurally coherent map using the generator
+  const mapWidth = 48;
+  const mapHeight = 48;
+  const tiled = generateProceduralTiledMap({ width: mapWidth, height: mapHeight });
 
-      tiles[id] = {
-        id,
-        position: { x, y },
-        terrain,
-      };
+  // We expect the first tileset to enumerate terrain types via the 'type' property
+  const ts = tiled.tilesets && tiled.tilesets[0];
+  const gidToTerrain: Record<number, TerrainType> = {};
+  if (ts && ts.tiles) {
+    for (const t of ts.tiles) {
+      const gid = (ts.firstgid || 1) + (t.id || 0);
+      const prop = t.properties?.find(p => p.name === 'type');
+      if (prop && typeof prop.value === 'string') {
+        gidToTerrain[gid] = prop.value as TerrainType;
+      }
+    }
+  }
+
+  const terrainLayer = tiled.layers.find(l => l.name === 'Terrain' && l.type === 'tilelayer');
+  if (terrainLayer && terrainLayer.data && terrainLayer.width && terrainLayer.height) {
+    for (let y = 0; y < terrainLayer.height; y++) {
+      for (let x = 0; x < terrainLayer.width; x++) {
+        const index = y * terrainLayer.width + x;
+        const gid = terrainLayer.data[index] || 0;
+        const terrain = gidToTerrain[gid] || 'scarredEarth';
+        const id = `tile_${x}_${y}`;
+        tiles[id] = { id, position: { x, y }, terrain };
+      }
     }
   }
 
