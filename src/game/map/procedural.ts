@@ -64,7 +64,7 @@ function fractalNoise(x: number, y: number, seed: number, octaves = 4, lacunarit
 export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData {
   const width = opts.width || 48;
   const height = opts.height || 48;
-  const seed = opts.seed || Math.floor(Math.random() * 2 ** 31);
+  const seed = opts.seed !== undefined ? opts.seed : Math.floor(Math.random() * 2 ** 31);
 
   // Tileset definition: map each terrain to a tile id and give it a 'type' property
   const tiles: TiledTileDef[] = TERRAIN_TYPES.map((t, idx) => ({
