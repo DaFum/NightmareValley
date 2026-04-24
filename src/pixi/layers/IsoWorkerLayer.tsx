@@ -29,16 +29,32 @@ export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
 
         if (!texture) return null;
 
+        const carryingTex = worker.carrying ? registry.getTexture(`resource_${worker.carrying}`) : undefined;
+
         return (
-          <Sprite
+          <Container
             key={worker.id}
-            texture={texture}
             x={worker.screenX}
             y={worker.screenY}
-            anchor={WORKER_ANCHOR}
-            scale={WORKER_SCALE}
             zIndex={worker.zIndex}
-          />
+            sortableChildren={true}
+          >
+            <Sprite
+              texture={texture}
+              anchor={WORKER_ANCHOR}
+              scale={WORKER_SCALE}
+              zIndex={0}
+            />
+            {carryingTex && (
+              <Sprite
+                texture={carryingTex}
+                anchor={{ x: 0.5, y: 1 }}
+                y={-16}
+                scale={0.2}
+                zIndex={1}
+              />
+            )}
+          </Container>
         );
       })}
     </>

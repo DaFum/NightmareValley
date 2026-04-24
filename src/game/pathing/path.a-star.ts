@@ -110,7 +110,14 @@ export function findPathAStar(
       }
 
       const g = current.g + baseEdgeCost; // Distance to neighbor
-      const h = Math.abs(neighbor.x - goal.x) + Math.abs(neighbor.y - goal.y);
+
+      // To keep A* admissible with our tier speed multipliers (which lower costs below 1),
+      // we need to multiply the manhattan distance by the minimum possible tile cost.
+      // E.g. paved speed is 2.0, so min cost is 0.5.
+      const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || { paved: 2.0 }));
+      const minEdgeCost = 1 / (maxMultiplier || 1);
+
+      const h = (Math.abs(neighbor.x - goal.x) + Math.abs(neighbor.y - goal.y)) * minEdgeCost;
       const f = g + h;
 
       // Check if neighbor is already in open list with a lower g score

@@ -382,7 +382,16 @@ export function advanceCarrierMovement(
     if (!currentPos) continue;
 
     const currentTile = getTileAtPosition(state.territory as TerritoryState, currentPos);
-    const speedMult = currentTile ? (config.tierSpeedMultipliers[currentTile.tier] || 1) : 1;
+    let speedMult = currentTile ? (config.tierSpeedMultipliers[currentTile.tier] || 1) : 1;
+
+    if (task.phase === "toDropoff" && config.carrierEncumbrancePenalty) {
+      const workerDef = WORKER_DEFINITIONS[carrier.type];
+      const capacity = workerDef ? workerDef.carryCapacity : 1;
+      const loadRatio = clamp(task.amount / capacity, 0, 1);
+      const encumbranceMultiplier = 1 - (loadRatio * config.carrierEncumbrancePenalty);
+      speedMult *= encumbranceMultiplier;
+    }
+
     const step = config.carrierBaseSpeed * speedMult * deltaSec;
 
     task.stepProgress += step;
