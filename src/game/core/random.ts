@@ -17,7 +17,7 @@ export class Random {
 	}
 
 	int(max: number): number {
-		if (!Number.isFinite(max) || isNaN(max)) {
+		if (!Number.isFinite(max)) {
 			throw new TypeError(`int() requires a finite number, got ${max}`);
 		}
 		const bound = Math.floor(max);

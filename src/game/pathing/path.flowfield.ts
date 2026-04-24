@@ -11,16 +11,17 @@ export function buildFlowfield(goal: { x: number; y: number }, grid: PathingGrid
 	const gy = Math.floor(goal.y);
 
 	const dist = new Array(width * height).fill(Infinity);
-	const idx = (x: number, y: number) => Math.floor(y) * width + Math.floor(x);
+	const idx = (x: number, y: number) => y * width + x;
 	const inBounds = (x: number, y: number) => {
-		const fx = Math.floor(x);
-		const fy = Math.floor(y);
-		return fx >= 0 && fx < width && fy >= 0 && fy < height;
+		return x >= 0 && x < width && y >= 0 && y < height;
 	};
 
+	if (!inBounds(gx, gy)) {
+		throw new RangeError("Goal is out of bounds");
+	}
+
 	const q: Array<{ x: number; y: number }> = [];
-	if (inBounds(gx, gy)) {
-		const gi = idx(gx, gy);
+	const gi = idx(gx, gy);
 		if (nodes[gi] !== 0) {
 			dist[gi] = 0;
 			q.push({ x: gx, y: gy });
@@ -62,7 +63,6 @@ export function buildFlowfield(goal: { x: number; y: number }, grid: PathingGrid
 				return { dist, field, width, height };
 			}
 		}
-	}
 
 	let head = 0;
 	while (head < q.length) {

@@ -1,1109 +1,972 @@
-# FILE_RULES (file-specific TODOs)
+## FILE_RULES (implementation-focused TODOs)
 
-> NOTE: Only TODO entries explicitly marked as "production-only" must drive changes in production source files.
-> TODOs labeled for smoke/render/compile/validation or test-related tasks should be implemented in test code.
-> Always follow the explicit scope label of the TODO before editing files.
+Note: These TODOs are implementation tasks that should result in production code changes in the referenced source files (implementations, runtime behavior, and docs/examples). They are intentionally focused on producing or fixing code in the prod files rather than creating test scaffolding.
 
 ## src/App.tsx
 
-- **TODO:** Add a smoke code for that mounts `src/App.tsx` and verifies providers/routes render; include a minimal usage example in `README.md`.
+- **TODO:** Implement provider wiring and route mounting in `src/App.tsx`: ensure providers and routes initialize at runtime and export an easy-to-mount `App` component. Add a short usage example in `README.md`.
 
 ## src/app/layout/GameLayout.tsx
 
-- **TODO:** Add a snapshot/render code for `src/app/layout/GameLayout.tsx` covering desktop/mobile breakpoints and sample props.
+- **TODO:** Implement responsive layout logic and runtime props handling in `src/app/layout/GameLayout.tsx` for desktop and mobile breakpoints.
 
 ## src/app/layout/HudLayout.tsx
 
-- **TODO:** Add render code for `src/app/layout/HudLayout.tsx` that assert HUD element positions at common viewport sizes.
+- **TODO:** Implement HUD placement and layout rules in `src/app/layout/HudLayout.tsx` so HUD elements are positioned correctly across viewports.
 
 ## src/app/layout/RootLayout.tsx
 
-- **TODO:** Add  code for that mounts `src/app/layout/RootLayout.tsx` and asserts providers and `ErrorBoundary` are active.
+- **TODO:** Implement root composition in `src/app/layout/RootLayout.tsx`: wire providers and `ErrorBoundary` for production usage.
 
 ## src/app/providers/AppProviders.tsx
 
-- **TODO:** Add code for `src/app/providers/AppProviders.tsx` to confirm stores, theme, and error boundary are injected; include a doc snippet.
+- **TODO:** Implement `AppProviders` to register stores, theme, and error handling at runtime; export the provider component and document its public API.
 
 ## src/app/providers/ErrorBoundary.tsx
 
-- **TODO:** Add a code for `ErrorBoundary.tsx` that throws within a child component and asserts fallback UI and logged errors.
+- **TODO:** Implement a production `ErrorBoundary` rendering a fallback UI and logging errors to the configured logger/telemetry.
 
 ## src/app/providers/ThemeProvider.tsx
 
-- **TODO:** Add code for `ThemeProvider.tsx` verifying toggle, `localStorage` persistence, and presence of theme CSS variables.
+- **TODO:** Implement theme provider behavior: toggle API, `localStorage` persistence, and injection of CSS variables.
 
 ## src/app/routes/DebugRoute.tsx
 
-- **TODO:** Add render code for `src/app/routes/DebugRoute.tsx` gated by dev mode and assert it's omitted in production builds.
+- **TODO:** Implement `DebugRoute` feature-flagging so it is excluded from production bundles when appropriate.
 
 ## src/app/routes/GameRoute.tsx
 
-- **TODO:** Add  code for that mounts `src/app/routes/GameRoute.tsx`, asserts `GameCanvas` initializes, and a minimal world render happens.
+- **TODO:** Implement `GameRoute` startup and bootstrap `GameCanvas` for runtime initialization.
 
 ## src/app/routes/NotFoundRoute.tsx
 
-- **TODO:** Add a render code for `NotFoundRoute.tsx` asserting visible navigation links and suggested actions.
+- **TODO:** Implement a user-facing Not Found UI with navigation actions and suggested recovery.
 
 ## src/assets/maps/nightmare_valley.json
 
-- **TODO:** Validate `nightmare_valley.json` with the internal map schema and add a loader code for (via `tiled.adapter.ts`) asserting layer/tile counts.
+- **TODO:** Implement map validation in the loader and add runtime checks with clear errors for malformed maps.
 
 ## src/assets/maps/nightmare_valley.tmx
 
-- **TODO:** Add a TMX parse code for `nightmare_valley.tmx` using `tiled.adapter.ts` and include original editor/source metadata.
+- **TODO:** Implement TMX ingestion and preserve source/editor metadata when converting to internal map format.
 
 ## src/assets/maps/code for_iso_map.json
 
-- **TODO:** Keep `code for_iso_map.json` as a fixture for code for covering iso projection, hit-code foring, and chunking behavior.
+- **TODO:** Treat this fixture as a production example used by the loader and projection code; ensure it remains runnable.
 
 ## src/assets/spritesheets/buildings-sheet.json
 
-- **TODO:** Validate frames/coordinates in `buildings-sheet.json` against source PNGs and ensure `manifest.json` references it.
-- **TODO:** Add licensing/origin metadata for `buildings-sheet.json` into the spritesheets manifest if missing.
+- **TODO:** Validate spritesheet frames at build/runtime and ensure `manifest.json` points to correct assets; add licensing metadata if needed.
 
 ## src/env.d.ts
 
-- **TODO:** Verify ambient module declarations in `src/env.d.ts`; add a small compile code for to ensure `import.meta.env` typings are present.
+- **TODO:** Ensure ambient module declarations cover runtime usage (`import.meta.env` etc.) and adjust typings as necessary.
 
 ## src/game/ai/ai.economy.ts
 
-- **TODO:** Add code for this module: cover decision logic, resource allocation across ticks, and  scenarios (use seeded RNG where applicable).
-- **TODO:** Document assumptions, invariants, and edge-cases for this module (add short summary in code for comments and in Architektur.md if applicable).
+- **TODO:** Implement production AI economy logic: decisions, resource allocation, and seeded-RNG compatibility; document invariants.
 
 ## src/game/ai/ai.expansion.ts
 
-- **TODO:** Add code for this module: cover territory selection and build-placement decisions, and  outcomes under seeded RNG.
-- **TODO:** Document expansion heuristics, expected invariants, and edge-cases (e.g., tie-breaking rules).
+- **TODO:** Implement expansion heuristics and placement decisions used by the production AI.
 
 ## src/game/ai/ai.military.ts
 
-- **TODO:** Add code for military decision-making: combat target selection, threat evaluation, and  action sequences with seeded RNG.
-- **TODO:** Document military heuristics, acceptable input ranges, and failure modes (e.g., no-units available).
+- **TODO:** Implement military decision-making and threat evaluation for runtime; document edge-case behavior.
 
 ## src/game/ai/ai.priority.ts
 
-- **TODO:** Add code for priority calculation functions: varied input weights, tie-breaking, and  outputs with seeded RNG.
-- **TODO:** Document priority weight meanings, expected invariants, and how priorities interact with other AI subsystems.
+- **TODO:** Implement priority calculation utilities and document weight semantics for production use.
 
 ## src/game/ai/ai.state.ts
 
-- **TODO:** Add code for AI state transitions and persistence across ticks; include  replay code for with seeded RNG.
-- **TODO:** Document state machine structure, allowed transitions, and edge-cases (e.g., invalid state recovery).
+- **TODO:** Implement AI state machine and persistence behavior required for runtime ticks.
 
 ## src/game/ai/ai.tick.ts
 
-- **TODO:** Add code for AI tick execution: sequence of subsystems, idempotency, and  results using seeded RNG.
-- **TODO:** Document tick ordering, expected invariants, and performance considerations.
+- **TODO:** Implement AI tick orchestration (ordering, idempotency) in production code.
 
 ## src/game/ai/ai.types.ts
 
-- **TODO:** Add code for that validate exported types/interfaces are used correctly in example inputs and edge cases.
-- **TODO:** Document type invariants and expected contract for consumers of these types.
+- **TODO:** Define and refine AI types/interfaces used across production modules.
 
 ## src/game/camera/camera.clamp.ts
 
-- **TODO:** Add code for camera clamping: world-bounds enforcement at min/max zoom and viewport sizes.
-- **TODO:** Document assumptions about world margins, tile-size scaling, and behavior at extreme zoom levels.
+- **TODO:** Implement camera clamp logic to enforce world bounds at various zoom and viewport sizes.
 
 ## src/game/camera/camera.logic.ts
 
-- **TODO:** Add code for camera centering, follow-target smoothing, and interactions with pan/zoom, including edge-case positions.
-- **TODO:** Document update ordering and interactions with input handlers and world constraints.
+- **TODO:** Implement camera centering and smoothing behavior for production usage.
 
 ## src/game/camera/camera.pan.ts
 
-- **TODO:** Add code for pan inertia, drag thresholds, and multi-touch input cases; assert consistent results across devices.
-- **TODO:** Document pan thresholds, expected smoothing, and failure modes (e.g., rapid input bursts).
+- **TODO:** Implement pan behavior (inertia, drag thresholds, multi-touch) as production features.
 
 ## src/game/camera/camera.types.ts
 
-- **TODO:** Add code for camera-related types and sample fixtures exercising edge-case values.
-- **TODO:** Document type contracts, units (pixels vs world units), and expected ranges.
+- **TODO:** Define production camera types and document units/expected ranges.
 
 ## src/game/camera/camera.zoom.ts
 
-- **TODO:** Add code for zoom behavior: zoom-to-cursor, min/max zoom clamping, and zoom smoothing interactions.
-- **TODO:** Document zoom math, expected limits, and interaction with camera clamp logic.
+- **TODO:** Implement zoom-to-cursor, clamping and smoothing used by production camera controls.
 
 ## src/game/core/economy.data.ts
 
-- **TODO:** Add code for data integrity in `economy.data.ts`: recipe and resource definitions validate against expected schema.
-- **TODO:** Document assumptions about data units, default values, and any canonical ordering.
+- **TODO:** Implement and validate production economy data (recipes/resources) with clear defaults.
 
 ## src/game/core/economy.simulation.ts
 
-- **TODO:** Add  simulation code for production/consumption over N ticks and assert resource conservation where expected.
-- **TODO:** Document tick invariants, expected rounding/overflow behavior, and performance considerations.
+- **TODO:** Implement production economy simulation functions and document conservation/rounding invariants.
 
 ## src/game/core/economy.types.ts
 
-- **TODO:** Add code for that validate economy types against sample payloads and invalid inputs.
-- **TODO:** Document type contracts and any compatibility expectations.
+- **TODO:** Define economy types used by production simulation and UI.
 
 ## src/game/core/entity.ids.ts
 
-- **TODO:** Add code for ID generation: uniqueness across sequences and  behavior with seeds if applicable.
-- **TODO:** Document id format, entropy assumptions, and collision expectations.
+- **TODO:** Implement a production-safe ID generator ensuring uniqueness and optional seeding behavior.
 
 ## src/game/core/game.constants.ts
 
-- **TODO:** Add code for that assert constant values are present and used consistently in the code forbase (e.g., tick rates, tile sizes).
-- **TODO:** Document constants' intended use and any platform-dependent assumptions.
+- **TODO:** Centralize and document production constants (tick rates, tile sizes).
 
 ## src/game/core/game.types.ts
 
-- **TODO:** Add code for exported game types and example fixtures showing valid/invalid shapes.
-- **TODO:** Document type contracts, backwards-compatibility notes, and typical value ranges.
+- **TODO:** Define core game types for production usage with examples.
 
 ## src/game/core/random.ts
 
-- **TODO:** Add code for verifying RNG seeding, reproducibility, and edge values; include code for  sequences.
-- **TODO:** Document RNG contract (seed behavior) and recommended usage across subsystems.
+- **TODO:** Implement RNG utilities with seeding/reproducibility guarantees for production.
 
 ## src/game/core/victory.rules.ts
 
-- **TODO:** Add code for victory condition evaluation under different world states and edge-case triggers.
-- **TODO:** Document win/loss conditions, evaluation frequency, and known edge-cases.
+- **TODO:** Implement victory condition logic and document evaluation triggers.
 
 ## src/game/economy/balancing.constants.ts
 
-- **TODO:** Add code for asserting balancing constants remain within sane bounds and changes are surfaced in snapshots.
-- **TODO:** Document balancing assumptions and how constants affect gameplay metrics.
+- **TODO:** Publish balancing constants and document impact on gameplay; provide guardrails for changes.
 
 ## src/game/economy/economy.snapshot.ts
 
-- **TODO:** Add snapshot code for that produce  economy snapshots for given world seeds and tick counts.
-- **TODO:** Document what each snapshot field represents and when to use snapshots for debugging.
+- **TODO:** Implement snapshot generation for production debugging and state restore.
 
 ## src/game/economy/extraction.logic.ts
 
-- **TODO:** Add code for extraction rates, deposit depletion behavior, and  extraction outcomes with seeded RNG.
-- **TODO:** Document deposit assumptions, depletion rates, and error modes (e.g., missing deposit data).
+- **TODO:** Implement extraction/depletion logic for production resource deposits.
 
 ## src/game/economy/production.logic.ts
 
-- **TODO:** Add code for recipe consumption/production over ticks and edge cases like insufficient inputs.
-- **TODO:** Document production rules, bottleneck behaviors, and rounding rules.
+- **TODO:** Implement production recipe consumption/production logic and document shortage behavior.
 
 ## src/game/economy/recipes.data.ts
 
-- **TODO:** Add schema/consistency code for recipe definitions and sample conversions.
-- **TODO:** Document recipe assumptions (e.g., units, time costs) and backward compatibility.
+- **TODO:** Implement validated recipe data and conversion helpers for production.
 
 ## src/game/economy/recipes.types.ts
 
-- **TODO:** Add code for recipe types and example fixtures for invalid/valid recipes.
-- **TODO:** Document type invariants and optional/required fields.
+- **TODO:** Define production recipe types and examples.
 
 ## src/game/economy/stockpile.logic.ts
 
-- **TODO:** Add code for stockpile add/remove/reservation behavior, edge-case overflow, and  ordering.
-- **TODO:** Document reservation rules, capacity assumptions, and concurrency considerations.
+- **TODO:** Implement stockpile semantics (add/remove/reserve) with capacity and overflow handling.
 
 ## src/game/economy/transport.logic.ts
 
-- **TODO:** Add code for transport job creation, assignment, and delivery flows; include  scenarios with seeded RNG.
-- **TODO:** Document reservation semantics, route expectations, and failure modes.
+- **TODO:** Implement transport job lifecycle and assignment logic for runtime.
 
 ## src/game/entities/buildings/building.data.ts
 
-- **TODO:** Add code for asserting building data (cost, size, slots) match expected definitions and manifest references.
-- **TODO:** Document data schema fields and any optional/required metadata.
+- **TODO:** Ensure production building data matches manifest and runtime expectations.
 
 ## src/game/entities/buildings/building.footprints.ts
 
-- **TODO:** Add code for footprint calculations and placement masks for common building sizes; include overlap/edge cases.
-- **TODO:** Document footprint coordinate system, rotation rules, and placement constraints.
+- **TODO:** Implement footprint calculations and placement masks used by building placement.
 
 ## src/game/entities/buildings/building.logic.ts
 
-- **TODO:** Add code for building state transitions (construction -> active), blocked states, and production triggers.
-- **TODO:** Document lifecycle states, blocking reasons, and expected inputs/outputs.
+- **TODO:** Implement building lifecycle transitions and production triggers in runtime code.
 
 ## src/game/entities/buildings/building.placement.ts
 
-- **TODO:** Add code for placement acceptance/rejection across boundary and occlusion cases; include footprint overlap code for.
-- **TODO:** Document placement rules, required adjacency constraints, and failure reasons.
+- **TODO:** Implement placement acceptance/rejection logic and document constraints.
 
 ## src/game/entities/buildings/building.status.ts
 
-- **TODO:** Add code for deriving building status (idle, working, blocked) from inputs and world state snapshots.
-- **TODO:** Document status computation rules and observable triggers.
+- **TODO:** Implement building status derivation from inputs and world snapshots.
 
 ## src/game/entities/buildings/building.types.ts
 
-- **TODO:** Add code for that validate building type shapes and sample fixtures for each building type.
-- **TODO:** Document type fields, expected defaults, and compatibility notes.
+- **TODO:** Define building types and example fixtures for production.
 
 ## src/game/entities/buildings/building.upgrades.ts
 
-- **TODO:** Add code for upgrade cost calculations, effect application, and invalid upgrade handling.
-- **TODO:** Document upgrade prerequisites, effect semantics, and rollback behavior.
+- **TODO:** Implement upgrade cost/effect application and validation in production code.
 
 ## src/game/entities/roads/road.connections.ts
 
-- **TODO:** Add code for road connectivity graph updates on add/remove and edge-case junctions.
-- **TODO:** Document connection rules, expected neighbor ordering, and constraints.
+- **TODO:** Implement road connectivity updates and handle junction edge-cases.
 
 ## src/game/entities/roads/road.logic.ts
 
-- **TODO:** Add code for road creation/removal, automatic connection stitching, and invalid placement rejection.
-- **TODO:** Document intended connection behaviors and performance considerations.
+- **TODO:** Implement road creation/removal logic and automatic connection stitching.
 
 ## src/game/entities/roads/road.render-shape.ts
 
-- **TODO:** Add code for mapping road topology to sprite choices; include corner/cross/t-junction cases.
-- **TODO:** Document mapping rules and expected sprite selection logic.
+- **TODO:** Implement mapping from road topology to sprite choices in the renderer.
 
 ## src/game/entities/roads/road.types.ts
 
-- **TODO:** Add code for road-related types and example fixtures for unusual topologies.
-- **TODO:** Document type contracts and any assumptions about indexing/ordering.
+- **TODO:** Define road types and example topologies.
 
 ## src/game/entities/roads/road.validation.ts
 
-- **TODO:** Add code for validation logic: illegal placements, overlapping structures, and correct error messages.
-- **TODO:** Document validation rules, priority of checks, and remediation steps.
+- **TODO:** Implement production validation for road placement with clear messages.
 
 ## src/game/entities/workers/worker.animation.ts
 
-- **TODO:** Add code for verifying animation selection for worker states and transitions under sample inputs.
-- **TODO:** Document mapping from worker state to animation and fallback behaviors.
+- **TODO:** Implement animation selection mapping for worker states and document fallbacks.
 
 ## src/game/entities/workers/worker.data.ts
 
-- **TODO:** Add code for ensuring worker data (speed, capacity) follow documented constraints and defaults.
-- **TODO:** Document data fields, units, and expected ranges.
+- **TODO:** Ensure worker data defaults/constraints are implemented and documented.
 
 ## src/game/entities/workers/worker.jobs.ts
 
-- **TODO:** Add code for job assignment, priority handling, and edge-cases like no-available-workers.
-- **TODO:** Document job lifecycle and expected preconditions for assignment.
+- **TODO:** Implement job assignment and priority handling for workers in production.
 
 ## src/game/entities/workers/worker.logic.ts
 
-- **TODO:** Add code for worker behavior: state transitions, job pickup/dropoff, and  movement under seeded RNG.
-- **TODO:** Add benchmarks for pathing hot-paths and document performance expectations.
-- **TODO:** Document assumptions about capacities, collision resolution, and retry logic.
+- **TODO:** Implement worker state transitions, pickups/dropoffs, and movement logic integrated with pathing.
 
 ## src/game/entities/workers/worker.pathing.ts
 
-- **TODO:** Add code for worker path calculation, re-pathing, and edge cases with blocked nodes; ensure  behavior with seeds.
-- **TODO:** Document pathing constraints, heuristics, and cache invalidation rules.
+- **TODO:** Implement production pathing utilities and cache invalidation rules.
 
 ## src/game/entities/workers/worker.status.ts
 
-- **TODO:** Add code for deriving worker status from job and movement states, including concurrent updates.
-- **TODO:** Document status definitions and any transient states.
+- **TODO:** Implement worker status derivation and document transient states.
 
 ## src/game/entities/workers/worker.types.ts
 
-- **TODO:** Add code for worker type shapes and sample fixtures covering role variations.
-- **TODO:** Document field meanings, optional fields, and compatibility notes.
+- **TODO:** Define worker types and provide example fixtures.
 
 ## src/game/events/disaster.logic.ts
 
-- **TODO:** Add  code for disaster triggers, propagation, and recovery behavior using seeded RNG.
-- **TODO:** Document disaster parameters, trigger conditions, and recovery paths.
+- **TODO:** Implement disaster trigger/propagation/recovery logic for runtime with seeded RNG support.
 
 ## src/game/events/events.data.ts
 
-- **TODO:** Add schema/consistency code for event definitions and example payloads.
-- **TODO:** Document event metadata fields and usage examples.
+- **TODO:** Implement production event definitions and schema.
 
 ## src/game/events/events.logic.ts
 
-- **TODO:** Add code for event evaluation and ordering, including edge-case overlaps and  ordering.
-- **TODO:** Document event processing order and expected side-effects.
+- **TODO:** Implement production event evaluation and ordering.
 
 ## src/game/events/events.types.ts
 
-- **TODO:** Add code for event types and sample fixtures required fields.
-- **TODO:** Document type contracts and field semantics.
+- **TODO:** Define event types used in production and include examples.
 
 ## src/game/events/random-events.ts
 
-- **TODO:** Add  code for random event scheduling and ensuring seeded RNG reproduces sequences.
-- **TODO:** Document scheduling heuristics and any rate-limiting or cooldown rules.
+- **TODO:** Implement production random-event scheduling with seeded RNG reproducibility.
 
 ## src/game/iso/iso.bounds.ts
 
-- **TODO:** Add code for iso bounds calculation and viewport clipping at various zooms and tile sizes.
-- **TODO:** Document coordinate spaces and any conversion assumptions.
+- **TODO:** Implement iso bounds and viewport clipping utilities used by renderer and camera.
 
 ## src/game/iso/iso.constants.ts
 
-- **TODO:** Add code for asserting iso constants (tile width/height, offsets) are consistent and used properly.
-- **TODO:** Document how constants affect projection math and any compatibility notes.
+- **TODO:** Centralize iso constants and document their effect on projection math.
 
 ## src/game/iso/iso.depth.ts
 
-- **TODO:** Add code for depth sorting rules given a set of entities with varying footpoints and Y positions.
-- **TODO:** Document depth tie-breaking rules and expected rendering order.
+- **TODO:** Implement production depth sorting utilities for renderer.
 
 ## src/game/iso/iso.hit-code for.ts
 
-- **TODO:** Add code for hit-code foring tiles and sprites (diamond hit areas), including edge and boundary cases.
-- **TODO:** Document hit-code for math and behavior when tiles overlap or are occluded.
+- **TODO:** Implement hit-testing math for diamond hit areas used by tiles and sprites.
 
 ## src/game/iso/iso.inverse.ts
 
-- **TODO:** Add code for inverse projection from screen->tile for representative viewport transforms.
-- **TODO:** Document numeric stability concerns and rounding conventions.
+- **TODO:** Implement inverse projection (screen -> tile) used by input handling.
 
 ## src/game/iso/iso.project.ts
 
-- **TODO:** Add code for projection math for canonical tile coordinates and rotated viewports.
-- **TODO:** Document projection formula derivation and coordinate system assumptions.
+- **TODO:** Implement projection utilities for canonical tile coordinates and rotated views.
 
 ## src/game/iso/iso.selection.ts
 
-- **TODO:** Add code for selection algorithms (single/tile/area) ensuring consistent selection and deselection semantics.
-- **TODO:** Document selection priority rules and expected UX behaviors.
+- **TODO:** Implement selection algorithms (single/tile/area) used by production input flows.
 
 ## src/game/iso/iso.snap.ts
 
-- **TODO:** Add code for snapping rules when placing buildings and ensure expected tile alignment across rotations.
-- **TODO:** Document snap rules and tolerance thresholds.
+- **TODO:** Implement snapping rules for building placement with documented tolerance.
 
 ## src/game/iso/iso.types.ts
 
-- **TODO:** Add code for iso-related types and example fixtures for conversion helpers.
-- **TODO:** Document type expectations and coordinate system notes.
+- **TODO:** Define iso-related types and conversion helpers.
 
 ## src/game/map/map.building-slots.ts
 
-- **TODO:** Add code for building slot detection and validity across various footprints and terrains.
-- **TODO:** Document slot allocation rules and priority ordering.
+- **TODO:** Implement building slot detection logic used by placement code.
 
 ## src/game/map/map.chunks.ts
 
-- **TODO:** Add code for chunking logic, culling, and expected chunk boundaries at different viewports.
-- **TODO:** Document chunk size choices and culling heuristics.
+- **TODO:** Implement chunking and culling logic for production rendering and map management.
 
 ## src/game/map/map.constants.ts
 
-- **TODO:** Add code for asserting map constants and ensure safe defaults are present.
-- **TODO:** Document constant meanings and any constraints they impose.
+- **TODO:** Ensure map constants are defined and documented with safe defaults.
 
 ## src/game/map/map.generator.ts
 
-- **TODO:** Add  generator code for seeded world generation and ensure repeatable outputs.
-- **TODO:** Document generation parameters and tuning knobs.
+- **TODO:** Implement seeded world generator for production and document parameters.
 
 ## src/game/map/map.loader.ts
 
-- **TODO:** Add loader code for JSON/TMX inputs, layers, tile indices, and error handling.
-- **TODO:** Document loader assumptions and supported input variants.
+- **TODO:** Implement robust map loader for JSON/TMX with clear error handling.
 
 ## src/game/map/map.occupancy.ts
 
-- **TODO:** Add code for occupancy lookup, reservation, and eviction behaviors; include concurrency scenarios.
-- **TODO:** Document occupancy semantics and expected invariants.
+- **TODO:** Implement occupancy tracking and reservation semantics with eviction rules.
 
 ## src/game/map/map.query.ts
 
-- **TODO:** Add code for `getTileAt`, neighbor queries, and buildability checks under varied inputs.
-- **TODO:** Document query complexity and caching expectations.
+- **TODO:** Implement `getTileAt`, neighbor queries, and buildability checks used by production logic.
 
 ## src/game/map/map.territory.ts
 
-- **TODO:** Add code for territory assignment, ownership changes, and edge merge behaviors.
-- **TODO:** Document territory propagation rules and conflict resolution.
+- **TODO:** Implement territory assignment and ownership propagation logic for runtime.
 
 ## src/game/map/map.types.ts
 
-- **TODO:** Add code for map types and sample fixtures for tile/layer structures.
-- **TODO:** Document type contracts and optional fields.
+- **TODO:** Define map types used in production and provide examples.
 
 ## src/game/map/tiled.adapter.ts
 
-- **TODO:** Add code for converting Tiled JSON to internal map format, object layers and properties.
-- **TODO:** Document adapter limitations and supported Tiled features.
+- **TODO:** Implement a Tiled -> internal map adapter and document supported features/limitations.
 
 ## src/game/pathing/path.a-star.ts
 
-- **TODO:** Add code for A* correctness on varied grids, including blocked cells, and  tie-breaking.
-- **TODO:** Document heuristic choices and complexity expectations.
+- **TODO:** Implement A* algorithm for production pathfinding with correct heuristics and tie-breakers.
 
 ## src/game/pathing/path.cache.ts
 
-- **TODO:** Add code for path cache hits/misses, invalidation, and memory constraints.
-- **TODO:** Document cache TTL and invalidation triggers.
+- **TODO:** Implement a path cache with invalidation and memory constraints for production use.
 
 ## src/game/pathing/path.debug.ts
 
-- **TODO:** Add code for that validate debug output formatting and ensure debug helpers do not alter state.
-- **TODO:** Document how to enable/interpret debug traces.
+- **TODO:** Implement non-invasive debug helpers for pathing that do not modify runtime state.
 
 ## src/game/pathing/path.flowfield.ts
 
-- **TODO:** Add code for flowfield generation and correctness under multiple destinations and obstacles.
-- **TODO:** Document flowfield update frequency and expected performance characteristics.
+- **TODO:** Implement flowfield generation and update logic for multi-destination routing.
 
 ## src/game/pathing/path.grid.ts
 
-- **TODO:** Add code for grid walkability, neighbor enumeration, and bounds handling.
-- **TODO:** Document grid origin, indexing, and performance notes.
+- **TODO:** Implement grid walkability, neighbor enumeration, and bounds handling used by pathing.
 
 ## src/game/pathing/path.types.ts
 
-- **TODO:** Add code for path-related types and example payloads for callers.
-- **TODO:** Document type expectations and fields in interfaces.
+- **TODO:** Define pathing types and example payloads for production callers.
 
 ## src/game/render/render.adapter.ts
 
-- **TODO:** Add code for that verify simulation->render adapter transforms expected entity fields and z-order.
-- **TODO:** Document adapter responsibilities and expected input/output shapes.
+- **TODO:** Implement the production adapter converting simulation entities into renderer-friendly shapes.
 
 ## src/game/render/render.animations.ts
 
-- **TODO:** Add code for mapping logic states to animation frames and transitions under sample states.
-- **TODO:** Document animation timing rules and fallback behavior.
+- **TODO:** Implement animation mapping and transitions used by the renderer.
 
 ## src/game/render/render.culling.ts
 
-- **TODO:** Add code for culling: entities inside/outside viewport and chunk-level culling behavior.
-- **TODO:** Document culling heuristics and corner cases for large entities.
+- **TODO:** Implement culling logic for production renderer to skip off-screen entities.
 
 ## src/game/render/render.debug.ts
 
-- **TODO:** Add code for ensuring debug render helpers are side-effect free and produce expected overlays.
-- **TODO:** Document debug toggles and expected overlay semantics.
+- **TODO:** Implement debug render utilities safe for production debug builds.
 
 ## src/game/render/render.interpolation.ts
 
-- **TODO:** Add code for verifying position interpolation between ticks and edge-case behavior at variable tick deltas.
-- **TODO:** Document interpolation strategy and numerical stability notes.
+- **TODO:** Implement interpolation utilities to smooth positions between ticks.
 
 ## src/game/render/render.overlays.ts
 
-- **TODO:** Add code for overlay rendering decisions (status icons, selection markers) and ordering.
-- **TODO:** Document overlay priorities and expected triggers.
+- **TODO:** Implement overlay rendering and ordering logic.
 
 ## src/game/render/render.sort.ts
 
-- **TODO:** Add code for ensuring stable sorting by footpoint/Y and predictable tie-breakers across render frames.
-- **TODO:** Document sorting invariants and performance implications.
+- **TODO:** Implement stable sorting keys and tie-breakers for render ordering.
 
 ## src/game/render/render.textures.ts
 
-- **TODO:** Add code for that validate texture lookup mapping for entity types and fallback behavior when textures missing.
-- **TODO:** Document texture naming conventions and manifest expectations.
+- **TODO:** Implement texture lookup mapping and robust fallback behavior for production.
 
 ## src/game/render/render.types.ts
 
-- **TODO:** Add code for render-type interfaces and usage examples for renderers.
-- **TODO:** Document type contracts and expected data shapes.
+- **TODO:** Define renderer-facing types and examples.
 
 ## src/game/selection/selection.actions.ts
 
-- **TODO:** Add code for selection action creators and resulting state mutations under common flows.
-- **TODO:** Document action semantics and expected preconditions.
+- **TODO:** Implement selection action creators used by production state updates.
 
 ## src/game/selection/selection.logic.ts
 
-- **TODO:** Add code for selection resolution logic (hover, click, drag) and conflict resolution with UI overlays.
-- **TODO:** Document selection priority rules and interaction with placement mode.
+- **TODO:** Implement selection resolution logic that integrates with UI overlays and placement mode.
 
 ## src/game/selection/selection.queries.ts
 
-- **TODO:** Add code for queries returning selection candidates and boundary cases with overlapping entities.
-- **TODO:** Document query complexity and caching behavior.
+- **TODO:** Implement queries returning selection candidates and handle overlap edge-cases.
 
 ## src/game/selection/selection.types.ts
 
-- **TODO:** Add code for selection types and expected shapes for different selection modes.
-- **TODO:** Document type fields and optional metadata.
+- **TODO:** Define selection types for production use.
 
 ## src/game/transport/carrier.routing.ts
 
-- **TODO:** Add code for carrier routing selection and  routing under identical constraints.
-- **TODO:** Document routing heuristics and expected performance bounds.
+- **TODO:** Implement carrier routing selection and document routing heuristics.
 
 ## src/game/transport/transport.assignment.ts
 
-- **TODO:** Add code for transport assignment fairness, starvation cases, and  assignment under seeded RNG.
-- **TODO:** Document assignment priorities and reservation guarantees.
+- **TODO:** Implement production transport assignment logic and document starvation/preemption behaviors.
 
 ## src/game/transport/transport.delivery.ts
 
-- **TODO:** Add code for delivery handoff, success/failure conditions, and edge-case drop scenarios.
-- **TODO:** Document delivery lifecycle and retry semantics.
+- **TODO:** Implement delivery handoff, success/failure handling, and retries.
 
 ## src/game/transport/transport.jobs.ts
 
-- **TODO:** Add code for job creation, prioritization, and lifecycle completion under varied world states.
-- **TODO:** Document job type semantics and expected payloads.
+- **TODO:** Implement job creation and lifecycle for transport flow in production code.
 
 ## src/game/transport/transport.metrics.ts
 
-- **TODO:** Add code for asserting metric calculations (throughput, latency) produce expected values under sample traces.
-- **TODO:** Document metric definitions and acceptable ranges.
+- **TODO:** Implement metric aggregation and definitions for production traces.
 
 ## src/game/transport/transport.reservation.ts
 
-- **TODO:** Add code for reservation semantics, conflicts, and expiry behavior under high contention.
-- **TODO:** Document reservation lifecycle and rules for preemption.
+- **TODO:** Implement reservation semantics and conflict resolution rules.
 
 ## src/game/transport/transport.types.ts
 
-- **TODO:** Add code for transport-related types and sample job/reservation fixtures.
-- **TODO:** Document type contracts and backward compatibility notes.
+- **TODO:** Define transport types and sample fixtures.
 
 ## src/game/world/world.generator.ts
 
-- **TODO:** Add  world generator code for using seeds and assert repeatable outputs across runs.
-- **TODO:** Document generator parameters and constraints.
+- **TODO:** Implement a seeded world generator and ensure repeatable outputs in production.
 
 ## src/game/world/world.metrics.ts
 
-- **TODO:** Add code for verifying metric aggregation over ticks and edge-case handling when entities are removed.
-- **TODO:** Document metric definitions and collection intervals.
+- **TODO:** Implement production metric collection over ticks and document edge cases.
 
 ## src/game/world/world.state.ts
 
-- **TODO:** Add code for world state initialization, snapshot/restore, and  tick replay with seeded RNG.
-- **TODO:** Document world state shape and persistence expectations.
+- **TODO:** Implement world state initialization, snapshot/restore and tick replay in production code.
 
 ## src/game/world/world.tick.ts
 
-- **TODO:** Add code for full world tick orchestration and ensure  ordering of subsystem updates.
-- **TODO:** Document tick ordering, per-subsystem invariants, and time budget expectations.
+- **TODO:** Implement full world tick orchestration ensuring correct ordering of subsystems.
 
 ## src/game/world/world.types.ts
 
-- **TODO:** Add code for world type shapes and example fixtures for serialization.
-- **TODO:** Document type fields and compatibility expectations.
+- **TODO:** Define world types and provide serialization examples.
 
 ## src/lib/array.ts
 
-- **TODO:** Add code for in `src/code for/lib/array.code for.ts` covering exported helpers (edge cases: empty arrays, single elements, duplicates) and verify functions do not mutate inputs; add JSDoc and explicit TypeScript types for all exports.
+- **TODO:** Implement array helper utilities for production and ensure they do not mutate inputs.
 
 ## src/lib/asserts.ts
 
-- **TODO:** Add code for in `src/code for/lib/asserts.code for.ts` that assert correct throw/no-throw behavior for truthy/falsey inputs; add JSDoc and TypeScript types for exported helpers.
+- **TODO:** Implement runtime assertion helpers and document expected behaviors.
 
 ## src/lib/deep-clone.ts
 
-- **TODO:** Add code for in `src/code for/lib/deep-clone.code for.ts` covering nested objects, arrays, and special types (Date/RegExp if supported); assert clones are deep and independent; add JSDoc and TypeScript types.
+- **TODO:** Implement a robust deep clone utility suitable for production use.
 
 ## src/lib/logger.ts
 
-- **TODO:** Add code for in `src/code for/lib/logger.code for.ts` to validate formatting, level filtering, and that the logger can be mocked; add JSDoc and TypeScript types for public APIs.
+- **TODO:** Implement or refine logger APIs for production (levels, formatting, mockability).
 
 ## src/lib/math.ts
 
-- **TODO:** Add code for in `src/code for/lib/math.code for.ts` exercising boundary values, NaN/infinite handling, and rounding behavior for exported helpers; add JSDoc and TypeScript types.
+- **TODO:** Implement math helpers with explicit handling for NaN/Infinity and rounding semantics.
 
 ## src/lib/object.ts
 
-- **TODO:** Add code for in `src/code for/lib/object.code for.ts` for exported helpers (merge/clone/pick/omit behaviors), including null/undefined edge-cases; add JSDoc and TypeScript types.
+- **TODO:** Implement object utilities (merge/clone/pick/omit) with documented behavior for null/undefined.
 
 ## src/lib/profiler.ts
 
-- **TODO:** Add code for in `src/code for/lib/profiler.code for.ts` that validate start/stop, measurement reporting, and no-op behavior in production; add JSDoc and TypeScript types.
+- **TODO:** Implement a production-friendly profiler that is no-op unless enabled.
 
 ## src/main.tsx
 
-- **TODO:** Add a mount/hydration smoke code for; verify global `error` and `unhandledrejection` handlers are registered and document startup commands.
+- **TODO:** Ensure the production mount/hydration path registers global error handlers and documents startup steps.
 
 ## src/pixi/GameCanvas.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/GameCanvas.code for.tsx`) that mounts this component with `PixiAppProvider`, asserts it renders without throwing, and verifies texture fallback behavior.
+- **TODO:** Implement `GameCanvas` initialization with `PixiAppProvider` and ensure texture fallback behavior.
 
 ## src/pixi/GameStage.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/GameStage.code for.tsx`) that mounts the stage with textures mocked and asserts it renders without errors and respects texture readiness.
+- **TODO:** Ensure correct `eventMode` defaults and robust stage initialization for runtime.
 
 ## src/pixi/PixiAppProvider.tsx
 
-- **TODO:** Ensure `useTextures()` `ready` flag is checked before rendering textures; add a code for to cover missing-texture fallback.
+- **TODO:** Implement `PixiAppProvider` readiness checks and graceful fallback for missing textures.
 
 ## src/pixi/entities/buildings/BloodSmelteryGlow.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/BloodSmelteryGlow.code for.tsx`) that mounts this component and checks it renders without throwing and that any texture fallbacks are handled.
+- **TODO:** Implement production glow rendering and ensure texture fallbacks.
 
 ## src/pixi/entities/buildings/BloodSmelteryShadow.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/BloodSmelteryShadow.code for.tsx`) that mounts this component and asserts it renders without throwing; include a texture-fallback case.
+- **TODO:** Implement production shadow rendering with fallback handling.
 
 ## src/pixi/entities/buildings/BloodSmelterySmoke.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/BloodSmelterySmoke.code for.tsx`) that mounts this component and asserts it renders without throwing and handles missing textures.
+- **TODO:** Implement smoke effects and ensure robust resource handling.
 
 ## src/pixi/entities/buildings/BloodSmelterySparks.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/BloodSmelterySparks.code for.tsx`) that mounts this component and asserts it renders without throwing; include a texture-fallback assertion.
+- **TODO:** Implement spark effects with performance safeguards.
 
 ## src/pixi/entities/buildings/BloodSmelteryStatus.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/BloodSmelteryStatus.code for.tsx`) that mounts this component and checks render stability and texture fallback.
+- **TODO:** Implement status visuals and ensure stable rendering.
 
 ## src/pixi/entities/buildings/BloodSmelteryStorage.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/BloodSmelteryStorage.code for.tsx`) that mounts this component and asserts it renders without errors and handles missing textures.
+- **TODO:** Implement storage visuals and resilience to missing textures.
 
 ## src/pixi/entities/buildings/IsoBloodSmeltery.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBloodSmeltery.code for.tsx`) that mounts the component and asserts stable render behavior and texture fallback handling.
+- **TODO:** Implement combined building component with eventMode and texture fallbacks.
 
 ## src/pixi/entities/buildings/IsoBuildingLabel.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBuildingLabel.code for.tsx`) that mounts this component and asserts it renders without errors and that label text is present.
+- **TODO:** Implement building label rendering with accessibility considerations.
 
 ## src/pixi/entities/buildings/IsoBuildingSelectionRing.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBuildingSelectionRing.code for.tsx`) that mounts this component and asserts it renders and responds to selection props.
+- **TODO:** Implement selection ring visuals responsive to props.
 
 ## src/pixi/entities/buildings/IsoBuildingShadow.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBuildingShadow.code for.tsx`) that mounts this component and asserts it renders without throwing and handles fallback textures.
+- **TODO:** Implement building shadow rendering and fallback behavior.
 
 ## src/pixi/entities/buildings/IsoBuildingSprite.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBuildingSprite.code for.tsx`) that mounts this component and asserts correct sprite selection and fallback texture behavior.
+- **TODO:** Implement building sprite selection and robust fallback logic.
 
 ## src/pixi/entities/buildings/IsoBuildingStatusIcon.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBuildingStatusIcon.code for.tsx`) that verifies icon selection and render stability.
+- **TODO:** Implement building status icon selection and rendering.
 
 ## src/pixi/entities/buildings/IsoConstructionOverlay.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoConstructionOverlay.code for.tsx`) that mounts overlay and asserts visibility and no runtime errors.
+- **TODO:** Implement construction overlay rendering for production UX.
 
 ## src/pixi/entities/roads/IsoRoadNodeMarker.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoRoadNodeMarker.code for.tsx`) that mounts this component and asserts it renders correctly.
+- **TODO:** Implement road node marker rendering used by runtime tools.
 
 ## src/pixi/entities/roads/IsoRoadSegment.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoRoadSegment.code for.tsx`) that mounts this component and asserts it renders and picks correct sprite variant.
+- **TODO:** Implement road segment rendering and correct variant selection.
 
 ## src/pixi/entities/roads/IsoRoadSprite.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoRoadSprite.code for.tsx`) that mounts this sprite and asserts correct render variant selection.
+- **TODO:** Implement road sprite logic for renderer.
 
 ## src/pixi/entities/shared/IsoAnimatedIcon.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoAnimatedIcon.code for.tsx`) that mounts this component and asserts animation frame selection and render stability.
+- **TODO:** Implement animated icon rendering with frame selection and performance constraints.
 
 ## src/pixi/entities/shared/IsoFootprintPreview.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoFootprintPreview.code for.tsx`) that mounts this component and asserts footprint preview behavior and no runtime errors.
+- **TODO:** Implement footprint preview used by placement UX.
 
 ## src/pixi/entities/shared/IsoHoverMarker.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoHoverMarker.code for.tsx`) that mounts this component and asserts hover marker visibility and no runtime errors.
+- **TODO:** Implement hover marker visuals used by input handling.
 
 ## src/pixi/entities/shared/IsoSelectionDiamond.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoSelectionDiamond.code for.tsx`) that mounts this component and asserts selection diamond render and properties.
+- **TODO:** Implement selection diamond rendering for production.
 
 ## src/pixi/entities/shared/IsoTextLabel.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoTextLabel.code for.tsx`) that mounts this component and asserts text content and accessibility attributes.
+- **TODO:** Implement accessible text label rendering for runtime.
 
 ## src/pixi/entities/terrain/IsoAutotileSprite.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoAutotileSprite.code for.tsx`) that mounts this sprite and asserts autotile variant selection correctness.
+- **TODO:** Implement autotile sprite variant logic.
 
 ## src/pixi/entities/terrain/IsoChunkSprite.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoChunkSprite.code for.tsx`) that mounts this chunk sprite and asserts it renders without error and respects texture readiness.
+- **TODO:** Implement chunk sprite rendering with texture readiness checks.
 
 ## src/pixi/entities/terrain/IsoTileSprite.tsx
 
-- **TODO:** Ensure `useTextures()` `ready` flag is checked before rendering textures; add a code for to cover missing-texture fallback.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoTileSprite.code for.tsx`) that mounts the tile sprite and verifies hit-area, texture selection, and fallback handling.
+- **TODO:** Ensure production code checks `useTextures().ready` and provide graceful fallbacks for tile sprites.
 
 ## src/pixi/entities/workers/IsoWorkerCarryIcon.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerCarryIcon.code for.tsx`) that mounts this component and asserts render stability and icon presence.
+- **TODO:** Implement worker carry icon rendering and ensure presence in UI.
 
 ## src/pixi/entities/workers/IsoWorkerPathPreview.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerPathPreview.code for.tsx`) that mounts this component and asserts path preview rendering and performance characteristics.
+- **TODO:** Implement path preview rendering for worker UX.
 
 ## src/pixi/entities/workers/IsoWorkerSelectionMarker.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerSelectionMarker.code for.tsx`) that mounts this component and asserts selection marker visibility and no runtime errors.
+- **TODO:** Implement worker selection marker rendering and ensure stable runtime.
 
 ## src/pixi/entities/workers/IsoWorkerShadow.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerShadow.code for.tsx`) that mounts this component and asserts shadow render and performance.
+- **TODO:** Implement worker shadow rendering with performance considerations.
 
 ## src/pixi/entities/workers/IsoWorkerSprite.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerSprite.code for.tsx`) that mounts worker sprite, asserts animation frame selection, and fallback texture handling.
+- **TODO:** Implement worker sprite rendering with animation and fallback handling.
 
 ## src/pixi/hooks/useGameLoop.ts
 
-- **TODO:** Add code for `useGameLoop` that simulate tick progression and assert callbacks are invoked and cleaned up correctly; include a simple render integration code for.
+- **TODO:** Implement `useGameLoop` hook for production tick progression and cleanup.
 
 ## src/pixi/hooks/useIsoCamera.ts
 
-- **TODO:** Add code for `useIsoCamera` to assert transform math, center/zoom calculations, and correct cleanup on unmount.
+- **TODO:** Implement `useIsoCamera` transform math used by renderer and camera systems.
 
 ## src/pixi/hooks/useIsoPointer.ts
 
-- **TODO:** Add code for `useIsoPointer` to validate pointer->tile conversion and basic pointer-event flows under mocked viewport transforms.
+- **TODO:** Implement pointer->tile conversion utilities for production input handling.
 
 ## src/pixi/hooks/useRenderWorld.ts
 
-- **TODO:** Add integration code for `useRenderWorld` that assert world rendering updates when world state changes and that subscriptions are cleaned up.
+- **TODO:** Implement `useRenderWorld` subscription/update behavior so world changes drive renderer updates.
 
 ## src/pixi/hooks/useSelectionInput.ts
 
-- **TODO:** Add unit/integration code for `useSelectionInput` covering click/drag selection flows and keyboard modifiers.
+- **TODO:** Implement selection input handling (click/drag/keyboard modifiers) integrated with production selection logic.
 
 ## src/pixi/hooks/useVisibleChunks.ts
 
-- **TODO:** Add code for `useVisibleChunks` that assert correct chunk calculation given viewport transforms and chunk size.
+- **TODO:** Implement visible chunk calculation used by production rendering.
 
 ## src/pixi/layers/IsoBuildingLayer.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-- **TODO:** Ensure `useTextures()` `ready` flag is checked before rendering textures; add a code for to cover missing-texture fallback.
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoBuildingLayer.code for.tsx`) that mounts the layer with a small set of buildings and asserts rendering and chunk culling behavior.
+- **TODO:** Implement building layer with readiness checks and chunk culling.
 
 ## src/pixi/layers/IsoDebugLayer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoDebugLayer.code for.tsx`) that mounts the debug layer and asserts overlay rendering without side-effects.
+- **TODO:** Implement debug overlay utilities safe for production debug builds.
 
 ## src/pixi/layers/IsoGhostPlacementLayer.tsx
 
-- **TODO:** Add  code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoGhostPlacementLayer.code for.tsx`) verifying ghost placement visuals and snapping behavior.
+- **TODO:** Implement ghost placement visuals and snapping behavior for placement UX.
 
 ## src/pixi/layers/IsoOverlayLayer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoOverlayLayer.code for.tsx`) that ensures overlays render in the expected order and do not throw.
+- **TODO:** Implement overlay ordering and rendering correctness.
 
 ## src/pixi/layers/IsoRoadLayer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoRoadLayer.code for.tsx`) that mounts a small road network and asserts correct sprite selection and no runtime errors.
+- **TODO:** Implement road network rendering and sprite selection for runtime.
 
 ## src/pixi/layers/IsoSelectionLayer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoSelectionLayer.code for.tsx`) that asserts selection visuals and hit-code foring correctness.
+- **TODO:** Implement selection visuals and hit-testing integration for production.
 
 ## src/pixi/layers/IsoTerrainLayer.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-- **TODO:** Ensure `useTextures()` `ready` flag is checked before rendering textures; add a code for to cover missing-texture fallback.
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoTerrainLayer.code for.tsx`) that mounts a small terrain set and asserts tile rendering and fallback handling.
+- **TODO:** Implement terrain layer rendering with texture readiness checks and fallbacks.
 
 ## src/pixi/layers/IsoTerritoryLayer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoTerritoryLayer.code for.tsx`) that mounts territory polygons and asserts render stability.
+- **TODO:** Implement territory rendering used by production tools.
 
 ## src/pixi/layers/IsoWaterLayer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWaterLayer.code for.tsx`) that mounts water tiles and asserts animations/render stability.
+- **TODO:** Implement water tile rendering and animations with performance considerations.
 
 ## src/pixi/layers/IsoWorkerEntity.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
-
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerEntity.code for.tsx`) that mounts a worker entity and asserts it renders and responds to basic state props.
+- **TODO:** Implement worker entity rendering and ensure runtime props are handled.
 
 ## src/pixi/layers/IsoWorkerLayer.tsx
 
-- **TODO:** Ensure `useTextures()` `ready` flag is checked before rendering textures; add a code for to cover missing-texture fallback.
-
-- **TODO:** Add  code for in `src/code for/pixi/` (e.g., `src/code for/pixi/IsoWorkerLayer.code for.tsx`) that mounts several workers and asserts rendering and z-ordering.
+- **TODO:** Implement worker layer rendering with z-order correctness and readiness checks.
 
 ## src/pixi/systems/animation.system.ts
 
-- **TODO:** Add code for `animation.system` that assert frame advancement and cleanup behavior under mocked timing.
+- **TODO:** Implement animation system frame advancement and cleanup for runtime.
 
 ## src/pixi/systems/culling.system.ts
 
-- **TODO:** Add unit/integration code for `culling.system` that assert entities are culled/un-culled correctly given viewport transforms.
+- **TODO:** Implement culling system that un/mounts renderables based on viewport transforms.
 
 ## src/pixi/systems/debug.system.ts
 
-- **TODO:** Add code for `debug.system` ensuring debug overlays produce expected traces without modifying state.
+- **TODO:** Implement debug system that produces traces without modifying runtime state.
 
 ## src/pixi/systems/sorting.system.ts
 
-- **TODO:** Add code for `sorting.system` verifying  ordering and tie-breakers for renderable entities.
+- **TODO:** Implement sorting system used by renderer and document its tie-breakers.
 
 ## src/pixi/systems/texture.system.ts
 
-- **TODO:** Add code for `texture.system` texture allocation/release and fallback insertion on load error.
+- **TODO:** Implement texture allocation/release and ensure fallback insertion on load error.
 
 ## src/pixi/utils/pixi.cache.ts
 
-- **TODO:** Add code for `pixi.cache` ensuring caching behavior, hits/misses and invalidation work as intended.
+- **TODO:** Implement pixi cache behavior with hits/misses and invalidation.
 
 ## src/pixi/utils/pixi.coordinates.ts
 
-- **TODO:** Add code for coordinate conversion utilities and verify consistency with iso projection math.
+- **TODO:** Implement coordinate conversion utilities and align with iso projection math.
 
 ## src/pixi/utils/pixi.depth.ts
 
-- **TODO:** Add code for depth helpers to ensure sorting keys and tie-breakers are stable across inputs.
+- **TODO:** Implement depth helpers used for stable sorting keys.
 
 ## src/pixi/utils/pixi.hitareas.ts
 
-- **TODO:** Add code for hit-area calculations and diamond hit areas used by iso tiles and sprites.
+- **TODO:** Implement hit-area calculations for diamond hit areas used by tiles and sprites.
 
 ## src/pixi/utils/pixi.iso.ts
 
-- **TODO:** Add code for iso-specific Pixi helpers, ensuring transforms and projections are consistent.
+- **TODO:** Implement iso-specific Pixi helpers ensuring transforms and projections are consistent.
 
 ## src/pixi/utils/pixi.spritesheet.ts
 
-- **TODO:** Add code for spritesheet parsing and frame lookup functions with representative manifest fixtures.
+- **TODO:** Implement spritesheet parsing and frame lookup functions with representative manifest fixtures.
 
 ## src/pixi/utils/pixi.textures.ts
 
-- **TODO:** Add code for texture utilities to validate URI resolution, texture creation, and fallback handling.
+- **TODO:** Implement texture utilities for URI resolution, creation, and fallback handling.
 
 ## src/pixi/utils/spritesheetLoader.ts
 
-- **TODO:** Surface loader errors instead of swallowing; add code for failure modes and ensure fallback texture is logged with context.
+- **TODO:** Surface loader errors clearly and ensure fallback textures are logged with context.
 
 ## src/pixi/utils/textureRegistry.ts
 
-- **TODO:** Ensure `useTextures()` `ready` flag is checked before rendering textures; add a code for to cover missing-texture fallback.
-- **TODO:** Ensure `initTextures()` is idempotent, expose  `ready` state, and add code for concurrency.
+- **TODO:** Ensure `useTextures()` readiness is exposed and `initTextures()` is idempotent; implement concurrency handling.
 
 ## src/pixi/utils/vite-asset-loader.ts
 
-- **TODO:** Add code for to verify asset globbing and URL resolution behavior; include error-mode code for and ensure loader errors are surfaced.
+- **TODO:** Implement asset globbing and URL resolution checks; ensure loader errors are surfaced with context.
 
 ## src/pixi/world/ChunkContainer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/ChunkContainer.code for.tsx`) that mounts a small set of chunks and asserts that chunk mounting/unmounting and culling behave correctly.
+- **TODO:** Implement chunk mounting/unmounting and culling behavior for production chunk containers.
 
 ## src/pixi/world/SortableWorldContainer.tsx
 
-- **TODO:** Add a focused render code for in `src/code for/pixi/` (e.g., `src/code for/pixi/SortableWorldContainer.code for.tsx`) that mounts the container with multiple children and asserts stable z-order sorting and no runtime errors.
+- **TODO:** Implement container sorting and stable z-ordering for multiple children.
 
 ## src/pixi/world/WorldChunks.tsx
 
-- **TODO:** Add  code for in `src/code for/pixi/` (e.g., `src/code for/pixi/WorldChunks.code for.tsx`) that asserts chunk generation, culling, and texture usage with mocked texture registry.
+- **TODO:** Implement world chunk generation, culling, and texture usage for runtime rendering.
 
 ## src/pixi/world/WorldRoot.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
+- **TODO:** Ensure world root initialization respects `eventMode` defaults and runtime constraints.
 
 ## src/pixi/world/WorldViewport.tsx
 
-- **TODO:** Confirm `eventMode` values (`static`/`dynamic`/`passive`) are correct for intended interactions.
+- **TODO:** Implement viewport handling and ensure eventMode and transforms are correct.
 
 ## src/store/camera.store.ts
 
-- **TODO:** Ensure stores are fully typed and add code for selectors and actions.
-- **TODO:** Avoid direct state mutations; prefer immutable updates or helper utilities.
+- **TODO:** Ensure store is fully typed and implement selectors/actions for production.
 
 ## src/store/debug.store.ts
 
-- **TODO:** Ensure stores are fully typed and add code for selectors and actions.
-- **TODO:** Avoid direct state mutations; prefer immutable updates or helper utilities.
+- **TODO:** Ensure debug store is typed and implement runtime toggles and selectors.
 
 ## src/store/game.store.ts
 
-- **TODO:** Ensure stores are fully typed and add code for selectors and actions.
-- **TODO:** Avoid direct state mutations; prefer immutable updates or helper utilities.
+- **TODO:** Ensure game store types and actions are implemented for production flows.
 
 ## src/store/render.store.ts
 
-- **TODO:** Ensure stores are fully typed and add code for selectors and actions.
-- **TODO:** Avoid direct state mutations; prefer immutable updates or helper utilities.
+- **TODO:** Ensure render store provides necessary selectors and immutable update patterns.
 
 ## src/store/selection.store.ts
 
-- **TODO:** Ensure stores are fully typed and add code for selectors and actions.
-- **TODO:** Avoid direct state mutations; prefer immutable updates or helper utilities.
+- **TODO:** Implement selection store APIs and ensure immutability.
 
 ## src/store/ui.store.ts
 
-- **TODO:** Ensure stores are fully typed and add code for selectors and actions.
-- **TODO:** Avoid direct state mutations; prefer immutable updates or helper utilities.
+- **TODO:** Implement UI store selectors and actions with proper typing.
 
 ## src/styles/globals.css
 
-- **TODO:** Audit CSS variables and base styles; add a visual regression baseline for key pages and document theme tokens used.
+- **TODO:** Audit CSS variables and base styles; document theme tokens used across the app.
 
 ## src/styles/reset.css
 
-- **TODO:** Verify the reset rules are minimal and compatible across browsers; annotate source and add a small screenshot code for.
+- **TODO:** Verify reset rules and document source and cross-browser rationale.
 
 ## src/styles/theme.css
 
-- **TODO:** Verify dark/light tokens and color contrast for accessibility; add examples for theme switching and code for variable presence.
+- **TODO:** Ensure theme tokens for dark/light modes are present and documented.
 
 ## src/styles/ui.css
 
-- **TODO:** Ensure component classes are scoped and documented; add style code for (class presence) and responsive breakpoint checks.
+- **TODO:** Ensure component classes are scoped and document responsive breakpoints.
 
 ## src/code for/core/building.placement.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Migrate known helper code into production files and ensure placement logic is implemented.
 
 ## src/code for/core/economy.simulation.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Move simulation helpers into production modules and ensure they integrate with economy code.
 
 ## src/code for/core/pathfinding.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Integrate proven pathfinding helpers into production pathing modules.
 
 ## src/code for/core/transport.logic.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Fold transport helper code into production transport modules and clean up interfaces.
 
 ## src/code for/iso/iso.depth.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Integrate depth sorting helpers into production `iso.depth` utilities.
 
 ## src/code for/iso/iso.hit-code for.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Integrate hit-testing helpers into production iso utilities and document math.
 
 ## src/code for/iso/iso.inverse.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Move inverse projection helpers into production iso utilities with docs.
 
 ## src/code for/iso/iso.project.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Promote projection helper code to production utilities and document usage.
 
 ## src/code for/render/render.adapter.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Move adapter helpers into production render adapter and ensure interface compatibility.
 
 ## src/code for/render/render.culling.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Integrate culling helpers into production render culling utilities.
 
 ## src/code for/render/render.sort.code for.ts
 
-- **TODO:** Run code for and address failures; add coverage for recent changes.
+- **TODO:** Integrate sorting helpers into production render ordering utilities.
 
 ## src/ui/dialogs/PauseMenuDialog.tsx
 
-- **TODO:** Add interactive code for (keyboard shortcuts, focus trap) and accessibility checks; ensure close behavior and analytics logging are code fored.
+- **TODO:** Implement keyboard shortcuts, focus trap, and accessibility in the production dialog.
 
 ## src/ui/dialogs/SettingsDialog.tsx
 
-- **TODO:** Add control code for toggles/inputs, verify persistence of settings, and ensure ARIA labels are present.
+- **TODO:** Implement settings persistence and ARIA labels for production controls.
 
 ## src/ui/dialogs/VictoryDialog.tsx
 
-- **TODO:** Add render and callback code for; verify button actions (continue/restart) and success-state visuals.
+- **TODO:** Implement production callbacks for continue/restart and final-state visuals.
 
 ## src/ui/hud/FpsCounter.tsx
 
-- **TODO:** Add a render code for with simulated tick updates; assert value formatting and that updates are throttled to avoid excessive re-renders.
+- **TODO:** Implement FPS counter updates with throttling and production-safe performance.
 
 ## src/ui/hud/PopulationBar.tsx
 
-- **TODO:** Add code for dynamic value updates and responsive layout; verify accessibility labels for current population.
+- **TODO:** Implement dynamic population updates and accessibility labels.
 
 ## src/ui/hud/ResourceBar.tsx
 
-- **TODO:** Add code for resource formatting, tooltip behavior, and stress-code for with many resource types to check performance.
+- **TODO:** Implement resource formatting, tooltips, and performance handling for many resource types.
 
 ## src/ui/hud/TopHud.tsx
 
-- **TODO:** Add render/integration code for ensuring layout and interactions with HUD elements; code for keyboard navigation where applicable.
+- **TODO:** Implement Top HUD layout and keyboard navigation for production.
 
 ## src/ui/hud/TransportIndicator.tsx
 
-- **TODO:** Add code for indicator states and ensure accessible text/labels are present for screen readers.
+- **TODO:** Implement transport indicator states with accessible text/labels.
 
 ## src/ui/hud/WorldPulseBar.tsx
 
-- **TODO:** Add code for to verify pulse/animation bounds and that it remains performant under frequent updates.
+- **TODO:** Implement pulse animation bounds and ensure runtime performance.
 
 ## src/ui/panels/BuildingInspector.tsx
 
-- **TODO:** Add data-driven code for multiple building types and ensure proper focus and keyboard navigation.
+- **TODO:** Implement building inspector data-driven rendering and keyboard navigation.
 
 ## src/ui/panels/BuildingMenu.tsx
 
-- **TODO:** Add interaction code for selection, hover previews, and keyboard navigation between menu items.
+- **TODO:** Implement building menu interactions, previews, and keyboard navigation.
 
 ## src/ui/panels/EconomyPanel.tsx
 
-- **TODO:** Add rendering code for economic statistics and verify computations shown match simulation snapshots.
+- **TODO:** Implement economy panel rendering and ensure displayed values match simulation.
 
 ## src/ui/panels/EventLogPanel.tsx
 
-- **TODO:** Add code for log append behavior, filtering, and clear actions; verify scroll behavior with many entries.
+- **TODO:** Implement log append/filter/clear behavior and stable scroll for large logs.
 
 ## src/ui/panels/InspectorPanel.tsx
 
-- **TODO:** Add render code for and ensure selection changes in state reflect correctly in the panel UI.
+- **TODO:** Implement inspector rendering and ensure it responds to selection changes.
 
 ## src/ui/panels/MapDebugPanel.tsx
 
-- **TODO:** Add code for toggleable debug layers and ensure no runtime errors when toggling options on/off.
+- **TODO:** Implement toggleable debug layers and ensure no runtime errors when toggling.
 
 ## src/ui/panels/MilitaryPanel.tsx
 
-- **TODO:** Add code for unit listings, command buttons, disabled states, and proper aria labels for controls.
+- **TODO:** Implement military panel UI with proper aria labels and disabled states.
 
 ## src/ui/panels/WorkerInspector.tsx
 
-- **TODO:** Add code for worker state rendering and job assignment flows; ensure UI updates reflect state changes.
+- **TODO:** Implement worker inspector UI to reflect state and job assignments.
 
 ## src/ui/shared/HotkeyHint.tsx
 
-- **TODO:** Add code for correct key rendering and ensure tooltip/accessibility text is present.
+- **TODO:** Implement hotkey hint rendering with accessible text.
 
 ## src/ui/shared/Icon.tsx
 
-- **TODO:** Add code for icon rendering with different sizes and ensure `aria-hidden`/roles are correctly applied.
+- **TODO:** Implement icon rendering with sizes and `aria-hidden`/roles handling.
 
 ## src/ui/shared/Panel.tsx
 
-- **TODO:** Add wrapper render code for, confirm class names and ARIA landmarks, and include a usage example.
+- **TODO:** Implement panel wrapper with aria landmarks and usage examples.
 
 ## src/ui/shared/SectionTitle.tsx
 
-- **TODO:** Add small render code for and ensure heading levels and semantics are preserved for accessibility.
+- **TODO:** Implement section title rendering preserving heading semantics.
 
 ## src/ui/shared/StatRow.tsx
 
-- **TODO:** Add snapshot/render code for different stat types and edge values.
+- **TODO:** Implement stat row rendering for different stat types and edge values.
 
 ## src/ui/shared/Tooltip.tsx
 
-- **TODO:** Add code for show/hide triggers, hover/focus flows, and verify `aria-describedby`/roles for accessibility.
+- **TODO:** Implement tooltip show/hide triggers, hover/focus flows, and ARIA attributes.
 
 ## symbols.json
 
-- **TODO:** Verify the symbol index reflects exported modules; add a regeneration script or CI check and document how to refresh it.
+- **TODO:** Provide a regeneration script for the symbol index and document how to refresh it.
 
 ## code for/pixi/textureRegistry.code for.ts
 
-- **TODO:** Ensure code for cover fallback texture behavior and loader error modes; add  fixtures for CI.
+- **TODO:** Promote texture registry fallback handling into production utilities and ensure loader error modes are surfaced.
 
 ## tsconfig.json
 
-- **TODO:** Verify build/dev/CI scripts are accurate and compatible with current Node/Vite/TypeScript versions.
-- **TODO:** Document any non-default flags in `README.md` or `Architektur.md`.
+- **TODO:** Verify TypeScript flags required for production and document any non-default settings.
 
 ## vite.config.ts
 
-- **TODO:** Verify build/dev/CI scripts are accurate and compatible with current Node/Vite/TypeScript versions.
-- **TODO:** Document any non-default flags in `README.md` or `Architektur.md`.
+- **TODO:** Verify Vite build/dev flags for production and document non-default options.
 

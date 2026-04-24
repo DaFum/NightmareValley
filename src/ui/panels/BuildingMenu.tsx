@@ -9,8 +9,9 @@ export function BuildingMenu() {
   const { activePanel, togglePanel, selectedBuildingToPlace, selectBuildingToPlace } = useUIStore();
   const gameState = useGameStore(state => state.gameState);
 
-  // We assume single player (player_1) for UI purposes right now
-  const playerId = "player_1";
+  // Get the actual first player ID instead of a hardcoded one
+  const playerIds = Object.keys(gameState.players);
+  const playerId = playerIds.length > 0 ? playerIds[0] : "player_1";
   const player = gameState.players[playerId];
 
   if (!player) return null;

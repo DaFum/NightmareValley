@@ -65,6 +65,11 @@ export interface MapTile {
   resourceDeposit?: Partial<Record<ResourceType, number>>;
 }
 
+/**
+ * Any code that inserts, removes or relocates entries in `tiles` (e.g., functions
+ * that call getTileAt or mutate MapTile positions) must also update `tileIndex`
+ * to avoid stale lookups. `tileIndex` is derived and must be kept coherent.
+ */
 export interface TerritoryState {
   tiles: Record<TileId, MapTile>;
   tileIndex?: Record<string, TileId>;

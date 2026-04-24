@@ -3,7 +3,10 @@ import { TerritoryState, MapTile } from '../core/game.types';
 export function getTileAt(territory: TerritoryState, tx: number, ty: number): MapTile | null {
 	if (territory.tileIndex) {
 		const id = territory.tileIndex[`${tx},${ty}`];
-		return id ? territory.tiles[id] : null;
+		if (id) {
+			return territory.tiles[id] ?? null;
+		}
+		return null;
 	}
 
 	for (const tile of Object.values(territory.tiles)) {

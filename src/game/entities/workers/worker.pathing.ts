@@ -4,7 +4,7 @@ export function planPath(grid: any, from: { x: number; y: number }, to: { x: num
 	try {
 		return findPathAStar(grid, from, to);
 	} catch (e) {
-		return { points: [], cost: Infinity, isComplete: false };
+		return { points: [], cost: 0, isComplete: false };
 	}
 }
 
