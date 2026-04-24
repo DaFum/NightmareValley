@@ -9,8 +9,8 @@ export function pickTileFromScreen(
 	tileWidth: number,
 	tileHeight: number
 ) {
-	const { tileX, tileY } = screenToIsoTile(screenX, screenY, cameraX, cameraY, zoom, tileWidth, tileHeight);
-	return { x: tileX, y: tileY };
+	const { tileX: x, tileY: y } = screenToIsoTile(screenX, screenY, cameraX, cameraY, zoom, tileWidth, tileHeight);
+	return { x, y };
 }
 
 export function snapToNearestTile(tx: number, ty: number) {

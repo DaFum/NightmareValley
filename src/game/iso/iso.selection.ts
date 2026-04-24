@@ -31,10 +31,10 @@ export function selectTileRangeBetween(
 	const minY = Math.min(a.tileY, b.tileY);
 	const maxY = Math.max(a.tileY, b.tileY);
 
-	const tiles: Array<{ x: number; y: number }> = [];
+	const tiles: Array<{ tileX: number; tileY: number }> = [];
 	for (let tx = minX; tx <= maxX; tx++) {
 		for (let ty = minY; ty <= maxY; ty++) {
-			tiles.push({ x: tx, y: ty });
+			tiles.push({ tileX: tx, tileY: ty });
 		}
 	}
 
