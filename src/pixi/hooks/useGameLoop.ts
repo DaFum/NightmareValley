@@ -9,7 +9,7 @@ export function useGameLoop() {
   useTick((delta, ticker) => {
     if (isRunning) {
       // ticker.deltaMS is the elapsed time in milliseconds since the last frame
-      const deltaSec = ticker.deltaMS / 1000;
+      const deltaSec = delta / 60;
       advanceTick(deltaSec);
     }
   });

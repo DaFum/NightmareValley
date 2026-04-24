@@ -61,7 +61,7 @@ export function GameStage() {
     const cx = typeof window !== 'undefined' ? window.innerWidth / 2 : centerX;
     const cy = typeof window !== 'undefined' ? window.innerHeight / 4 : centerY;
 
-    const hit = getIsoHit(e.data.global.x, e.data.global.y, world, cx, cy, 1, 64, 32);
+    const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, 1, 64, 32);
 
     if (hit.tileId && !hit.buildingId && !hit.workerId) {
       placeBuildingAt('player_1', selectedBuildingToPlace, hit.tileId);
