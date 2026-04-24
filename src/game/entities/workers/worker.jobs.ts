@@ -5,9 +5,9 @@ export function assignJob(worker: WorkerInstance, job: Job): WorkerInstance {
 }
 
 export function clearJob(worker: WorkerInstance): WorkerInstance {
-	const { currentJob, ...rest } = worker as any;
-	const isIdle = !(rest.path && rest.path.length > 0);
-	return { ...rest, isIdle } as WorkerInstance;
+	const { currentJob, ...rest } = worker;
+	const isIdle = true;
+	return { ...rest, path: [], isIdle };
 }
 
 

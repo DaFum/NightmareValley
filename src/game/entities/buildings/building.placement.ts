@@ -2,7 +2,7 @@ import { TerritoryState } from '../../core/game.types';
 import { getTileAt } from '../../map/map.query';
 
 export function canPlaceBuilding(territory: TerritoryState, tx: number, ty: number, width = 1, height = 1) {
-	if (width <= 0 || height <= 0) return { ok: false, reason: 'invalid_footprint' };
+	if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return { ok: false, reason: 'invalid_footprint' };
 	let originTileId: string | undefined;
 	for (let y = ty; y < ty + height; y++) {
 		for (let x = tx; x < tx + width; x++) {

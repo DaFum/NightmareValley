@@ -10,7 +10,8 @@ export function advanceBuildingConstruction(b: BuildingInstance, deltaSec: numbe
 	if (b.constructionProgress === undefined) return b;
 	const next = { ...b };
 	const def = getBuildingDefinition(b.type);
-	const time = def?.constructionTime ?? 10;
+	let time = def?.constructionTime;
+	if (typeof time !== 'number' || time <= 0) time = 10;
 	next.constructionProgress = Math.min(1, (next.constructionProgress ?? 0) + deltaSec / time);
 	if (next.constructionProgress >= 1) {
 		delete next.constructionProgress;
