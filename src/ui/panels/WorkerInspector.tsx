@@ -10,23 +10,30 @@ type WorkerInspectorProps = {
 
 export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX.Element | null {
   const worker = useGameStore((state) => state.gameState.workers[workerId]);
-  const homeBuilding = useGameStore((state) => worker?.homeBuildingId ? state.gameState.buildings[worker.homeBuildingId] : undefined);
+  const homeBuilding = useGameStore((state) => {
+    const w = state.gameState.workers[workerId];
+    return w?.homeBuildingId ? state.gameState.buildings[w.homeBuildingId] : undefined;
+  });
   const activeTask = useGameStore((state) => state.gameState.transport.activeCarrierTasks[workerId]);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!worker) return null;
 
-  const def = WORKER_DEFINITIONS[worker.type];
+  const def = WORKER_DEFINITIONS[worker.type] || { name: 'Unknown Worker', description: 'No definition found.' };
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Worker inspector">
       <div className="inspector-panel__header">
-        <img
-          src={imageMap[`workers/${worker.type}.png`]}
-          alt=""
-          aria-hidden="true"
-          className="inspector-portrait"
-        />
+        {imageMap[`workers/${worker.type}.png`] ? (
+          <img
+            src={imageMap[`workers/${worker.type}.png`]}
+            alt=""
+            aria-hidden="true"
+            className="inspector-portrait"
+          />
+        ) : (
+          <div className="inspector-portrait" style={{ backgroundColor: '#222' }} />
+        )}
         <div>
           <span className="panel-kicker">Worker</span>
           <h2>{def.name}</h2>

@@ -16,12 +16,13 @@ export function PopulationBar() {
     return { active: 13, max: 20 };
   }));
   const { active, max } = population;
-  const fill = (max ?? 20) > 0 ? ((active ?? 13) / (max ?? 20)) * 100 : 0;
+  const maxSafe = max <= 0 ? 0 : max;
+  const fill = maxSafe > 0 ? Math.min(Math.max((active / maxSafe) * 100, 0), 100) : 0;
 
   return (
     <div className="population-chip" aria-label="Population">
       <span>Souls</span>
-      <strong>{active ?? 13}<small>/{max ?? 20}</small></strong>
+      <strong>{active}<small>/{maxSafe}</small></strong>
       <div className="population-chip__track">
         <div className="population-chip__fill" style={{ width: `${fill}%` }} />
       </div>

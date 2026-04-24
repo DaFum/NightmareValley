@@ -23,7 +23,7 @@ export default function FpsCounter(): JSX.Element {
   }, []);
 
   return (
-    <div className={`status-chip ${fps < 45 ? 'status-chip--warn' : ''}`} aria-label="Frames per second">
+    <div className={`status-chip ${fps > 0 && fps < 45 ? 'status-chip--warn' : ''}`} aria-label="Frames per second">
       <span>FPS</span>
       <strong>{fps || '--'}</strong>
     </div>

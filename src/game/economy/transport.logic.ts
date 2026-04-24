@@ -40,6 +40,7 @@ export interface TransportState {
   activeCarrierTasks: Record<string, CarrierTask>;
   networkStress: number;
   averageLatencySec: number;
+  queuedJobCount: number;
 }
 
 // =========================
@@ -94,6 +95,7 @@ export function generateTransportJobs(
           status: "queued",
           description: `Move ${resourceType} from ${source.type} to ${target.type}`,
         };
+        state.transport.queuedJobCount = (state.transport.queuedJobCount || 0) + 1;
 
         existingJobSignatures.add(signature);
         created += 1;
@@ -253,6 +255,7 @@ export function assignCarrierTasks(
     }
 
     bestJob.status = "claimed";
+    state.transport.queuedJobCount = Math.max(0, (state.transport.queuedJobCount || 0) - 1);
     bestJob.reserved = bestJob.amount;
 
     const task: CarrierTask = {
@@ -361,7 +364,11 @@ export function advanceCarrierMovement(
 
     if (!carrier || !source || !target || !job) {
       if (job) {
+        const wasQueued = job.status === "queued";
         job.status = "lost";
+        if (wasQueued) {
+          state.transport.queuedJobCount = (state.transport.queuedJobCount || 0) + 1;
+        }
         job.reserved = Math.max(0, job.reserved - task.amount);
       }
       if (carrier) {

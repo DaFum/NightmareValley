@@ -10,6 +10,7 @@ type IsoFootfallLayerProps = {
 export default function IsoFootfallLayer({ tiles }: IsoFootfallLayerProps): JSX.Element | null {
   const drawFootfall = useCallback((g: PIXI.Graphics) => {
     g.clear();
+    g.lineStyle(0); // Reset stroke
 
     const TILE_WIDTH = 64;
     const TILE_HEIGHT = 32;

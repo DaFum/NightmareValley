@@ -13,7 +13,7 @@ export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: Is
   const { registry } = useTextures();
 
   return (
-    <Container eventMode="none" cacheAsBitmap={true}>
+    <Container eventMode="none">
       {tiles.map((tile) => {
         // Fallback for missing textures based on terrain type
         let textureKey = tile.textureKey;

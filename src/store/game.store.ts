@@ -40,7 +40,7 @@ const carrier3Id = createId('wrk');
 const initialTerritory = loadInitialMap();
 
 function prepareInitialTerritory(ownerId: string) {
-  const territory = initialTerritory;
+  const territory = JSON.parse(JSON.stringify(initialTerritory)) as typeof initialTerritory;
   const ownedRadius = 13;
   const start = { x: 7, y: 7 };
   const ownedTileIds: string[] = [];
@@ -181,6 +181,7 @@ const initialGameState: EconomySimulationState = {
     activeCarrierTasks: {},
     networkStress: 0,
     averageLatencySec: 0,
+    queuedJobCount: 0,
   },
   worldPulse: 0,
 };
@@ -313,7 +314,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           ...gs,
           transport: {
             ...gs.transport,
-            jobs: newJobs
+            jobs: newJobs,
+            queuedJobCount: (gs.transport.queuedJobCount || 0) + count
           }
         }
       };

@@ -2,6 +2,7 @@ import React from 'react';
 import { RootLayout } from './app/layout/RootLayout';
 import { GameRoute } from './app/routes/GameRoute';
 import NotFoundRoute from './app/routes/NotFoundRoute';
+import DebugRoute from './app/routes/DebugRoute';
 import './styles/globals.css';
 import './styles/ui.css';
 
@@ -18,11 +19,33 @@ export function App() {
 
   React.useEffect(() => {
     const updatePath = () => setPath(getCurrentPath());
+
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function (...args) {
+      const result = originalPushState.apply(this, args);
+      window.dispatchEvent(new Event('pushstate'));
+      return result;
+    };
+
+    history.replaceState = function (...args) {
+      const result = originalReplaceState.apply(this, args);
+      window.dispatchEvent(new Event('replacestate'));
+      return result;
+    };
+
     window.addEventListener('popstate', updatePath);
     window.addEventListener('hashchange', updatePath);
+    window.addEventListener('pushstate', updatePath);
+    window.addEventListener('replacestate', updatePath);
     return () => {
       window.removeEventListener('popstate', updatePath);
       window.removeEventListener('hashchange', updatePath);
+      window.removeEventListener('pushstate', updatePath);
+      window.removeEventListener('replacestate', updatePath);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
     };
   }, []);
 
@@ -30,7 +53,7 @@ export function App() {
   if (path === '/' || path === '/game') {
     route = <GameRoute />;
   } else if (path === '/debug' && DEBUG_ROUTE_ENABLED) {
-    route = <main className="debug-route" role="main"><h1>Debug route</h1><p>Debug tools are available from the development source route.</p><a className="hud-button" href="/">Return to game</a></main>;
+    route = <DebugRoute />;
   } else {
     route = <NotFoundRoute />;
   }

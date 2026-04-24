@@ -167,6 +167,7 @@ export function generateInitialWorld(): EconomySimulationState {
       activeCarrierTasks: {},
       networkStress: 0,
       averageLatencySec: 0,
+      queuedJobCount: 0,
     },
     worldPulse: 0,
   };

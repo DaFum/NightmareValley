@@ -87,10 +87,24 @@ export function GameStage() {
   }, [togglePlayPause]);
 
   const isBrowser = typeof window !== 'undefined';
-  const centerX = isBrowser ? window.innerWidth / 2 : 512;
-  const centerY = isBrowser ? window.innerHeight * 0.42 : 320;
-  const viewportWidth = isBrowser ? window.innerWidth : 1024;
-  const viewportHeight = isBrowser ? window.innerHeight : 768;
+  const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
+  const [viewportHeight, setViewportHeight] = React.useState(isBrowser ? window.innerHeight : 768);
+
+  useEffect(() => {
+    if (!isBrowser) return;
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+      setViewportHeight(window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isBrowser]);
+
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight * 0.42;
+
   const visibleTiles = useMemo(() => {
     const padding = 192;
     const minX = (-centerX - cameraX - padding) / zoom;
@@ -115,8 +129,8 @@ export function GameStage() {
   const handlePointerDown = (e: any) => {
     if (typeof e.button === 'number' && e.button !== 0) return;
 
-    const cx = (typeof window !== 'undefined' ? window.innerWidth / 2 : centerX) + cameraX;
-    const cy = (typeof window !== 'undefined' ? window.innerHeight * 0.42 : centerY) + cameraY;
+    const cx = centerX + cameraX;
+    const cy = centerY + cameraY;
 
     const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, zoom, 64, 32);
 

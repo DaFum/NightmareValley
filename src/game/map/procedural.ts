@@ -109,18 +109,20 @@ export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData 
 
       // Hand-shaped opening valley: enough authored structure for a
       // Settlers-style first economy while the outer map stays procedural.
-      if (x >= 2 && x <= 4 && y >= 8 && y <= 10) terrain = 'weepingForest';
-      if (x >= 10 && x <= 13 && y >= 4 && y <= 7) {
-        terrain = (x + y) % 3 === 0 ? 'cathedralRock' : 'ribMountain';
-      }
-      if (x >= 6 && x <= 9 && y >= 9 && y <= 11) terrain = 'ashBog';
-      if (x >= 12 && x <= 15 && y >= 10 && y <= 13) terrain = 'placentaLake';
-      if (
-        (y === 6 && x >= 4 && x <= 12) ||
-        (x === 7 && y >= 6 && y <= 10) ||
-        (x === 12 && y >= 6 && y <= 11)
-      ) {
-        terrain = 'scarPath';
+      if (width >= 24 && height >= 24) {
+        if (x >= 2 && x <= 4 && y >= 8 && y <= 10) terrain = 'weepingForest';
+        if (x >= 10 && x <= 13 && y >= 4 && y <= 7) {
+          terrain = (x + y) % 3 === 0 ? 'cathedralRock' : 'ribMountain';
+        }
+        if (x >= 6 && x <= 9 && y >= 9 && y <= 11) terrain = 'ashBog';
+        if (x >= 12 && x <= 15 && y >= 10 && y <= 13) terrain = 'placentaLake';
+        if (
+          (y === 6 && x >= 4 && x <= 12) ||
+          (x === 7 && y >= 6 && y <= 10) ||
+          (x === 12 && y >= 6 && y <= 11)
+        ) {
+          terrain = 'scarPath';
+        }
       }
 
       const tid = TERRAIN_TYPES.indexOf(terrain);
