@@ -412,8 +412,17 @@ export function advanceCarrierMovement(
 
       const steppedTile = getTileAtPosition(state.territory as TerritoryState, newPos);
       if (steppedTile) {
+        const prevFootfall = steppedTile.footfall;
         steppedTile.footfall += 1;
-        recomputeTierFromFootfall(steppedTile, config.footfallTierThresholds);
+        // Recompute tier only when a boundary is crossed; avoids redundant work on hot paths.
+        const thresh = config.footfallTierThresholds;
+        if (
+          (steppedTile.footfall >= thresh.paved  && prevFootfall < thresh.paved)  ||
+          (steppedTile.footfall >= thresh.cobble && prevFootfall < thresh.cobble) ||
+          (steppedTile.footfall >= thresh.dirt   && prevFootfall < thresh.dirt)
+        ) {
+          recomputeTierFromFootfall(steppedTile, thresh);
+        }
       }
     }
 
