@@ -181,6 +181,8 @@ export async function loadSpritesheets(): Promise<void> {
       if (frameX + r.width > baseTex.width || frameY + r.height > baseTex.height) {
          frameX = 0;
          frameY = 0;
+         r.width = baseTex.width;
+         r.height = baseTex.height;
       }
     }
 

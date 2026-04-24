@@ -131,8 +131,12 @@ export function findPath(start: Position, goal: Position, state: any): Path {
   let width = 10;
   let height = 10;
   if (tiles && tiles.length > 0) {
-    const maxX = Math.max(...tiles.map((t: any) => t.position.x));
-    const maxY = Math.max(...tiles.map((t: any) => t.position.y));
+    let maxX = 0;
+    let maxY = 0;
+    for (const t of tiles as any[]) {
+      if (t.position.x > maxX) maxX = t.position.x;
+      if (t.position.y > maxY) maxY = t.position.y;
+    }
     width = maxX + 1;
     height = maxY + 1;
   }

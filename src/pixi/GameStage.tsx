@@ -21,10 +21,15 @@ export function GameStage() {
 
   useEffect(() => {
     // Simple game loop
-    let lastTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    let lastTime: number | null = null;
     let animationFrameId: number;
 
     const loop = (time: number) => {
+      if (lastTime === null) {
+        lastTime = time;
+        animationFrameId = requestAnimationFrame(loop);
+        return;
+      }
       const deltaMs = time - lastTime;
       lastTime = time;
 
@@ -61,10 +66,12 @@ export function GameStage() {
     const cx = typeof window !== 'undefined' ? window.innerWidth / 2 : centerX;
     const cy = typeof window !== 'undefined' ? window.innerHeight / 4 : centerY;
 
-    const hit = getIsoHit(e.data.global.x, e.data.global.y, world, cx, cy, 1, 64, 32);
+    const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, 1, 64, 32);
 
     if (hit.tileId && !hit.buildingId && !hit.workerId) {
-      placeBuildingAt('player_1', selectedBuildingToPlace, hit.tileId);
+      const playerIds = Object.keys(useGameStore.getState().gameState.players);
+      const playerId = playerIds.length > 0 ? playerIds[0] : 'player_1';
+      placeBuildingAt(playerId, selectedBuildingToPlace, hit.tileId);
       selectBuildingToPlace(null);
     }
   };

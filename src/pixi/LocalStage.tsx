@@ -105,7 +105,7 @@ export function LocalStage({
             // ignore
           }
 
-          appRef.current.destroy(true, { children: true, texture: true, baseTexture: true });
+          appRef.current.destroy(true, { children: true });
         }
       } catch (err) {
         // ignore
@@ -138,10 +138,6 @@ export function LocalStage({
     if (!app) return;
     if (typeof width === 'number' && typeof height === 'number') {
       app.renderer.resize(width, height);
-    }
-    if (options && typeof options === 'object' && 'resolution' in options && options.resolution != null) {
-      app.renderer.resolution = (options as any).resolution;
-      // NOTE: do NOT access `app.renderer.plugins.interaction` here to avoid deprecation warnings
     }
   }, [width, height, options]);
 
