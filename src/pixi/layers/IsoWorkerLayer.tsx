@@ -7,6 +7,9 @@ interface IsoWorkerLayerProps {
   workers: IsoRenderWorld['workers'];
 }
 
+const WORKER_SCALE = 0.13;
+const WORKER_ANCHOR = { x: 0.5, y: 1 } as const;
+
 export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
   const { registry } = useTextures();
 
@@ -32,7 +35,8 @@ export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
             texture={texture}
             x={worker.screenX}
             y={worker.screenY}
-            anchor={{ x: 0.5, y: 1.0 }}
+            anchor={WORKER_ANCHOR}
+            scale={WORKER_SCALE}
             zIndex={worker.zIndex}
           />
         );

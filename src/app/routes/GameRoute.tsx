@@ -1,6 +1,9 @@
 import React from 'react'
+import { GameLayout } from '../layout/GameLayout'
 
-export default function GameRoute(): JSX.Element | null {
-	return null
+export function GameRoute(): JSX.Element {
+	return <GameLayout />
 }
+
+export default GameRoute
 

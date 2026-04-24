@@ -9,14 +9,22 @@ export function useIsoCamera() {
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
+    let spacePressed = false;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space") spacePressed = true;
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") spacePressed = false;
+    };
 
     const handlePointerDown = (e: PointerEvent) => {
-      // Only drag with middle or right click, or if we want left click dragging
-      // Let's enable left click drag for now for ease of testing
-      if (e.target instanceof HTMLCanvasElement) {
+      if (e.target instanceof HTMLCanvasElement && (e.button === 1 || e.button === 2 || spacePressed)) {
         isDragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
+        e.preventDefault();
       }
     };
 
@@ -36,6 +44,7 @@ export function useIsoCamera() {
       const currentY = useCameraStore.getState().y;
 
       setCameraPosition(currentX + dx, currentY + dy);
+      e.preventDefault();
     };
 
     const handlePointerUp = () => {
@@ -48,18 +57,29 @@ export function useIsoCamera() {
       const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
       const newZoom = Math.max(0.2, Math.min(3, currentZoom + zoomDelta));
       setZoom(newZoom);
+      e.preventDefault();
     };
 
+    const handleContextMenu = (e: MouseEvent) => {
+      if (e.target instanceof HTMLCanvasElement) e.preventDefault();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     window.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("wheel", handleWheel);
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("contextmenu", handleContextMenu);
     };
   }, [setCameraPosition, setZoom]);
 }

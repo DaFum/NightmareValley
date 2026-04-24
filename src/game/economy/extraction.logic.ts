@@ -1,10 +1,14 @@
 import { EconomySimulationState } from "../core/economy.simulation";
 import { SimulationConfig } from "./balancing.constants";
-import { BuildingInstance } from "../core/game.types";
-import { BuildingDefinition } from "../core/economy.types";
+import { BuildingInstance, MapTile } from "../core/game.types";
+import { BuildingDefinition, ResourceType } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
 import { requiresRoad, hasAssignedWorkersForBuilding, clamp } from "../core/economy.simulation";
 import { getResourceAmount, addResource } from "./stockpile.logic";
+import { getTileAt } from "../map/map.query";
+
+const RENEWABLE_EXTRACTIONS = new Set<ResourceType>(["pigFleshMass"]);
+const EXTRACTION_SEARCH_RADIUS = 2;
 
 export function processExtraction(
   state: EconomySimulationState,
@@ -40,14 +44,39 @@ export function processExtraction(
         break;
       }
 
+      const depositTile = findExtractionDepositTile(state, building, def.extraction.resource);
+      const depositAmount = depositTile?.resourceDeposit?.[def.extraction.resource] ?? 0;
+      const isRenewable = RENEWABLE_EXTRACTIONS.has(def.extraction.resource);
+
+      if (!isRenewable && depositAmount <= 0) {
+        building.progressSec = 0;
+        break;
+      }
+
       building.progressSec -= cycleTime;
-      const amountToAdd = Math.min(def.extraction.amountPerCycle, availableSpace);
+      const amountToAdd = Math.min(
+        def.extraction.amountPerCycle,
+        availableSpace,
+        isRenewable ? Number.POSITIVE_INFINITY : depositAmount
+      );
+
+      if (amountToAdd <= 0 || !Number.isFinite(amountToAdd)) {
+        building.progressSec = 0;
+        break;
+      }
 
       building.outputBuffer = addResource(
         building.outputBuffer,
         def.extraction.resource,
         amountToAdd
       );
+
+      if (!isRenewable && depositTile?.resourceDeposit) {
+        depositTile.resourceDeposit[def.extraction.resource] = Math.max(
+          0,
+          depositAmount - amountToAdd
+        );
+      }
 
       building.corruption = clamp((building.corruption ?? 0) + 0.1, 0, 100);
     }
@@ -67,4 +96,31 @@ export function getExtractionCycleTime(
     1 + (building.level - 1) * config.extractionLevelBonus;
 
   return def.extraction.cycleTimeSec / levelMultiplier;
+}
+
+export function findExtractionDepositTile(
+  state: EconomySimulationState,
+  building: BuildingInstance,
+  resourceType: ResourceType
+): MapTile | null {
+  let best: MapTile | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let dy = -EXTRACTION_SEARCH_RADIUS; dy <= EXTRACTION_SEARCH_RADIUS; dy++) {
+    for (let dx = -EXTRACTION_SEARCH_RADIUS; dx <= EXTRACTION_SEARCH_RADIUS; dx++) {
+      const tx = building.position.x + dx;
+      const ty = building.position.y + dy;
+      const tile = getTileAt(state.territory, tx, ty);
+      const amount = tile?.resourceDeposit?.[resourceType] ?? 0;
+      if (!tile || amount <= 0) continue;
+
+      const distance = Math.abs(dx) + Math.abs(dy);
+      if (distance < bestDistance) {
+        best = tile;
+        bestDistance = distance;
+      }
+    }
+  }
+
+  return best;
 }

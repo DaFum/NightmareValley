@@ -78,28 +78,50 @@ export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData 
     tiles,
   };
 
-  // Noise scale: tuned for pleasing features
-  const scale = 6.0;
+  const scale = 5.5;
+  const start = { x: 5, y: 5 };
 
   const data: number[] = [];
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const nx = (x / width) * scale;
       const ny = (y / height) * scale;
+      const dx = x - start.x;
+      const dy = y - start.y;
+      const startDistance = Math.sqrt(dx * dx + dy * dy);
 
       const h = fractalNoise(nx, ny, seed, 5, 2, 0.5);
       const m = fractalNoise(nx + 153.7, ny + 421.3, seed + 9876, 4, 2, 0.55);
+      const ridge = fractalNoise(nx + 711.2, ny + 91.4, seed + 2442, 3, 2, 0.6);
 
       let terrain: TerrainType = 'scarredEarth';
 
-      if (h < 0.15) terrain = 'placentaLake';
-      else if (h > 0.82) terrain = 'ribMountain';
-      else if (h > 0.68) terrain = 'cathedralRock';
+      if (startDistance < 7) terrain = 'scarredEarth';
+      else if (Math.abs((x - y) - 8) <= 1 && x > 8 && y > 4) terrain = 'scarPath';
+      else if (h < 0.14 && startDistance > 10) terrain = 'placentaLake';
+      else if (h > 0.79 || (ridge > 0.76 && x > width * 0.55)) terrain = 'ribMountain';
+      else if (h > 0.67) terrain = 'cathedralRock';
       else if (m > 0.66 && h > 0.35) terrain = 'weepingForest';
       else if (m < 0.18) terrain = 'ashBog';
       else if (m < 0.33) terrain = 'scarPath';
       else if (m > 0.6) terrain = 'occupiedScar';
       else terrain = 'scarredEarth';
+
+      // Hand-shaped opening valley: enough authored structure for a
+      // Settlers-style first economy while the outer map stays procedural.
+      if (x >= 2 && x <= 4 && y >= 8 && y <= 10) terrain = 'weepingForest';
+      if (x >= 10 && x <= 13 && y >= 4 && y <= 7) {
+        terrain = (x + y) % 3 === 0 ? 'cathedralRock' : 'ribMountain';
+      }
+      if (x >= 6 && x <= 9 && y >= 9 && y <= 11) terrain = 'ashBog';
+      if (x >= 12 && x <= 15 && y >= 10 && y <= 13) terrain = 'placentaLake';
+      if (
+        (y === 6 && x >= 4 && x <= 12) ||
+        (x === 7 && y >= 6 && y <= 10) ||
+        (x === 12 && y >= 6 && y <= 11)
+      ) {
+        terrain = 'scarPath';
+      }
 
       const tid = TERRAIN_TYPES.indexOf(terrain);
       const gid = (tid >= 0 ? tid : 0) + tileset.firstgid;

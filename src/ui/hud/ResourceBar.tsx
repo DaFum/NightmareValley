@@ -1,7 +1,6 @@
 import React from 'react';
 import { useGameStore } from '../../store/game.store';
-
-import { useShallow } from 'zustand/react/shallow';
+import imageMap from '../../pixi/utils/vite-asset-loader';
 
 export function ResourceBar() {
   // Try to use real data from the store, but fall back to thematic placeholder if store structure isn't ready
@@ -14,6 +13,11 @@ export function ResourceBar() {
   const marrow = useGameStore((state) => {
     const playerIds = Object.keys(state.gameState.players);
     if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.marrowGrain ?? 0;
+    return 0;
+  });
+  const stone = useGameStore((state) => {
+    const playerIds = Object.keys(state.gameState.players);
+    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock.sepulcherStone ?? 0;
     return 0;
   });
   const bile = useGameStore((state) => {
@@ -33,56 +37,39 @@ export function ResourceBar() {
   });
 
   return (
-    <div className="macabre-panel animate-bleed-in delay-1" style={{ padding: '16px 24px', minWidth: '280px' }}>
-      <h2 style={{
-        fontFamily: 'var(--font-display)',
-        margin: '0 0 12px 0',
-        color: 'var(--fresh-blood)',
-        fontSize: '28px',
-        textTransform: 'uppercase',
-        letterSpacing: '2px',
-        borderBottom: '1px solid var(--coagulated-blood)',
-        paddingBottom: '8px'
-      }}>
-        Tithe Collected
-      </h2>
+    <div className="resource-strip" aria-label="Resources">
+      <ResourceChip label="Teeth" value={teeth} tone="bone" />
+      <ResourceChip label="Stone" value={stone} tone="stone" />
+      <ResourceChip label="Marrow" value={marrow} tone="marrow" />
+      <ResourceChip label="Dust" value={dust} tone="bone" />
+      <ResourceChip label="Bile" value={bile} tone="bile" />
+      <ResourceChip label="Loaf" value={loaf} tone="flesh" />
+    </div>
+  );
+}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--bone)', fontSize: '18px', fontWeight: 'bold' }}>Teeth</span>
-          <span className="macabre-text-glow" style={{ color: 'var(--bone)', fontFamily: 'monospace', fontSize: '20px' }}>
-            {teeth}
-          </span>
-        </div>
+type ResourceChipProps = {
+  label: string;
+  value: number;
+  tone: 'bone' | 'stone' | 'marrow' | 'bile' | 'flesh';
+};
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--marrow)', fontSize: '18px' }}>Marrow Grain</span>
-          <span style={{ color: 'var(--marrow)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {marrow}
-          </span>
-        </div>
+function ResourceChip({ label, value, tone }: ResourceChipProps) {
+  const resourceFileByLabel: Record<string, string> = {
+    Teeth: 'resources/toothPlanks.png',
+    Stone: 'resources/sepulcherStone.png',
+    Marrow: 'resources/marrowGrain.png',
+    Dust: 'resources/boneDust.png',
+    Bile: 'resources/amnioticWater.png',
+    Loaf: 'resources/funeralLoaf.png',
+  };
+  const image = imageMap[resourceFileByLabel[label]];
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--bone)', fontSize: '18px' }}>Bone Dust</span>
-          <span style={{ color: 'var(--bone)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {dust}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--bile)', fontSize: '18px' }}>Amniotic Bile</span>
-          <span style={{ color: 'var(--bile)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {bile}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ color: 'var(--flesh)', fontSize: '18px' }}>Funeral Loaf</span>
-          <span style={{ color: 'var(--flesh)', fontFamily: 'monospace', fontSize: '18px' }}>
-            {loaf}
-          </span>
-        </div>
-      </div>
+  return (
+    <div className={`resource-chip resource-chip--${tone}`}>
+      {image ? <img src={image} alt="" aria-hidden="true" /> : null}
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }

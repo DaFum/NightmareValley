@@ -1,7 +1,12 @@
 import React from 'react'
 import type { ReactNode } from 'react'
+import { Logger } from '../../lib/logger'
 
-type Props = { children?: ReactNode; fallback?: React.ReactNode }
+type Props = {
+	children?: ReactNode
+	fallback?: React.ReactNode | ((error: Error | null, reset: () => void) => React.ReactNode)
+	onError?: (error: Error, info: React.ErrorInfo) => void
+}
 type State = { hasError: boolean; error: Error | null }
 
 export class ErrorBoundary extends React.Component<Props, State> {
@@ -15,17 +20,27 @@ export class ErrorBoundary extends React.Component<Props, State> {
 	}
 
 	componentDidCatch(error: Error, info: React.ErrorInfo) {
-		// eslint-disable-next-line no-console
-		console.error('ErrorBoundary caught an error:', error, info)
+		Logger.error('ErrorBoundary caught an error:', error, info)
+		this.props.onError?.(error, info)
+	}
+
+	private reset = () => {
+		this.setState({ hasError: false, error: null })
 	}
 
 	render() {
 		if (this.state.hasError) {
+			if (typeof this.props.fallback === 'function') {
+				return this.props.fallback(this.state.error, this.reset)
+			}
+
 			return (
 				this.props.fallback ?? (
-					<div role="alert" style={{ padding: 16, background: '#2b2b2b', color: '#fff' }}>
-						<h2>Something went wrong</h2>
-						<pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>{String(this.state.error)}</pre>
+					<div className="app-error-fallback" role="alert" aria-live="assertive">
+						<h1>NightmareValley stopped rendering</h1>
+						<p>The runtime caught an unrecoverable UI error. The simulation has been paused visually to avoid corrupt input.</p>
+						<pre>{String(this.state.error?.message ?? this.state.error ?? 'Unknown error')}</pre>
+						<button className="hud-button" type="button" onClick={this.reset}>Try again</button>
 					</div>
 				)
 			)

@@ -7,11 +7,13 @@ interface IsoTerrainLayerProps {
   tiles: IsoRenderWorld['tiles'];
 }
 
-export function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
+const TILE_ANCHOR = { x: 0.5, y: 0.5 } as const;
+
+export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
   const { registry } = useTextures();
 
   return (
-    <Container eventMode="none">
+    <Container eventMode="none" cacheAsBitmap={true}>
       {tiles.map((tile) => {
         // Fallback for missing textures based on terrain type
         let textureKey = tile.textureKey;
@@ -36,10 +38,10 @@ export function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
             texture={texture}
             x={tile.screenX}
             y={tile.screenY}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={TILE_ANCHOR}
           />
         );
       })}
     </Container>
   );
-}
+});

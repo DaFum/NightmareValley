@@ -7,6 +7,10 @@ export interface IsoBuildingLayerProps {
   buildings: IsoBuildingRenderData[];
 }
 
+const BUILDING_SCALE = 0.28;
+const BUILDING_ANCHOR = { x: 0.5, y: 1 } as const;
+const CENTER_ANCHOR = { x: 0.5, y: 0.5 } as const;
+
 export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings }) => {
   const { registry } = useTextures();
 
@@ -39,37 +43,41 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
             eventMode="none"
           >
             {shadowTex ? (
-              <Sprite texture={shadowTex} anchor={0.5} y={10} zIndex={0} alpha={0.3} />
+              <Sprite texture={shadowTex} anchor={CENTER_ANCHOR} y={10} zIndex={0} alpha={0.3} scale={0.8} />
             ) : (
-              <Sprite image="generic_building_shadow" anchor={0.5} y={10} zIndex={0} alpha={0.3} />
+              <Sprite image="generic_building_shadow" anchor={CENTER_ANCHOR} y={10} zIndex={0} alpha={0.3} scale={0.8} />
             )}
 
             {selected && (
               selectionTex ? (
-                <Sprite texture={selectionTex} anchor={0.5} y={10} zIndex={1} />
+                <Sprite texture={selectionTex} anchor={CENTER_ANCHOR} y={10} zIndex={1} />
               ) : (
-                <Sprite image="selection_ellipse_building" anchor={0.5} y={10} zIndex={1} />
+                <Sprite image="selection_ellipse_building" anchor={CENTER_ANCHOR} y={10} zIndex={1} />
               )
             )}
             {hovered && !selected && (
               hoverTex ? (
-                <Sprite texture={hoverTex} anchor={0.5} y={10} zIndex={1} alpha={0.5} />
+                <Sprite texture={hoverTex} anchor={CENTER_ANCHOR} y={10} zIndex={1} alpha={0.5} />
               ) : (
-                <Sprite image="hover_ellipse_building" anchor={0.5} y={10} zIndex={1} alpha={0.5} />
+                <Sprite image="hover_ellipse_building" anchor={CENTER_ANCHOR} y={10} zIndex={1} alpha={0.5} />
               )
             )}
 
             {mainTex ? (
               <Sprite
                 texture={mainTex}
-                anchor={0.5}
+                anchor={BUILDING_ANCHOR}
+                y={16}
+                scale={BUILDING_SCALE}
                 zIndex={2}
                 tint={state === "damaged" ? 0xddaaaa : 0xffffff}
               />
             ) : (
               <Sprite
                 image={spriteKey}
-                anchor={0.5}
+                anchor={BUILDING_ANCHOR}
+                y={16}
+                scale={BUILDING_SCALE}
                 zIndex={2}
                 tint={state === "damaged" ? 0xddaaaa : 0xffffff}
               />

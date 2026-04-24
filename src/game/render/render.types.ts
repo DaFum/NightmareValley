@@ -5,6 +5,7 @@ export type IsoTileRenderData = {
   screenY: number;
   textureKey: string;
   chunkId: string;
+  resourceDeposit?: import("../core/economy.types").ResourceInventory;
 };
 import { IsoBuildingRenderData, IsoWorkerRenderData } from "../iso/iso.types";
 
