@@ -11,7 +11,7 @@ export function decideMilitaryActions(state: any, rng: RNG): AiAction[] {
 
 	if (Array.isArray(nearby) && nearby.length > 0) {
 		// pick highest threat (random tie-breaker)
-		const maxThreat = Math.max(...nearby.map(computeThreat));
+		const maxThreat = nearby.reduce((max, e) => Math.max(max, computeThreat(e)), 0);
 		const highestThreatEnemies = nearby.filter(e => computeThreat(e) === maxThreat);
 		const idx = Math.floor(rng() * highestThreatEnemies.length);
 		actions.push({ type: 'attack', payload: { target: highestThreatEnemies[idx] } });
