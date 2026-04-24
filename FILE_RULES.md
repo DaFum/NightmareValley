@@ -1,8 +1,8 @@
 # FILE_RULES (file-specific TODOs)
 
-> NOTE: The TODO entries below are implementation tasks for production code.
-> Each TODO should drive changes in the referenced production source file(s).
-> Do not treat these as instructions to generate tests; implement or update the prod code instead.
+> NOTE: Only TODO entries explicitly marked as "production-only" must drive changes in production source files.
+> TODOs labeled for smoke/render/compile/validation or test-related tasks should be implemented in test code.
+> Always follow the explicit scope label of the TODO before editing files.
 
 ## src/App.tsx
 

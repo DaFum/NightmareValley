@@ -1,9 +1,11 @@
 export type AiActionType = 'build' | 'assign' | 'expand' | 'attack' | 'idle';
 
-export interface AiAction {
-	type: AiActionType;
-	payload?: any;
-}
+export type AiAction =
+	| { type: 'build', payload: { what: string } }
+	| { type: 'assign', payload: { target: any } }
+	| { type: 'expand', payload: { tile: any } }
+	| { type: 'attack', payload: { target: any } }
+	| { type: 'idle' };
 
 export interface AiState {
 	seed: number;

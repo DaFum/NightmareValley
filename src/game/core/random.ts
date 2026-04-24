@@ -17,7 +17,14 @@ export class Random {
 	}
 
 	int(max: number): number {
-		return Math.floor(this.next() * Math.floor(max));
+		if (!Number.isFinite(max) || isNaN(max)) {
+			throw new TypeError(`int() requires a finite number, got ${max}`);
+		}
+		const bound = Math.floor(max);
+		if (bound <= 0) {
+			throw new RangeError(`int() requires bound > 0, got ${bound}`);
+		}
+		return Math.floor(this.next() * bound);
 	}
 
 	choice<T>(arr: T[], fallback?: T): T | undefined {

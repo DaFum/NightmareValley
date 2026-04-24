@@ -47,10 +47,10 @@ export interface WorkerInstance {
   path?: Position[];
 }
 
-export interface Job {
+export interface Job<T = unknown> {
   id: string;
   type: string;
-  target?: any;
+  target?: T;
 }
 
 export interface MapTile {
