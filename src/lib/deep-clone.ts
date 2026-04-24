@@ -54,15 +54,15 @@ export function deepClone<T>(value: T): T {
 		}
 
 		if (ArrayBuffer.isView(obj)) {
-			const bufferCopy = obj.buffer.slice(0);
-			if (obj instanceof DataView || obj.constructor.name === 'DataView') {
-				const copy = new DataView(bufferCopy, obj.byteOffset, obj.byteLength);
+			const bufferCopy = obj.buffer.slice(obj.byteOffset, obj.byteOffset + obj.byteLength);
+			if (obj instanceof DataView || Object.prototype.toString.call(obj) === '[object DataView]') {
+				const copy = new DataView(bufferCopy);
 				visited.set(obj, copy);
 				return copy as any;
 			}
 			try {
 				const ctor = (obj as any).constructor;
-				const copy = new ctor(bufferCopy, obj.byteOffset, (obj as any).length);
+				const copy = new ctor(bufferCopy);
 				visited.set(obj, copy);
 				return copy as any;
 			} catch (e) {
@@ -85,14 +85,18 @@ export function deepClone<T>(value: T): T {
 		const out = Object.create(proto);
 		visited.set(obj, out);
 
-		// Note: Accessor properties (getters/setters) are NOT preserved to avoid leaking closures
+		// Note: Accessor properties (getters/setters) are evaluated and their current values are preserved,
+		// but the getters and setters themselves are not copied to avoid leaking closures.
 		for (const key of Reflect.ownKeys(obj)) {
 			const desc = Object.getOwnPropertyDescriptor(obj, key as any);
 			if (!desc) continue;
-			if (desc.get || desc.set) {
-				continue;
+			if (desc.get) {
+				desc.value = _clone(desc.get.call(obj));
+			} else if ('value' in desc) {
+				desc.value = _clone(desc.value);
 			}
-			if ('value' in desc) desc.value = _clone(desc.value);
+			delete desc.get;
+			delete desc.set;
 			Object.defineProperty(out, key, desc);
 		}
 		return out as any;

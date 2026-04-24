@@ -47,18 +47,26 @@ export function canUpgradeBuilding(building: BuildingInstance): boolean {
 }
 
 export function getUpgradeCost(
-  building: BuildingInstance
+  building: BuildingInstance,
+  toLevel: number
 ): BuildingCost | null {
   const def = BUILDING_DEFINITIONS[building.type];
-  if (building.level >= def.maxLevel) return null;
-  return def.upgradeCosts[building.level - 1] ?? null;
+  if (!def) return null;
+  if (toLevel < 1) return null;
+  if (toLevel <= building.level) return null;
+  if (def.maxLevel !== undefined && toLevel > def.maxLevel) return null;
+
+  const idx = toLevel - 2;
+  if (!def.upgradeCosts || idx >= def.upgradeCosts.length || idx < 0) return null;
+
+  return def.upgradeCosts[idx] ?? null;
 }
 
 export function canAffordUpgrade(
   player: PlayerState,
   building: BuildingInstance
 ): boolean {
-  const cost = getUpgradeCost(building);
+  const cost = getUpgradeCost(building, building.level + 1);
   if (!cost) return false;
   return hasEnoughResources(player.stock, cost.resources);
 }

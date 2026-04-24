@@ -42,9 +42,7 @@ export function parseTiledMap(mapData: TiledMapData): TerritoryState {
           position: { x, y },
           terrain,
         };
-        if (territory.tileIndex) {
-          territory.tileIndex[`${x},${y}`] = tileId as any;
-        }
+        territory.tileIndex![`${x},${y}`] = tileId;
       }
     }
   }

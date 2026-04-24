@@ -303,7 +303,7 @@ export function upgradeBuilding(
     throw new Error(`Building ${buildingId} belongs to another regime`);
   }
 
-  const cost = getUpgradeCost(building);
+  const cost = getUpgradeCost(building, building.level + 1);
   if (!cost) {
     throw new Error(`Building ${buildingId} cannot ascend further`);
   }

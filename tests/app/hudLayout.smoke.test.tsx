@@ -2,9 +2,6 @@
 import React from 'react';
 import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 
-
-jest.resetModules();
-
 describe('HudLayout render', () => {
   beforeEach(() => {
     jest.resetModules();

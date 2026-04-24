@@ -1,6 +1,6 @@
 type Level = 'debug' | 'info' | 'warn' | 'error';
 
-const isProduction = process.env.NODE_ENV === 'production' || (typeof process !== 'undefined' && process.env.PROD === 'true');
+export const isProduction = process.env.NODE_ENV === 'production';
 
 export const Logger = {
 	debug: (...args: any[]) => {

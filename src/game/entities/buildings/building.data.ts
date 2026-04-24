@@ -1,9 +1,9 @@
 import { BUILDING_DEFINITIONS } from '../../core/economy.data';
 
-import { BuildingDefinition } from '../../core/economy.types';
-import { BuildingType } from '../../core/economy.types';
+import { BuildingDefinition, BuildingType } from '../../core/economy.types';
 
-export function getBuildingDefinition(typeOrBuilding: string | { type: string }): BuildingDefinition | null {
+export function getBuildingDefinition(typeOrBuilding: string | { type: string } | null | undefined): BuildingDefinition | null {
+	if (typeOrBuilding === null || typeOrBuilding === undefined) return null;
 	const t = typeof typeOrBuilding === 'string' ? typeOrBuilding : typeOrBuilding.type;
 	return BUILDING_DEFINITIONS[t as BuildingType] || null;
 }
