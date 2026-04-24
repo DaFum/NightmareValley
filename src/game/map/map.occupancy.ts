@@ -7,15 +7,14 @@ export class Occupancy {
 	isOccupied(tileId: string) {
 		const t = this.territory.tiles[tileId];
 		if (!t) return false;
-		return !!(t.buildingId || t.roadNodeId);
+		return !!t.buildingId;
 	}
 
-	reserve(tileId: string, buildingId?: BuildingId, roadNodeId?: string) {
+	reserve(tileId: string, buildingId?: BuildingId) {
 		if (this.isOccupied(tileId)) return false;
 		const t = this.territory.tiles[tileId];
 		if (t) {
 			if (buildingId) t.buildingId = buildingId;
-			if (roadNodeId) t.roadNodeId = roadNodeId;
 		}
 		return true;
 	}
@@ -24,7 +23,6 @@ export class Occupancy {
 		const t = this.territory.tiles[tileId];
 		if (t) {
 			delete t.buildingId;
-			delete t.roadNodeId;
 		}
 	}
 }

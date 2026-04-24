@@ -48,7 +48,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
       {activeTask ? (
         <section className="inventory-block">
           <h3>Transport</h3>
-          <p className="inspector-note">{activeTask.resourceType} {Math.round(activeTask.progress * 100)}%</p>
+          <p className="inspector-note">{activeTask.resourceType} {activeTask.phase}</p>
         </section>
       ) : null}
     </aside>

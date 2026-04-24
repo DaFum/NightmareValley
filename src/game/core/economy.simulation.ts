@@ -20,8 +20,8 @@ import { processProduction } from "../economy/production.logic";
 import {
   generateTransportJobs,
   assignCarrierTasks,
-  moveCarrierTasks,
-  deliverCarrierTasks,
+  advanceCarrierMovement,
+  decayFootfall,
   updateTransportMetrics
 } from "../economy/transport.logic";
 
@@ -451,17 +451,12 @@ export function simulateTick(
   next.ageOfTeeth += deltaSec;
 
   next = updateWorkersPassiveState(next, deltaSec, config);
-  next = processExtraction(next, deltaSec, config);
-  next = processProduction(next, deltaSec, config);
   next = generateTransportJobs(next, config);
   next = assignCarrierTasks(next, config);
-  next = moveCarrierTasks(next, deltaSec, config);
-  next = deliverCarrierTasks(next, config);
+  next = advanceCarrierMovement(next, deltaSec, config);
+  next = decayFootfall(next, config);
   next = updateTransportMetrics(next, config);
   next = updateWorldPulse(next);
-
-  // Apply Worker AI (movement)
-  next = updateWorkersAI(next, deltaSec, config);
 
   return next;
 }

@@ -3,6 +3,7 @@ import { GameCanvas } from '../../pixi/GameCanvas';
 import { TopHud } from '../../ui/hud/TopHud';
 import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import InspectorPanel from '../../ui/panels/InspectorPanel';
+import DebugLogisticsPanel from '../../ui/panels/DebugLogisticsPanel';
 import { HudLayout } from './HudLayout';
 
 export type GameLayoutProps = {
@@ -15,7 +16,7 @@ export type GameLayoutProps = {
 export function GameLayout({
   canvas = <GameCanvas />,
   hud = <TopHud />,
-  panels = <BuildingMenu />,
+  panels = null,
   className,
 }: GameLayoutProps) {
   return (
@@ -24,6 +25,11 @@ export function GameLayout({
         {canvas}
       </section>
       <HudLayout top={hud} right={<InspectorPanel />} bottom={panels} />
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', zIndex: 1000 }}>
+          <DebugLogisticsPanel />
+        </div>
+      )}
     </div>
   );
 }

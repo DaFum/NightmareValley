@@ -1,4 +1,6 @@
 
+import { TileTier } from "../core/game.types";
+
 export type IsoTileRenderData = {
   id: string;
   screenX: number;
@@ -6,6 +8,8 @@ export type IsoTileRenderData = {
   textureKey: string;
   chunkId: string;
   resourceDeposit?: import("../core/economy.types").ResourceInventory;
+  footfall: number;
+  tier: TileTier;
 };
 import { IsoBuildingRenderData, IsoWorkerRenderData } from "../iso/iso.types";
 

@@ -38,6 +38,8 @@ export function mapTerrainToIsoTiles(
       textureKey: `terrain_${mapTile.terrain}`,
       chunkId: "0,0", // simplified
       resourceDeposit: mapTile.resourceDeposit,
+      footfall: mapTile.footfall,
+      tier: mapTile.tier,
     });
   }
 
@@ -141,9 +143,21 @@ export function mapWorkersToIsoWorkers(
   const workers: IsoRenderWorld["workers"] = [];
 
   for (const worker of Object.values(state.workers)) {
+    const activeTask = state.transport.activeCarrierTasks[worker.id];
+    let renderX = worker.position.x;
+    let renderY = worker.position.y;
+
+    if (activeTask && activeTask.path && activeTask.path.length > 1 && activeTask.pathIndex + 1 < activeTask.path.length) {
+      const p1 = activeTask.path[activeTask.pathIndex];
+      const p2 = activeTask.path[activeTask.pathIndex + 1];
+      const prog = activeTask.stepProgress;
+      renderX = p1.x + (p2.x - p1.x) * prog;
+      renderY = p1.y + (p2.y - p1.y) * prog;
+    }
+
     const { x: sx, y: sy } = tileToScreen(
-      worker.position.x,
-      worker.position.y,
+      renderX,
+      renderY,
       TILE_WIDTH,
       TILE_HEIGHT
     );
@@ -156,11 +170,10 @@ export function mapWorkersToIsoWorkers(
     let animation: IsoRenderWorld["workers"][0]["animation"] = "idle";
     let carrying: string | undefined = undefined;
 
-    const activeTask = state.transport.activeCarrierTasks[worker.id];
     if (activeTask) {
       renderState = "carrying";
       animation = "carry";
-      carrying = activeTask.resourceType;
+      carrying = activeTask.phase === "toDropoff" ? activeTask.resourceType : undefined;
 
       const dropoffBuilding = state.buildings[activeTask.dropoffBuildingId];
       const targetBuilding = dropoffBuilding;

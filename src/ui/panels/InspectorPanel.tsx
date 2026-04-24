@@ -35,7 +35,8 @@ export default function InspectorPanel(): JSX.Element | null {
       <dl className="inspector-stats">
         <div><dt>Position</dt><dd>{tile.position.x}, {tile.position.y}</dd></div>
         <div><dt>Owner</dt><dd>{tile.ownerId ?? 'unclaimed'}</dd></div>
-        <div><dt>Road</dt><dd>{tile.roadNodeId ? 'connected' : 'none'}</dd></div>
+        <div><dt>Tier</dt><dd>{tile.tier}</dd></div>
+        <div><dt>Footfall</dt><dd>{tile.footfall}</dd></div>
       </dl>
       <section className="inventory-block">
         <h3>Deposits</h3>

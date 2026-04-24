@@ -11,10 +11,15 @@ interface AStarNode {
   parent: AStarNode | null;
 }
 
+import { MapTile } from "../core/game.types";
+import { DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
+
 export function findPathAStar(
   grid: PathingGrid,
   start: Position,
-  goal: Position
+  goal: Position,
+  state?: any,
+  tileCost?: (tile: MapTile) => number
 ): Path {
   const { width, height, nodes } = grid;
 
@@ -90,7 +95,21 @@ export function findPathAStar(
       const key = `${neighbor.x},${neighbor.y}`;
       if (closedSet.has(key)) continue;
 
-      const g = current.g + 1; // Distance to neighbor is always 1 (no diagonals)
+
+      let baseEdgeCost = 1;
+      if (tileCost && state?.territory?.tileIndex) {
+        const tileId = state.territory.tileIndex[`${neighbor.x},${neighbor.y}`];
+        if (tileId) {
+          const tile = state.territory.tiles[tileId];
+          if (tile) {
+            const costMult = tileCost(tile);
+            if (costMult === Infinity) continue;
+            baseEdgeCost *= costMult;
+          }
+        }
+      }
+
+      const g = current.g + baseEdgeCost; // Distance to neighbor
       const h = Math.abs(neighbor.x - goal.x) + Math.abs(neighbor.y - goal.y);
       const f = g + h;
 
@@ -125,7 +144,7 @@ export function findPathAStar(
   return { points: [], cost: 0, isComplete: false };
 }
 
-export function findPath(start: Position, goal: Position, state: any): Path {
+export function findPath(start: Position, goal: Position, state: any, tileCost?: (tile: MapTile) => number): Path {
   const tiles = state?.territory ? Object.values(state.territory.tiles) : [];
 
   let width = 10;
@@ -142,7 +161,12 @@ export function findPath(start: Position, goal: Position, state: any): Path {
   }
 
   const grid = createGridFromTerritory((state?.territory ?? { tiles: {} }) as TerritoryState, width, height);
-  return findPathAStar(grid, start, goal);
+  return findPathAStar(grid, start, goal, state, tileCost);
+}
+
+export function tierTileCost(tile: MapTile): number {
+  const multipliers = DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 };
+  return 1 / (multipliers[tile.tier] || 1);
 }
 
 export function calculatePathDistance(path: Path): number {

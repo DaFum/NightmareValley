@@ -12,6 +12,9 @@ export interface SimulationConfig {
   stressPerQueuedJob: number;
   stressPerActiveCarrier: number;
   maxJobBatchSize?: number;
+  footfallTierThresholds: Record<string, number>;
+  tierSpeedMultipliers: Record<string, number>;
+  footfallDecayPerTenTicks: number;
 }
 
 export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.freeze({
@@ -28,4 +31,7 @@ export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.free
   stressPerQueuedJob: 0.2,
   stressPerActiveCarrier: 0.5,
   maxJobBatchSize: 10,
+  footfallTierThresholds: { dirt: 10, cobble: 50, paved: 200 },
+  tierSpeedMultipliers: { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 },
+  footfallDecayPerTenTicks: 0.1,
 });

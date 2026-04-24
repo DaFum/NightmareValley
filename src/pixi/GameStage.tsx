@@ -5,7 +5,8 @@ import * as PIXI from 'pixi.js';
 import { IsoTerrainLayer } from './layers/IsoTerrainLayer';
 import { IsoBuildingLayer } from './layers/IsoBuildingLayer';
 import { IsoWorkerLayer } from './layers/IsoWorkerLayer';
-import IsoRoadLayer from './layers/IsoRoadLayer';
+import IsoFootfallLayer from './layers/IsoFootfallLayer';
+import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 
 import { useGameStore } from '../store/game.store';
@@ -25,7 +26,9 @@ export function GameStage() {
   const cameraX = useCameraStore((state) => state.x);
   const cameraY = useCameraStore((state) => state.y);
   const zoom = useCameraStore((state) => state.zoom);
-  const roads = useGameStore((state) => state.gameState.transport.roadNodes);
+  const isDebugSpawningWarehouse = useUIStore((state) => state.isDebugSpawningWarehouse);
+  const setDebugSpawningWarehouse = useUIStore((state) => state.setDebugSpawningWarehouse);
+  const showFootfallHeatmap = useUIStore((state) => state.showFootfallHeatmap);
   const selectBuilding = useSelectionStore((state) => state.selectBuilding);
   const selectWorker = useSelectionStore((state) => state.selectWorker);
   const selectTile = useSelectionStore((state) => state.selectTile);
@@ -117,11 +120,11 @@ export function GameStage() {
 
     const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, zoom, 64, 32);
 
-    if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
+    if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
       const playerIds = Object.keys(useGameStore.getState().gameState.players);
       const playerId = playerIds.length > 0 ? playerIds[0] : 'player_1';
-      placeBuildingAt(playerId, selectedBuildingToPlace, hit.tileId);
-      selectBuildingToPlace(null);
+      placeBuildingAt(playerId, "vaultOfDigestiveStone", hit.tileId);
+      setDebugSpawningWarehouse(false);
       return;
     }
 
@@ -138,7 +141,8 @@ export function GameStage() {
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown}>
       <IsoTerrainLayer tiles={visibleTiles} />
       <IsoResourceLayer tiles={visibleTiles} />
-      <IsoRoadLayer roads={roads} />
+      <IsoFootfallLayer tiles={visibleTiles} />
+      {showFootfallHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />
       <IsoWorkerLayer workers={world.workers} />
     </Container>
