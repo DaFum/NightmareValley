@@ -3,11 +3,22 @@ import { EconomySimulationState } from "../../game/core/economy.simulation";
 import { MapTile, TerritoryState } from "../../game/core/game.types";
 import { DEFAULT_SIMULATION_CONFIG } from "../../game/economy/balancing.constants";
 
+function makeMockTile(overrides: Partial<MapTile> = {}): MapTile {
+  return {
+    id: "t_mock",
+    position: { x: 0, y: 0 },
+    terrain: "weepingForest",
+    footfall: 0,
+    tier: "grass",
+    ...overrides,
+  };
+}
+
 describe("footfall decay and tier transitions", () => {
   const thresholds = DEFAULT_SIMULATION_CONFIG.footfallTierThresholds;
 
   it("upgrades tier correctly based on thresholds", () => {
-    const tile: MapTile = { footfall: 0, tier: "grass" } as any;
+    const tile = makeMockTile({ footfall: 0, tier: "grass" });
 
     recomputeTierFromFootfall(tile, thresholds);
     expect(tile.tier).toBe("grass");
@@ -26,7 +37,7 @@ describe("footfall decay and tier transitions", () => {
   });
 
   it("decays footfall every 10 ticks and downgrades tiers", () => {
-    const tile: MapTile = { id: "t1", footfall: 200, tier: "paved" } as any;
+    const tile = makeMockTile({ id: "t1", footfall: 200, tier: "paved" });
 
     let state: EconomySimulationState = {
       tick: 10,

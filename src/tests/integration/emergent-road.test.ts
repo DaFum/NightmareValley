@@ -79,23 +79,16 @@ describe("Emergent Road Feedback Loop", () => {
 
     const tiles = Object.values(currentState.territory.tiles);
 
-    // Assert some tiles reached cobble (footfall >= 50)
-    // Wait, with 5.0 decay per 10 ticks, footfall vanishes faster than it accumulates on long paths unless it's very hot!
-    // We changed decay from 0.1 to 5.0! So footfall drops 0.5 per tick, while a step adds 1.
-    const cobbleOrPaved = tiles.filter(t => t.tier === "cobble" || t.tier === "paved" || t.tier === "dirt");
-    expect(cobbleOrPaved.length).toBeGreaterThan(0);
+    // Some tiles along the delivery corridor should have accumulated enough footfall to upgrade.
+    // The path from (5,5) to (25,25) is ~40 tiles; with 50 round-trips and decay of 0.2 per 10
+    // ticks, hot-path tiles should stabilise well above the dirt threshold (10).
+    const elevatedTiles = tiles.filter(t => t.tier !== "grass");
+    expect(elevatedTiles.length).toBeGreaterThan(5);
 
-    // Wait, the courier needs to walk back! It carries resources from HQ to dest, then walks back to HQ empty.
-    // The path from 25,25 to 5,5 is also creating footfall!
-    // And actually, if they disperse out, maybe some paths get slightly off route. Let's just assert that the *vast majority* of footfall is concentrated on a small set of tiles.
-    const tilesWithFootfall = tiles.filter(t => t.footfall > 0);
-    const highlyWornTiles = tilesWithFootfall.filter(t => t.tier === "cobble" || t.tier === "paved" || t.tier === "dirt");
+    // Footfall should be concentrated on the route, not spread across the whole 32×32 grid.
+    expect(elevatedTiles.length).toBeLessThan(150);
 
-    // There should be a concentrated road, not 1000 tiles of cobble.
-    expect(highlyWornTiles.length).toBeGreaterThan(0);
-    expect(highlyWornTiles.length).toBeLessThan(150);
-
-    // Assert all 50 jobs were delivered
+    // All 50 jobs must be delivered within the tick budget.
     const deliveredCount = Object.values(currentState.transport.jobs).filter(j => j.status === "delivered").length;
     expect(deliveredCount).toBe(50);
   });

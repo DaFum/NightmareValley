@@ -14,27 +14,25 @@ function getCurrentPath(): string {
   return window.location.pathname || '/';
 }
 
-let historyPatched = false;
-let originalPushState: typeof history.pushState | null = null;
-let originalReplaceState: typeof history.replaceState | null = null;
-
-if (typeof window !== 'undefined' && typeof history !== 'undefined' && !historyPatched) {
-  originalPushState = history.pushState;
-  originalReplaceState = history.replaceState;
+// Use a window property as the patch guard so HMR module re-evaluation does not
+// double-patch history (module-scoped variables reset on each hot reload cycle).
+if (typeof window !== 'undefined' && typeof history !== 'undefined' && !(window as Window & { __historyPatched?: boolean }).__historyPatched) {
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
 
   history.pushState = function (...args) {
-    const result = originalPushState!.apply(this, args);
+    const result = originalPushState.apply(this, args);
     window.dispatchEvent(new Event('pushstate'));
     return result;
   };
 
   history.replaceState = function (...args) {
-    const result = originalReplaceState!.apply(this, args);
+    const result = originalReplaceState.apply(this, args);
     window.dispatchEvent(new Event('replacestate'));
     return result;
   };
 
-  historyPatched = true;
+  (window as Window & { __historyPatched?: boolean }).__historyPatched = true;
 }
 
 export function App() {

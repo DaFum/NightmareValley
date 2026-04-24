@@ -1,5 +1,6 @@
 import { BuildingId, WorkerId } from "../core/entity.ids";
 import { Position, BuildingInstance, WorkerInstance } from "../core/game.types";
+import Logger from "../../lib/logger";
 import { ResourceType, WorkerDefinition } from "../core/economy.types";
 import { EconomySimulationState, createId, distance, clamp, getNonZeroResources } from "../core/economy.simulation";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "./balancing.constants";
@@ -256,7 +257,7 @@ export function assignCarrierTasks(
 
     const pathResult = findPath(carrier.position, source.position, state, tierTileCost);
     if (!pathResult.isComplete) {
-      console.warn(`Carrier ${carrier.id} could not find path to pickup ${source.id}`);
+      Logger.debug(`Carrier ${carrier.id} could not find path to pickup ${source.id}`);
       continue;
     }
 
@@ -340,7 +341,7 @@ export function getTileAtPosition(territory: TerritoryState, pos: Position): Map
   if (!territory) return undefined;
   if (territory.tileIndex) {
     const id = territory.tileIndex[`${pos.x},${pos.y}`];
-    if (id) return territory.tiles[id];
+    return id ? territory.tiles[id] : undefined;
   }
   return territory.tiles[`tile_${pos.x}_${pos.y}`];
 }
@@ -416,8 +417,10 @@ export function advanceCarrierMovement(
       }
     }
 
-    // Has arrived at the final tile of the current path
-    if (task.pathIndex === task.path.length - 1 && task.stepProgress >= 0.999) {
+    // stepProgress accumulates fractional sub-tile distance each frame. 0.999 guards
+    // against floating-point overshoot at the final node after the while loop drains whole steps.
+    const ARRIVAL_THRESHOLD = 0.999;
+    if (task.pathIndex === task.path.length - 1 && task.stepProgress >= ARRIVAL_THRESHOLD) {
       if (task.phase === "toPickup") {
         const nextPathResult = findPath(source.position, target.position, state, tierTileCost);
         if (!nextPathResult.isComplete) {

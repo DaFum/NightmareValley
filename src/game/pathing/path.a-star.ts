@@ -18,7 +18,7 @@ export function findPathAStar(
   grid: PathingGrid,
   start: Position,
   goal: Position,
-  state?: any,
+  state?: { territory?: TerritoryState },
   tileCost?: (tile: MapTile) => number
 ): Path {
   const { width, height, nodes } = grid;
@@ -154,7 +154,7 @@ export function findPathAStar(
   return { points: [], cost: 0, isComplete: false };
 }
 
-export function findPath(start: Position, goal: Position, state: any, tileCost?: (tile: MapTile) => number): Path {
+export function findPath(start: Position, goal: Position, state: { territory?: TerritoryState }, tileCost?: (tile: MapTile) => number): Path {
   const tiles = state?.territory ? Object.values(state.territory.tiles) : [];
 
   let width = 10;

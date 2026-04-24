@@ -15,7 +15,7 @@ export interface SimulationConfig {
   footfallTierThresholds: Record<string, number>;
   tierSpeedMultipliers: Record<string, number>;
   footfallDecayPerTenTicks: number;
-  carrierEncumbrancePenalty: number; // e.g. 0.5 means 50% slower at max capacity
+  carrierEncumbrancePenalty: number; // e.g. 0.3 means 30% speed reduction at max capacity
 }
 
 export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.freeze({

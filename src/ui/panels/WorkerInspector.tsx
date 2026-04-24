@@ -55,7 +55,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
       {activeTask ? (
         <section className="inventory-block">
           <h3>Transport</h3>
-          <p className="inspector-note">{activeTask.resourceType} {activeTask.phase}</p>
+          <p className="inspector-note">{activeTask.resourceType} — {activeTask.phase === "toPickup" ? "heading to pickup" : "delivering"}</p>
         </section>
       ) : null}
     </aside>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { GameCanvas } from '../../pixi/GameCanvas';
 import { TopHud } from '../../ui/hud/TopHud';
-import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import InspectorPanel from '../../ui/panels/InspectorPanel';
 import DebugLogisticsPanel from '../../ui/panels/DebugLogisticsPanel';
 import { HudLayout } from './HudLayout';

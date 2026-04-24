@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Graphics } from '@pixi/react';
 import * as PIXI from 'pixi.js';
 import { IsoTileRenderData } from '../../game/render/render.types';
+import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
 
 type IsoFootfallHeatmapLayerProps = {
   tiles: IsoTileRenderData[];
@@ -17,7 +18,7 @@ export default function IsoFootfallHeatmapLayer({ tiles }: IsoFootfallHeatmapLay
     for (const tile of tiles) {
       if (tile.footfall <= 0) continue;
 
-      const alpha = Math.min(0.7, tile.footfall / 200);
+      const alpha = Math.min(0.7, tile.footfall / DEFAULT_SIMULATION_CONFIG.footfallTierThresholds.paved);
 
       g.beginFill(0xff0000, alpha);
 
