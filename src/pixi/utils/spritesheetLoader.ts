@@ -26,7 +26,7 @@ export async function loadSpritesheets(): Promise<void> {
     }
     for (const k of Object.keys(obj)) {
       // Skip metadata/notes blocks so JSON refs there aren't treated as
-      // spritesheet image files (e.g. metadata.buildings_sheet.file).
+      // spritesheet image files (e.g. metadata.buildings_sheet.path).
       if (k === "metadata" || k === "notes") continue;
       const v = obj[k];
       if (v && typeof v === "object") {
