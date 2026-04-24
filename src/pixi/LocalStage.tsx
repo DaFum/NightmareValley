@@ -139,6 +139,7 @@ export function LocalStage({
     if (typeof width === 'number' && typeof height === 'number') {
       app.renderer.resize(width, height);
     }
+    // NOTE: do NOT set `app.renderer.resolution` after initialization in PIXI v7
   }, [width, height, options]);
 
   return <div ref={containerRef} className={className} style={{ width: '100%', height: '100%', position: 'relative', ...style }} />;
