@@ -2,20 +2,32 @@ import { PathingGrid } from './path.types';
 
 export function buildFlowfield(goal: { x: number; y: number }, grid: PathingGrid) {
 	const { width, height, nodes } = grid;
+
+	if (!Number.isInteger(width) || width <= 0) throw new RangeError("Grid width must be a positive integer");
+	if (!Number.isInteger(height) || height <= 0) throw new RangeError("Grid height must be a positive integer");
+	if (nodes.length !== width * height) throw new RangeError("Grid nodes array length must equal width * height");
+
+	const gx = Math.floor(goal.x);
+	const gy = Math.floor(goal.y);
+
 	const dist = new Array(width * height).fill(Infinity);
-	const idx = (x: number, y: number) => y * width + x;
-	const inBounds = (x: number, y: number) => x >= 0 && x < width && y >= 0 && y < height;
+	const idx = (x: number, y: number) => Math.floor(y) * width + Math.floor(x);
+	const inBounds = (x: number, y: number) => {
+		const fx = Math.floor(x);
+		const fy = Math.floor(y);
+		return fx >= 0 && fx < width && fy >= 0 && fy < height;
+	};
 
 	const q: Array<{ x: number; y: number }> = [];
-	if (inBounds(goal.x, goal.y)) {
-		const gi = idx(goal.x, goal.y);
+	if (inBounds(gx, gy)) {
+		const gi = idx(gx, gy);
 		if (nodes[gi] !== 0) {
 			dist[gi] = 0;
-			q.push({ x: goal.x, y: goal.y });
+			q.push({ x: gx, y: gy });
 		} else {
 			// goal cell is blocked — find nearest walkable fallback (BFS)
 			const visited = new Array(width * height).fill(false);
-			const fbq: Array<{ x: number; y: number }> = [{ x: goal.x, y: goal.y }];
+			const fbq: Array<{ x: number; y: number }> = [{ x: gx, y: gy }];
 			visited[gi] = true;
 			let fhead = 0;
 			let found: { x: number; y: number } | null = null;

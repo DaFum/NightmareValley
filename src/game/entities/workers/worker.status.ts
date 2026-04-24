@@ -1,6 +1,6 @@
 import { WorkerInstance } from '../../core/game.types';
 
-export function workerStatus(w: WorkerInstance) {
+export function workerStatus(w: WorkerInstance | null | undefined) {
 	if (!w) return 'missing';
 	if (w.isIdle) return 'idle';
 	if (w.currentJob) return 'working';

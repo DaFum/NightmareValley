@@ -2,7 +2,7 @@
 import React from 'react';
 import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 
-// @ts-ignore
+
 jest.resetModules();
 
 describe('RootLayout render', () => {

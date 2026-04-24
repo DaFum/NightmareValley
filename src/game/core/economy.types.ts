@@ -113,6 +113,9 @@ export interface BuildingDefinition {
   inputPriority?: ResourceType[];
   outputPriority?: ResourceType[];
   description: string;
+  widthTiles?: number;
+  heightTiles?: number;
+  constructionTime?: number;
 }
 
 export interface WorkerDefinition {

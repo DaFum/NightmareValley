@@ -12,7 +12,7 @@ export function selectTileAtScreen(
 	return screenToIsoTile(screenX, screenY, cameraX, cameraY, zoom, tileWidth, tileHeight);
 }
 
-export function selectTilesInRect(
+export function selectTileRangeBetween(
 	x1: number,
 	y1: number,
 	x2: number,

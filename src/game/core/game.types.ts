@@ -67,6 +67,7 @@ export interface MapTile {
 
 export interface TerritoryState {
   tiles: Record<TileId, MapTile>;
+  tileIndex?: Record<string, TileId>;
 }
 
 export type DoctrineType =

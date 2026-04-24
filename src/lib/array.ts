@@ -4,15 +4,15 @@ export function unique<T>(arr: T[]): T[] {
 }
 
 export function flatten<T>(arr: T[][]): T[] {
-	return arr.reduce((acc, v) => acc.concat(v), [] as T[]);
+	return arr.flat();
 }
 
 export function head<T>(arr: T[]): T | undefined {
-	return arr && arr.length > 0 ? arr[0] : undefined;
+	return arr.length > 0 ? arr[0] : undefined;
 }
 
 export function tail<T>(arr: T[]): T[] {
-	return arr && arr.length > 1 ? arr.slice(1) : [];
+	return arr.length > 0 ? arr.slice(1) : [];
 }
 
 export function insertAt<T>(arr: T[], index: number, item: T): T[] {
@@ -22,6 +22,7 @@ export function insertAt<T>(arr: T[], index: number, item: T): T[] {
 }
 
 export function removeAt<T>(arr: T[], index: number): T[] {
+	if (!Number.isInteger(index) || index < 0 || index >= arr.length) throw new RangeError("Index out of bounds");
 	const copy = arr.slice();
 	copy.splice(index, 1);
 	return copy;

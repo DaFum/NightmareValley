@@ -4,7 +4,7 @@ import { TerrainType } from "../core/economy.types";
 import { createId } from "../core/economy.simulation";
 
 export function parseTiledMap(mapData: TiledMapData): TerritoryState {
-  const territory: TerritoryState = { tiles: {} };
+  const territory: TerritoryState = { tiles: {}, tileIndex: {} };
 
   // Helper to resolve terrain type from gid
   const resolveTerrainFromGid = (gid: number): TerrainType => {
@@ -42,6 +42,9 @@ export function parseTiledMap(mapData: TiledMapData): TerritoryState {
           position: { x, y },
           terrain,
         };
+        if (territory.tileIndex) {
+          territory.tileIndex[`${x},${y}`] = tileId as any;
+        }
       }
     }
   }

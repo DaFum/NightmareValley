@@ -1,6 +1,6 @@
 import { screenToIsoTile } from './iso.inverse';
 
-export function snapScreenToTile(
+export function pickTileFromScreen(
 	screenX: number,
 	screenY: number,
 	cameraX: number,

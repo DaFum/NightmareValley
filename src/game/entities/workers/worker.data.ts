@@ -2,7 +2,8 @@ import { getWorkerDefinition, WORKER_DEFINITIONS } from '../../core/economy.data
 
 export function getWorkerDef(type: string) {
 	try {
-		return getWorkerDefinition(type as any);
+		const def = getWorkerDefinition(type as any);
+		return def === undefined ? null : def;
 	} catch (e) {
 		return null;
 	}
