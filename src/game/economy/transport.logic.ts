@@ -64,7 +64,13 @@ export function generateTransportJobs(
     if (created >= config.maxJobsPerTick) break;
 
     for (const resourceType of getNonZeroResources(source.outputBuffer)) {
-      const amountAvailable = getResourceAmount(source.outputBuffer, resourceType);
+      let totalReserved = 0;
+      for (const j of Object.values(state.transport.jobs)) {
+        if (j.fromBuildingId === source.id && j.resourceType === resourceType && j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled") {
+          totalReserved += j.reserved;
+        }
+      }
+      const amountAvailable = getResourceAmount(source.outputBuffer, resourceType) - totalReserved;
       if (amountAvailable <= 0) continue;
 
       const targets = findTargetBuildingsForResource(state, source, resourceType, config);
@@ -367,7 +373,7 @@ export function advanceCarrierMovement(
         const wasQueued = job.status === "queued";
         job.status = "lost";
         if (wasQueued) {
-          state.transport.queuedJobCount = (state.transport.queuedJobCount || 0) + 1;
+          state.transport.queuedJobCount = Math.max(0, (state.transport.queuedJobCount || 0) - 1);
         }
         job.reserved = Math.max(0, job.reserved - task.amount);
       }
@@ -413,8 +419,6 @@ export function advanceCarrierMovement(
     // Has arrived at the final tile of the current path
     if (task.pathIndex === task.path.length - 1 && task.stepProgress >= 0.999) {
       if (task.phase === "toPickup") {
-        source.outputBuffer = removeResource(source.outputBuffer, task.resourceType, task.amount);
-
         const nextPathResult = findPath(source.position, target.position, state, tierTileCost);
         if (!nextPathResult.isComplete) {
           job.status = "lost";
@@ -423,6 +427,11 @@ export function advanceCarrierMovement(
           delete state.transport.activeCarrierTasks[workerId];
           continue;
         }
+
+        source.outputBuffer = removeResource(source.outputBuffer, task.resourceType, task.amount);
+
+        // Clear reservation so source can accept new jobs
+        job.reserved = Math.max(0, job.reserved - task.amount);
 
         task.phase = "toDropoff";
         task.path = nextPathResult.points;
@@ -437,7 +446,6 @@ export function advanceCarrierMovement(
 
         job.delivered += task.amount;
         job.status = "delivered";
-        job.reserved = Math.max(0, job.reserved - task.amount);
 
         carrier.isIdle = true;
         delete state.transport.activeCarrierTasks[workerId];
@@ -470,7 +478,7 @@ export function updateTransportMetrics(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
-  const queued = Object.values(state.transport.jobs).filter((j) => j.status === "queued").length;
+  const queued = state.transport.queuedJobCount ?? 0;
   const active = Object.keys(state.transport.activeCarrierTasks).length;
 
   state.transport.networkStress =

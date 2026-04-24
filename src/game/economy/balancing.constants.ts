@@ -34,6 +34,6 @@ export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.free
   maxJobBatchSize: 10,
   footfallTierThresholds: { dirt: 10, cobble: 50, paved: 200 },
   tierSpeedMultipliers: { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 },
-  footfallDecayPerTenTicks: 0.1,
+  footfallDecayPerTenTicks: 0.2,
   carrierEncumbrancePenalty: 0.3,
 });

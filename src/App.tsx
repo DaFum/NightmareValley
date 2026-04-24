@@ -14,26 +14,34 @@ function getCurrentPath(): string {
   return window.location.pathname || '/';
 }
 
+let historyPatched = false;
+let originalPushState: typeof history.pushState | null = null;
+let originalReplaceState: typeof history.replaceState | null = null;
+
+if (typeof window !== 'undefined' && typeof history !== 'undefined' && !historyPatched) {
+  originalPushState = history.pushState;
+  originalReplaceState = history.replaceState;
+
+  history.pushState = function (...args) {
+    const result = originalPushState!.apply(this, args);
+    window.dispatchEvent(new Event('pushstate'));
+    return result;
+  };
+
+  history.replaceState = function (...args) {
+    const result = originalReplaceState!.apply(this, args);
+    window.dispatchEvent(new Event('replacestate'));
+    return result;
+  };
+
+  historyPatched = true;
+}
+
 export function App() {
   const [path, setPath] = React.useState(getCurrentPath);
 
   React.useEffect(() => {
     const updatePath = () => setPath(getCurrentPath());
-
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-
-    history.pushState = function (...args) {
-      const result = originalPushState.apply(this, args);
-      window.dispatchEvent(new Event('pushstate'));
-      return result;
-    };
-
-    history.replaceState = function (...args) {
-      const result = originalReplaceState.apply(this, args);
-      window.dispatchEvent(new Event('replacestate'));
-      return result;
-    };
 
     window.addEventListener('popstate', updatePath);
     window.addEventListener('hashchange', updatePath);
@@ -44,8 +52,6 @@ export function App() {
       window.removeEventListener('hashchange', updatePath);
       window.removeEventListener('pushstate', updatePath);
       window.removeEventListener('replacestate', updatePath);
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
     };
   }, []);
 

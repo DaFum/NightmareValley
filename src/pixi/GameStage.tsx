@@ -142,6 +142,14 @@ export function GameStage() {
       return;
     }
 
+    if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
+      const playerIds = Object.keys(useGameStore.getState().gameState.players);
+      const playerId = playerIds.length > 0 ? playerIds[0] : 'player_1';
+      placeBuildingAt(playerId, selectedBuildingToPlace, hit.tileId);
+      selectBuildingToPlace(null);
+      return;
+    }
+
     if (hit.buildingId) {
       selectBuilding(hit.buildingId);
     } else if (hit.workerId) {

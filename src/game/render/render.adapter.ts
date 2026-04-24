@@ -171,12 +171,18 @@ export function mapWorkersToIsoWorkers(
     let carrying: string | undefined = undefined;
 
     if (activeTask) {
-      renderState = "carrying";
-      animation = "carry";
-      carrying = activeTask.phase === "toDropoff" ? activeTask.resourceType : undefined;
+      if (activeTask.phase === "toPickup") {
+        renderState = "walking";
+        animation = "walk";
+        carrying = undefined;
+      } else {
+        renderState = "carrying";
+        animation = "carry";
+        carrying = activeTask.resourceType;
+      }
 
-      const dropoffBuilding = state.buildings[activeTask.dropoffBuildingId];
-      const targetBuilding = dropoffBuilding;
+      const targetBuildingId = activeTask.phase === "toPickup" ? activeTask.pickupBuildingId : activeTask.dropoffBuildingId;
+      const targetBuilding = state.buildings[targetBuildingId];
 
       if (targetBuilding) {
         const dx = targetBuilding.position.x - worker.position.x;
