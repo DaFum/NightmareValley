@@ -11,6 +11,7 @@ import { BuildingType, ResourceInventory, WorkerType } from "../game/core/econom
 import { BuildingInstance, Position, WorkerInstance } from "../game/core/game.types";
 import { loadInitialMap } from "../game/map/map.loader";
 import { createTransportJob, buildingAcceptsResource } from "../game/economy/transport.logic";
+import { deepClone } from "../lib/deep-clone";
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -41,7 +42,7 @@ const carrier3Id = createId('wrk');
 const initialTerritory = loadInitialMap();
 
 function prepareInitialTerritory(ownerId: string) {
-  const territory = JSON.parse(JSON.stringify(initialTerritory)) as typeof initialTerritory;
+  const territory = deepClone(initialTerritory);
   const ownedRadius = 13;
   const start = { x: 7, y: 7 };
   const ownedTileIds: string[] = [];

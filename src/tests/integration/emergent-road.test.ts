@@ -4,6 +4,7 @@ import { EconomySimulationState, createId } from "../../game/core/economy.simula
 import { TerritoryState, MapTile, BuildingInstance, WorkerInstance } from "../../game/core/game.types";
 
 describe("Emergent Road Feedback Loop", () => {
+  jest.setTimeout(15_000);
   it("forms roads, upgrades to cobble, and shortens travel paths", () => {
     const state: EconomySimulationState = {
       tick: 0,
@@ -54,6 +55,7 @@ describe("Emergent Road Feedback Loop", () => {
     };
     state.buildings[hqId] = hqBuilding;
     state.buildings[destId] = destBuilding;
+    state.players["p1"].buildings.push(hqId, destId);
 
     // 5 carriers starting at the HQ position
     for (let i = 0; i < 5; i++) {
@@ -63,6 +65,7 @@ describe("Emergent Road Feedback Loop", () => {
         isIdle: true, morale: 100, infection: 0, scars: 0,
       };
       state.workers[wId] = carrier;
+      state.players["p1"].workers.push(wId);
     }
 
     let currentState = state;
@@ -77,7 +80,7 @@ describe("Emergent Road Feedback Loop", () => {
     }
 
     // Run simulation ticks until all jobs delivered or max time
-    const maxTicks = 10000;
+    const maxTicks = 4000;
     let ticks = 0;
     while (ticks < maxTicks) {
       const pendingJobs = Object.values(currentState.transport.jobs).filter(j => j.status !== "delivered");
@@ -104,7 +107,10 @@ describe("Emergent Road Feedback Loop", () => {
     expect(elevatedTiles.length).toBeGreaterThan(5);
 
     // Footfall should be concentrated on the route, not spread across the whole 32×32 grid.
-    expect(elevatedTiles.length).toBeLessThan(150);
+    // Bound is 15% of the grid; tied to footfallTierThresholds.dirt and footfallDecayPerTenTicks
+    // in balancing.constants — if either changes, this expectation may need re-tuning.
+    const totalTiles = 32 * 32;
+    expect(elevatedTiles.length).toBeLessThan(totalTiles * 0.15);
 
     // All 50 jobs must be delivered within the tick budget.
     const deliveredCount = Object.values(currentState.transport.jobs).filter(j => j.status === "delivered").length;

@@ -14,6 +14,8 @@ interface AStarNode {
 import { MapTile } from "../core/game.types";
 import { DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 
+const DEFAULT_TIER_MULTIPLIERS = { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 };
+
 export function findPathAStar(
   grid: PathingGrid,
   start: Position,
@@ -43,7 +45,7 @@ export function findPathAStar(
   // scaled heuristic as neighbor nodes, keeping A* admissible with tier speed multipliers.
   let minEdgeCost = 1.0;
   if (tileCost) {
-    const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || { paved: 2.0 }));
+    const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || DEFAULT_TIER_MULTIPLIERS));
     minEdgeCost = 1 / (maxMultiplier || 1);
   }
 
@@ -175,7 +177,7 @@ export function findPath(start: Position, goal: Position, state: { territory?: T
 }
 
 export function tierTileCost(tile: MapTile): number {
-  const multipliers = DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 };
+  const multipliers = DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || DEFAULT_TIER_MULTIPLIERS;
   return 1 / (multipliers[tile.tier] || 1);
 }
 

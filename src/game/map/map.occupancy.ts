@@ -10,8 +10,7 @@ export class Occupancy {
 		return !!t.buildingId;
 	}
 
-	reserve(tileId: string, buildingId?: BuildingId) {
-		if (!buildingId) return false;
+	reserve(tileId: string, buildingId: BuildingId) {
 		if (this.isOccupied(tileId)) return false;
 		const t = this.territory.tiles[tileId];
 		if (t) {

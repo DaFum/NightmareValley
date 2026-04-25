@@ -1,6 +1,9 @@
 import React from 'react';
 import { useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
+import type { ResourceType } from '../../game/core/economy.types';
+
+const DEBUG_RESOURCE: ResourceType = 'sinewTimber';
 
 export default function DebugLogisticsPanel() {
   const isDebugSpawningWarehouse = useUIStore(state => state.isDebugSpawningWarehouse);
@@ -9,7 +12,7 @@ export default function DebugLogisticsPanel() {
   const toggleFootfallHeatmap = useUIStore(state => state.toggleFootfallHeatmap);
 
   const activeCarrierTasksCount = useGameStore(state => Object.keys(state.gameState.transport.activeCarrierTasks).length);
-  const queuedJobsCount = useGameStore(state => Object.values(state.gameState.transport.jobs).filter(j => j.status === 'queued').length);
+  const queuedJobsCount = useGameStore(state => state.gameState.transport.queuedJobCount ?? 0);
   const totalFootfall = useGameStore(state => Object.values(state.gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0));
 
   const dispatchDebugJobsFromHQ = useGameStore(state => state.dispatchDebugJobsFromHQ);
@@ -31,10 +34,10 @@ export default function DebugLogisticsPanel() {
           {isDebugSpawningWarehouse ? 'Cancel Spawn' : 'Spawn warehouse at cursor'}
         </button>
         <button
-          onClick={() => dispatchDebugJobsFromHQ(10, 'sinewTimber')}
+          onClick={() => dispatchDebugJobsFromHQ(10, DEBUG_RESOURCE)}
           style={{ backgroundColor: '#333', color: 'white', padding: '0.5rem', border: '1px solid #555', cursor: 'pointer' }}
         >
-          Dispatch 10 logs to nearest warehouse
+          {`Dispatch 10 ${DEBUG_RESOURCE}`}
         </button>
         <button
           onClick={resetFootfall}

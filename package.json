@@ -35,7 +35,7 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "moduleNameMapper": {
-      ".*vite-asset-loader.*": "<rootDir>/src/pixi/utils/__mocks__/vite-asset-loader.ts"
+      "(.*/)?vite-asset-loader$": "<rootDir>/src/pixi/utils/__mocks__/vite-asset-loader.ts"
     }
   }
 }

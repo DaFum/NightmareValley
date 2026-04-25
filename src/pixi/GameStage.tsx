@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { Container } from '@pixi/react';
 import * as PIXI from 'pixi.js';
@@ -89,11 +89,10 @@ export function GameStage() {
   const isBrowser = typeof window !== 'undefined';
   const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
   const [viewportHeight, setViewportHeight] = React.useState(isBrowser ? window.innerHeight : 768);
-  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isBrowser) return;
-    const el = containerRef.current ?? document.documentElement;
+    const el = document.documentElement;
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;

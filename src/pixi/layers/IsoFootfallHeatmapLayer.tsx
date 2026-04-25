@@ -15,15 +15,16 @@ export default function IsoFootfallHeatmapLayer({ tiles }: IsoFootfallHeatmapLay
   const drawHeatmap = useCallback((g: PIXI.Graphics) => {
     g.clear();
 
-    const pavedThreshold = DEFAULT_SIMULATION_CONFIG.footfallTierThresholds.paved;
+    const pavedThreshold = Math.max(1, DEFAULT_SIMULATION_CONFIG.footfallTierThresholds.paved);
 
     // Group tiles by quantized alpha bucket to minimise beginFill calls
     const buckets: IsoTileRenderData[][] = Array.from({ length: HEATMAP_BUCKETS }, () => []);
 
     for (const tile of tiles) {
       if (tile.footfall <= 0) continue;
-      const alpha = Math.min(0.7, tile.footfall / pavedThreshold);
-      const bucketIdx = Math.min(HEATMAP_BUCKETS - 1, Math.floor(alpha / 0.7 * HEATMAP_BUCKETS));
+      const tileFootfall = Math.max(0, tile.footfall);
+      const alpha = Math.min(0.7, tileFootfall / pavedThreshold);
+      const bucketIdx = Math.min(HEATMAP_BUCKETS - 1, Math.max(0, Math.floor(alpha / 0.7 * HEATMAP_BUCKETS)));
       buckets[bucketIdx].push(tile);
     }
 

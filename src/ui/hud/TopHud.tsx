@@ -17,7 +17,12 @@ export function TopHud() {
   });
 
   const [minimalHud, setMinimalHud] = useState<boolean>(() => {
-    try { return !!localStorage.getItem('ui:minimalHud'); } catch { return false; }
+    try {
+      const current = localStorage.getItem('ui:minimalHud');
+      if (current !== null) return !!current;
+      // Migrate from legacy key if the new key has not been set yet.
+      return !!localStorage.getItem('ui:hudHidden');
+    } catch { return false; }
   });
 
   useEffect(() => {
@@ -46,14 +51,14 @@ export function TopHud() {
         </section>
 
         <nav className="hud-controls" aria-label="Game controls">
-          <button className={`hud-button hud-button--primary ${isRunning ? 'active' : ''}`} onClick={togglePlayPause}>{isRunning ? 'Pause' : 'Play'}</button>
+          <button className={`hud-button hud-button--primary ${isRunning ? 'active' : ''}`} aria-pressed={isRunning} onClick={togglePlayPause}>{isRunning ? 'Pause' : 'Play'}</button>
           <div className="hud-segment" aria-label="Simulation speed">
             <button className={`hud-button ${tickRate === 1 ? 'active' : ''}`} onClick={() => setTickRate(1)}>1x</button>
             <button className={`hud-button ${tickRate === 2 ? 'active' : ''}`} onClick={() => setTickRate(2)}>2x</button>
             <button className={`hud-button ${tickRate === 5 ? 'active' : ''}`} onClick={() => setTickRate(5)}>5x</button>
           </div>
-          <button className={`hud-button ${focusMode ? 'active' : ''}`} onClick={() => setFocusMode(s => !s)} title="Increase world contrast">Focus</button>
-          <button className={`hud-button ${minimalHud ? 'active' : ''}`} onClick={() => setMinimalHud(s => !s)} title="Collapse secondary HUD panels">{minimalHud ? 'Full HUD' : 'Minimal'}</button>
+          <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={() => setFocusMode(s => !s)} title="Increase world contrast">Focus</button>
+          <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} onClick={() => setMinimalHud(s => !s)} title={minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels'}>{minimalHud ? 'Full HUD' : 'Minimal'}</button>
           <FpsCounter />
           <TransportIndicator />
         </nav>

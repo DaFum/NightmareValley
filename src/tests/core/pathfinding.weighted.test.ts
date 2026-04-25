@@ -9,7 +9,7 @@ describe("weighted A* pathfinding", () => {
     // P P P T .
     // . . . . .
     // Start (0,0), Target (3,2)
-    // Direct grass route cost: 5 steps × 1.0 = 5.0
+    // Direct grass route cost: 4 grass steps × 1.0 + 1 paved step × 0.5 = 4.5
     // Paved detour cost: 5 steps × 0.5 = 2.5  (preferred)
 
     const tiles: Record<string, MapTile> = {};
@@ -55,9 +55,8 @@ describe("weighted A* pathfinding", () => {
     expect(path.points).toContainEqual({ x: 3, y: 2 });
     // The direct grass shortcut through (1,0),(2,0),(3,0) should NOT be taken
     const grassShortcut = [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }];
-    const pathStr = JSON.stringify(path.points);
     for (const pt of grassShortcut) {
-      expect(pathStr).not.toContain(JSON.stringify(pt));
+      expect(path.points).not.toContainEqual(pt);
     }
   });
 });

@@ -67,12 +67,19 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
 
       {upgradeCost ? (
         <div className="cost-row">
-          {Object.entries(upgradeCost.resources).map(([resource, amount]) => (
-            <span key={resource} className="resource-pill">
-              <img src={imageMap[`resources/${resource}.png`]} alt="" aria-hidden="true" />
-              {amount}
-            </span>
-          ))}
+          {Object.entries(upgradeCost.resources).map(([resource, amount]) => {
+            const imgSrc = imageMap[`resources/${resource}.png`];
+            return (
+              <span key={resource} className="resource-pill" title={resource}>
+                {imgSrc ? (
+                  <img src={imgSrc} alt="" aria-hidden="true" />
+                ) : (
+                  <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
+                )}
+                {amount}
+              </span>
+            );
+          })}
         </div>
       ) : (
         <p className="inspector-note">Maximum level reached.</p>
@@ -93,12 +100,19 @@ function InventoryBlock({ title, inventory }: InventoryBlockProps) {
       <h3>{title}</h3>
       {entries.length ? (
         <div className="cost-row">
-          {entries.map(([resource, amount]) => (
-            <span key={resource} className="resource-pill">
-              <img src={imageMap[`resources/${resource}.png`]} alt="" aria-hidden="true" />
-              {amount}
-            </span>
-          ))}
+          {entries.map(([resource, amount]) => {
+            const imgSrc = imageMap[`resources/${resource}.png`];
+            return (
+              <span key={resource} className="resource-pill" title={resource}>
+                {imgSrc ? (
+                  <img src={imgSrc} alt="" aria-hidden="true" />
+                ) : (
+                  <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
+                )}
+                {amount}
+              </span>
+            );
+          })}
         </div>
       ) : (
         <p className="inspector-note">empty</p>

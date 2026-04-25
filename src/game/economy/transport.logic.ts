@@ -95,7 +95,8 @@ export function generateTransportJobs(
       let totalReserved = 0;
       for (const j of Object.values(state.transport.jobs)) {
         if (j.fromBuildingId === source.id && j.resourceType === resourceType && j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled") {
-          totalReserved += j.reserved;
+          // Queued jobs have reserved=0 but their amount represents pending demand on the source.
+          totalReserved += j.status === "queued" ? j.amount : j.reserved;
         }
       }
       const amountAvailable = getResourceAmount(source.outputBuffer, resourceType) - totalReserved;
@@ -425,7 +426,14 @@ export function advanceCarrierMovement(
     }
 
     const currentPos = task.path[task.pathIndex];
-    if (!currentPos) continue;
+    if (!currentPos) {
+      Logger.debug(`Carrier ${workerId} has no current position for job ${task.jobId}; marking lost`);
+      job.status = "lost";
+      job.reserved = Math.max(0, job.reserved - task.amount);
+      carrier.isIdle = true;
+      delete state.transport.activeCarrierTasks[workerId];
+      continue;
+    }
 
     // Use the *destination* tile's speed to match A*'s cost model: cost(A→B) = 1/multiplier[B].
     const destPos = task.pathIndex + 1 < task.path.length
@@ -438,7 +446,7 @@ export function advanceCarrierMovement(
       const workerDef = WORKER_DEFINITIONS[carrier.type];
       const capacity = workerDef ? workerDef.carryCapacity : 1;
       const loadRatio = clamp(task.amount / capacity, 0, 1);
-      const encumbranceMultiplier = 1 - (loadRatio * config.carrierEncumbrancePenalty);
+      const encumbranceMultiplier = clamp(1 - (loadRatio * config.carrierEncumbrancePenalty), 0.05, 1);
       speedMult *= encumbranceMultiplier;
     }
 

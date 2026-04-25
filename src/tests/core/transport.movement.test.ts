@@ -153,6 +153,7 @@ describe("transport.movement", () => {
     expect(state.buildings[srcId].outputBuffer.sinewTimber).toBe(0);
 
     // Force arrive at dropoff
+    expect(taskAfterPickup.path[taskAfterPickup.path.length - 1]).toEqual({ x: 0, y: 0 });
     taskAfterPickup.pathIndex = taskAfterPickup.path.length - 1;
     taskAfterPickup.stepProgress = 1.0;
 
