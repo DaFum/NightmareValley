@@ -12,9 +12,7 @@ export function tickWorld(
 	const scenarioMultiplier = world.scenarioProfile === 'hardcore' ? 0.9 : world.scenarioProfile === 'sandbox' ? 1.15 : 1;
 	const biomeModifier = Number.isFinite(world.biomeModifier) && (world.biomeModifier ?? 0) > 0 ? (world.biomeModifier as number) : 1;
 	const temporaryProductionBoost = world.temporaryModifiers?.productionBoost ?? 1;
-	const temporaryTransportBoost = world.temporaryModifiers?.transportBoost ?? 1;
-	const temporaryBoost = (temporaryProductionBoost + temporaryTransportBoost) / 2;
-	const effectiveDelta = safeDelta * scenarioMultiplier * biomeModifier * temporaryBoost;
+	const effectiveDelta = safeDelta * scenarioMultiplier * biomeModifier * temporaryProductionBoost;
 	const next = simulateTick(world, effectiveDelta, config);
 	const eventDue = Math.floor(world.ageOfTeeth / 120) < Math.floor(next.ageOfTeeth / 120);
 	const expiredTemporary = world.temporaryModifiers?.expiresAtAge

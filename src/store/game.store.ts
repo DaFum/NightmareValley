@@ -232,6 +232,7 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
   if (!player) return state;
   return {
     ...state,
+    scenarioProfile: profile,
     players: {
       ...state.players,
       [player1Id]: {
@@ -309,7 +310,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
-      set({ gameState: { ...gameState, ...nextState } });
+      set({ gameState: nextState as WorldState });
     } catch (error) {
       console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
@@ -320,7 +321,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = upgradeBuilding(gameState, ownerId, buildingId);
-      set({ gameState: { ...gameState, ...nextState } });
+      set({ gameState: nextState as WorldState });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });
@@ -331,7 +332,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = connectBuildingToRoad(gameState, buildingId);
-      set({ gameState: { ...gameState, ...nextState } });
+      set({ gameState: nextState as WorldState });
     } catch (error) {
       console.error("Failed to connect building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_CONNECT_FAILURE', 'connectBuildingAt', get().gameState.tick) });
