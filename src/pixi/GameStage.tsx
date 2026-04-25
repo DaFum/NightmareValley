@@ -17,9 +17,18 @@ import { useRenderWorld } from './hooks/useRenderWorld';
 import { useIsoCamera } from './hooks/useIsoCamera';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSelectionInput } from './hooks/useSelectionInput';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
+
+const CHUNK_SCREEN_SIZE = 512;
+// Starting buildings are placed at tiles (10,10)-(14,10); center on (12,10).
+// Uses ISO_TILE_WIDTH/HEIGHT (64/32) matching render.adapter.ts screen coords.
+const START_TILE = { x: 12, y: 10 };
+const START_SCREEN_X = (START_TILE.x - START_TILE.y) * (ISO_TILE_WIDTH / 2);
+const START_SCREEN_Y = (START_TILE.x + START_TILE.y) * (ISO_TILE_HEIGHT / 2);
 
 export function GameStage() {
   const setRunning = useGameStore((state) => state.setRunning);
+  const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
   const cameraX = useCameraStore((state) => state.x);
   const cameraY = useCameraStore((state) => state.y);
   const zoom = useCameraStore((state) => state.zoom);
@@ -34,10 +43,18 @@ export function GameStage() {
     // Auto-start simulation in an idempotent way.
     // This avoids double-toggle issues under React StrictMode remounting.
     setRunning(true);
+
+    // Center the camera on the starting tile so the starting area is in view.
+    // viewportHeight * (0.5 - 0.42) corrects for centerY = height * 0.42.
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+    const initialCameraX = -START_SCREEN_X;
+    const initialCameraY = Math.round(vh * 0.08 - START_SCREEN_Y);
+    setCameraPosition(initialCameraX, initialCameraY);
+
     return () => {
       setRunning(false);
     };
-  }, [setRunning]);
+  }, [setRunning, setCameraPosition]);
 
   const isBrowser = typeof window !== 'undefined';
   const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
@@ -49,8 +66,9 @@ export function GameStage() {
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setViewportWidth(Math.round(width));
-        setViewportHeight(Math.round(height));
+        // Ignore zero-dimension reports from headless/hidden environments.
+        if (width > 0) setViewportWidth(Math.round(width));
+        if (height > 0) setViewportHeight(Math.round(height));
       }
     });
     observer.observe(el);
@@ -64,16 +82,17 @@ export function GameStage() {
   const lodLevel: 'full' | 'medium' | 'low' = zoom >= 1.1 ? 'full' : zoom >= 0.75 ? 'medium' : 'low';
   const drawHeatmap = showFootfallHeatmap && lodLevel !== 'low';
   const drawWorkers = lodLevel !== 'low' || world.workers.length <= 120;
-  const CHUNK_SCREEN_SIZE = 512;
-  const chunkKey = (x: number, y: number) => `${Math.floor(x / CHUNK_SCREEN_SIZE)},${Math.floor(y / CHUNK_SCREEN_SIZE)}`;
 
+  // Tile screen positions are static after map load; rebuild when tiles change to handle map reloads.
+  // Stores array indices instead of IDs to avoid O(N) map creation per frame.
   const chunkIndex = useMemo(() => {
-    const grouped = new Map<string, typeof world.tiles>();
-    for (const tile of world.tiles) {
-      const key = chunkKey(tile.screenX, tile.screenY);
-      const bucket = grouped.get(key);
-      if (bucket) bucket.push(tile);
-      else grouped.set(key, [tile]);
+    const grouped = new Map<string, number[]>();
+    for (let i = 0; i < world.tiles.length; i++) {
+      const tile = world.tiles[i];
+      const key = `${Math.floor(tile.screenX / CHUNK_SCREEN_SIZE)},${Math.floor(tile.screenY / CHUNK_SCREEN_SIZE)}`;
+      const indices = grouped.get(key);
+      if (indices) indices.push(i);
+      else grouped.set(key, [i]);
     }
     return grouped;
   }, [world.tiles]);
@@ -88,13 +107,14 @@ export function GameStage() {
     const maxChunkX = Math.floor(maxX / CHUNK_SCREEN_SIZE);
     const minChunkY = Math.floor(minY / CHUNK_SCREEN_SIZE);
     const maxChunkY = Math.floor(maxY / CHUNK_SCREEN_SIZE);
-    const selected: typeof world.tiles = [];
+    const selected: (typeof world.tiles)[number][] = [];
 
     for (let cx = minChunkX; cx <= maxChunkX; cx++) {
       for (let cy = minChunkY; cy <= maxChunkY; cy++) {
-        const bucket = chunkIndex.get(`${cx},${cy}`);
-        if (!bucket) continue;
-        for (const tile of bucket) {
+        const indices = chunkIndex.get(`${cx},${cy}`);
+        if (!indices) continue;
+        for (const i of indices) {
+          const tile = world.tiles[i];
           if (
             tile.screenX >= minX &&
             tile.screenX <= maxX &&
@@ -107,7 +127,7 @@ export function GameStage() {
       }
     }
     return selected;
-  }, [cameraX, cameraY, centerX, centerY, chunkIndex, lodLevel, viewportHeight, viewportWidth, zoom]);
+  }, [cameraX, cameraY, centerX, centerY, chunkIndex, lodLevel, viewportHeight, viewportWidth, zoom, world.tiles]);
   const hitArea = useMemo(() => new PIXI.Rectangle(
     (-centerX - cameraX) / zoom,
     (-centerY - cameraY) / zoom,

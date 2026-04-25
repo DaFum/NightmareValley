@@ -1,9 +1,8 @@
+import React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
-
-import React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 
 const resourceFileByLabel: Record<string, string> = {
   Teeth: 'resources/toothPlanks.png',
@@ -29,14 +28,17 @@ const signedCompactFormatter = new Intl.NumberFormat(undefined, {
 type TrendMap = Partial<Record<ResourceType, number>>;
 
 export function ResourceBar() {
-  const ageOfTeeth = useGameStore((state) => state.gameState.ageOfTeeth);
-  const buildings = useGameStore((state) => state.gameState.buildings);
-  const transport = useGameStore((state) => state.gameState.transport);
-  const stock = useGameStore(useShallow((state) => {
-    const playerIds = Object.keys(state.gameState.players);
-    if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock;
-    return {};
-  }));
+  const { ageOfTeeth, buildings, transport, stock } = useGameStore(
+    useShallow((state) => {
+      const playerIds = Object.keys(state.gameState.players);
+      return {
+        ageOfTeeth: state.gameState.ageOfTeeth,
+        buildings: state.gameState.buildings,
+        transport: state.gameState.transport,
+        stock: playerIds.length > 0 ? state.gameState.players[playerIds[0]].stock : {},
+      };
+    })
+  );
   const trendRef = React.useRef<{ age: number; stock: TrendMap } | null>(null);
   const [trendPerMin, setTrendPerMin] = React.useState<TrendMap>({});
 
@@ -47,7 +49,15 @@ export function ResourceBar() {
       return;
     }
     const elapsedSec = ageOfTeeth - previous.age;
-    if (!Number.isFinite(elapsedSec) || elapsedSec <= 0) return;
+    // Always keep the baseline current so stock changes while paused (e.g. building
+    // placement costs) don't produce a bogus spike when the simulation resumes.
+    if (!Number.isFinite(elapsedSec) || elapsedSec <= 0) {
+      trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
+      return;
+    }
+    // Sample at most once per 5 game-seconds. Shorter windows produce
+    // noisy, flickering values when a single recipe completes in one tick.
+    if (elapsedSec < 5.0) return;
     const nextTrend: TrendMap = {};
     const keys = new Set([...Object.keys(stock), ...Object.keys(previous.stock)]);
     for (const key of keys) {

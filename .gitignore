@@ -147,3 +147,6 @@ src/assets/spritesheets/**/*.png
 src/assets/spritesheets/**/*.jpg
 public/build/
 screenshots/
+
+# Generated symbol index (run npm run symbols:generate locally)
+symbols.json

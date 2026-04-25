@@ -15,9 +15,9 @@ export default function DebugRoute(): JSX.Element {
 	const debugWarnings = useDebugStore((state) => state.warnings)
 	const renderWarnings = useRenderStore((state) => state.warnings)
 	const renderStats = useRenderStore((state) => state.stats)
-  const lastErrorText = lastError
-    ? `${lastError.code}: ${lastError.message}${lastError.tick ? ` @tick ${lastError.tick}` : ''}`
-    : 'none'
+	const lastErrorText = lastError
+		? `${lastError.code}: ${lastError.message}${lastError.tick ? ` @tick ${lastError.tick}` : ''}`
+		: 'none'
 
 	if (!DEBUG_ROUTE_ENABLED) {
 		return (

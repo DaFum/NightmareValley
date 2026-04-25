@@ -10,19 +10,26 @@ const MAX_ADAPTIVE_STEPS = 8;
 const MIN_ADAPTIVE_STEPS = 2;
 const DEBT_STREAK_THROTTLE_FRAMES = 20;
 
+function economyStepMultiplier(carryoverSec: number): number {
+  return carryoverSec > SIMULATION_STEP_SEC * 1.5 ? 0.9 : 1;
+}
+
+// Intentionally gives slow frames a *smaller* step budget, not a larger one.
+// A slow frame is already overloaded; letting it run extra simulation steps would
+// deepen the stall. The carry-over accumulator and debt-streak throttle handle
+// catch-up across subsequent frames once the spike resolves.
+function getAdaptiveStepBudget(deltaSec: number): number {
+  const budgetScale = Math.min(1.6, Math.max(0.7, deltaSec / SIMULATION_STEP_SEC));
+  const computed = Math.round(BASE_MAX_STEPS_PER_FRAME / budgetScale);
+  return Math.max(MIN_ADAPTIVE_STEPS, Math.min(MAX_ADAPTIVE_STEPS, computed));
+}
+
 export function useGameLoop() {
   const runSimulationSteps = useGameStore((state) => state.runSimulationSteps);
   const isRunning = useGameStore((state) => state.isRunning);
   const setLoopStats = useDebugStore((state) => state.setLoopStats);
   const accumulatorRef = useRef(0);
   const debtStreakRef = useRef(0);
-  const economyStepMultiplier = (carryoverSec: number) => (carryoverSec > SIMULATION_STEP_SEC * 1.5 ? 0.9 : 1);
-
-  const getAdaptiveStepBudget = (deltaSec: number) => {
-    const budgetScale = Math.min(1.6, Math.max(0.7, deltaSec / SIMULATION_STEP_SEC));
-    const computed = Math.round(BASE_MAX_STEPS_PER_FRAME / budgetScale);
-    return Math.max(MIN_ADAPTIVE_STEPS, Math.min(MAX_ADAPTIVE_STEPS, computed));
-  };
 
   useTick((deltaFrames) => {
     // @pixi/react v7 useTick callback receives frame delta (1 ~= 60fps frame).

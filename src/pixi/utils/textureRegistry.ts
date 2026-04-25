@@ -65,20 +65,30 @@ class TextureRegistryService {
                       canvas.height = tileH;
                       const ctx = canvas.getContext('2d');
                       if (ctx) {
-                        let color = '#666';
-                        switch (name) {
-                          case 'scarredEarth': color = '#6B5132'; break;
-                          case 'weepingForest': color = '#2F6F2F'; break;
-                          case 'ribMountain': color = '#8A8A8A'; break;
-                          case 'placentaLake': color = '#2F4FA0'; break;
-                          case 'scarPath': color = '#8B5A2B'; break;
-                          case 'occupiedScar': color = '#5A1B1B'; break;
-                          case 'ashBog': color = '#4A4A4A'; break;
-                          case 'cathedralRock': color = '#777777'; break;
-                          default: color = '#666';
-                        }
-                        ctx.fillStyle = color;
-                        ctx.fillRect(0, 0, tileW, tileH);
+                        // Map terrain name to [lightColor, darkColor] for gradient
+                        const palette: Record<string, [string, string]> = {
+                          scarredEarth:  ['#5E3C22', '#1E0C06'],
+                          weepingForest: ['#264222', '#0E1A0C'],
+                          ribMountain:   ['#363854', '#141620'],
+                          placentaLake:  ['#0E1E40', '#030810'],
+                          scarPath:      ['#3E2A14', '#1A1008'],
+                          occupiedScar:  ['#320C0C', '#100404'],
+                          ashBog:        ['#1E2028', '#0A0A10'],
+                          cathedralRock: ['#1C1C2C', '#090912'],
+                        };
+                        const [light, dark] = palette[name] ?? ['#444', '#222'];
+                        const grad = ctx.createLinearGradient(0, 0, tileW, tileH);
+                        grad.addColorStop(0, light);
+                        grad.addColorStop(1, dark);
+                        // Draw proper isometric diamond (transparent corners)
+                        ctx.beginPath();
+                        ctx.moveTo(tileW / 2, 0);
+                        ctx.lineTo(tileW, tileH / 2);
+                        ctx.lineTo(tileW / 2, tileH);
+                        ctx.lineTo(0, tileH / 2);
+                        ctx.closePath();
+                        ctx.fillStyle = grad;
+                        ctx.fill();
                       }
                       const tex = PIXI.Texture.from(canvas);
                       PIXI.Texture.addToCache(tex, key);

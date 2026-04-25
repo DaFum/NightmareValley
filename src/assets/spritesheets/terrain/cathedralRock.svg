@@ -1,4 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
-  <rect width="64" height="32" fill="#8b8b6f"/>
-  <text x="32" y="20" font-size="8" text-anchor="middle" fill="#ffffff">cathedralRock</text>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1C1C2C"/>
+      <stop offset="100%" stop-color="#090912"/>
+    </linearGradient>
+    <clipPath id="d">
+      <polygon points="32,0 64,16 32,32 0,16"/>
+    </clipPath>
+  </defs>
+  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
+  <g clip-path="url(#d)">
+    <polygon points="32,0 16,8 24,14 40,8" fill="#242438" opacity="0.30"/>
+    <line x1="8" y1="12" x2="40" y2="4" stroke="#1E1E2E" stroke-width="1" opacity="0.85"/>
+    <line x1="8" y1="20" x2="56" y2="8" stroke="#1E1E2E" stroke-width="1" opacity="0.85"/>
+    <line x1="8" y1="28" x2="56" y2="16" stroke="#1E1E2E" stroke-width="1" opacity="0.75"/>
+    <line x1="20" y1="8" x2="36" y2="28" stroke="#1E1E2E" stroke-width="1" opacity="0.75"/>
+    <line x1="32" y1="4" x2="48" y2="28" stroke="#1E1E2E" stroke-width="1" opacity="0.75"/>
+    <line x1="44" y1="8" x2="56" y2="22" stroke="#1E1E2E" stroke-width="1" opacity="0.65"/>
+    <rect x="28" y="14" width="8" height="4" rx="1" fill="none" stroke="#2C2C40" stroke-width="1" opacity="0.60"/>
+  </g>
 </svg>
