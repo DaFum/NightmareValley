@@ -49,6 +49,15 @@ export function GameStage() {
     const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
     const initialCameraY = Math.round(vh * 0.08 - HQ_SCREEN_Y);
     setCameraPosition(HQ_SCREEN_X, initialCameraY);
+    // eslint-disable-next-line no-console
+    console.log('[GameStage] Camera init:', {
+      vh,
+      HQ_SCREEN_X,
+      HQ_SCREEN_Y,
+      initialCameraY,
+      centerY: vh * 0.42,
+      expectedHQScreenY: vh * 0.42 + initialCameraY + HQ_SCREEN_Y,
+    });
 
     return () => {
       setRunning(false);
@@ -101,6 +110,10 @@ export function GameStage() {
     const maxX = (viewportWidth - centerX - cameraX + padding) / zoom;
     const minY = (-centerY - cameraY - padding) / zoom;
     const maxY = (viewportHeight - centerY - cameraY + padding) / zoom;
+    if (world.tiles.length > 0 && Math.random() < 0.01) {
+      // eslint-disable-next-line no-console
+      console.log('[visibleTiles] culling:', { minX, maxX, minY, maxY, cameraX, cameraY, tileCount: world.tiles.length, sampleTile: world.tiles[0] });
+    }
     const minChunkX = Math.floor(minX / CHUNK_SCREEN_SIZE);
     const maxChunkX = Math.floor(maxX / CHUNK_SCREEN_SIZE);
     const minChunkY = Math.floor(minY / CHUNK_SCREEN_SIZE);
