@@ -80,26 +80,20 @@ export function GameStage() {
   const lodLevel: 'full' | 'medium' | 'low' = zoom >= 1.1 ? 'full' : zoom >= 0.75 ? 'medium' : 'low';
   const drawHeatmap = showFootfallHeatmap && lodLevel !== 'low';
   const drawWorkers = lodLevel !== 'low' || world.workers.length <= 120;
-  const tileCount = world.tiles.length;
 
-  // Tile screen positions are static after map load; only rebuild when tile count changes.
+  // Tile screen positions are static after map load; rebuild when tiles change to handle map reloads.
+  // Stores array indices instead of IDs to avoid O(N) map creation per frame.
   const chunkIndex = useMemo(() => {
-    const grouped = new Map<string, string[]>();
-    for (const tile of world.tiles) {
+    const grouped = new Map<string, number[]>();
+    for (let i = 0; i < world.tiles.length; i++) {
+      const tile = world.tiles[i];
       const key = `${Math.floor(tile.screenX / CHUNK_SCREEN_SIZE)},${Math.floor(tile.screenY / CHUNK_SCREEN_SIZE)}`;
-      const ids = grouped.get(key);
-      if (ids) ids.push(tile.id);
-      else grouped.set(key, [tile.id]);
+      const indices = grouped.get(key);
+      if (indices) indices.push(i);
+      else grouped.set(key, [i]);
     }
     return grouped;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tileCount]);
-
-  // Per-tick lookup: always has current tile objects (footfall, tier, etc.)
-  const tileById = useMemo(
-    () => new Map(world.tiles.map((t) => [t.id, t])),
-    [world.tiles]
-  );
+  }, [world.tiles]);
 
   const visibleTiles = useMemo(() => {
     const padding = lodLevel === 'full' ? 192 : 128;
@@ -115,11 +109,10 @@ export function GameStage() {
 
     for (let cx = minChunkX; cx <= maxChunkX; cx++) {
       for (let cy = minChunkY; cy <= maxChunkY; cy++) {
-        const ids = chunkIndex.get(`${cx},${cy}`);
-        if (!ids) continue;
-        for (const id of ids) {
-          const tile = tileById.get(id);
-          if (!tile) continue;
+        const indices = chunkIndex.get(`${cx},${cy}`);
+        if (!indices) continue;
+        for (const i of indices) {
+          const tile = world.tiles[i];
           if (
             tile.screenX >= minX &&
             tile.screenX <= maxX &&
@@ -132,7 +125,7 @@ export function GameStage() {
       }
     }
     return selected;
-  }, [cameraX, cameraY, centerX, centerY, chunkIndex, tileById, lodLevel, viewportHeight, viewportWidth, zoom]);
+  }, [cameraX, cameraY, centerX, centerY, chunkIndex, lodLevel, viewportHeight, viewportWidth, zoom, world.tiles]);
   const hitArea = useMemo(() => new PIXI.Rectangle(
     (-centerX - cameraX) / zoom,
     (-centerY - cameraY) / zoom,
