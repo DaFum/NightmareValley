@@ -11,7 +11,6 @@ export interface WorldState extends EconomySimulationState {
 	biomeModifier?: number;
 	temporaryModifiers?: {
 		productionBoost?: number;
-		transportBoost?: number;
 		expiresAtAge?: number;
 	};
 }

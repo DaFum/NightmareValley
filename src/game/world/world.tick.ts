@@ -29,14 +29,12 @@ export function tickWorld(
 			? eventDue
 				? {
 						productionBoost: 1.08,
-						transportBoost: 1.04,
 						expiresAtAge: next.ageOfTeeth + 30,
 					}
 				: undefined
 			: eventDue
 				? {
 						productionBoost: 1.08,
-						transportBoost: 1.04,
 						expiresAtAge: next.ageOfTeeth + 30,
 					}
 				: world.temporaryModifiers,

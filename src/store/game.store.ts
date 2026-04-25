@@ -310,7 +310,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
-      set({ gameState: nextState as WorldState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
@@ -321,7 +321,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = upgradeBuilding(gameState, ownerId, buildingId);
-      set({ gameState: nextState as WorldState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });
@@ -332,7 +332,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = connectBuildingToRoad(gameState, buildingId);
-      set({ gameState: nextState as WorldState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to connect building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_CONNECT_FAILURE', 'connectBuildingAt', get().gameState.tick) });
