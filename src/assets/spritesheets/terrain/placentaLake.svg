@@ -1,21 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
   <defs>
-    <radialGradient id="g" cx="35" cy="14" r="22" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0E1E40"/>
-      <stop offset="100%" stop-color="#030810"/>
-    </radialGradient>
-    <clipPath id="d">
-      <polygon points="32,0 64,16 32,32 0,16"/>
-    </clipPath>
+    <filter id="lake-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <linearGradient id="fluid-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c4ba3d" />
+      <stop offset="100%" stop-color="#827a1c" />
+    </linearGradient>
   </defs>
-  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
-  <g clip-path="url(#d)">
-    <path d="M22 18 Q32 14 42 18" stroke="#141E3C" stroke-width="1.2" fill="none" opacity="0.9"/>
-    <path d="M16 22 Q32 12 48 22" stroke="#101A38" stroke-width="1" fill="none" opacity="0.7"/>
-    <path d="M10 24 Q32 10 54 24" stroke="#0C1830" stroke-width="1" fill="none" opacity="0.5"/>
-    <rect x="28" y="10" width="2" height="1" rx="0.5" fill="#2A3E60" opacity="0.65"/>
-    <rect x="38" y="16" width="2" height="1" rx="0.5" fill="#243458" opacity="0.55"/>
-    <rect x="20" y="16" width="1" height="1" rx="0.5" fill="#2A3E60" opacity="0.55"/>
-    <rect x="44" y="12" width="1" height="1" rx="0.5" fill="#1E3050" opacity="0.50"/>
-  </g>
+
+  <!-- Base 3D Geometry (Flesh/Bone Rim) -->
+  <polygon points="0,96 64,128 64,144 0,112" fill="#2b1414" stroke="#2b1414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#140909" stroke="#140909" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#4a2121" stroke="#4a2121" stroke-width="1" stroke-linejoin="round" />
+
+  <!-- Outer Lake Rim (darker flesh) -->
+  <path d="M 64,68 Q 105,78 120,96 Q 105,114 64,124 Q 23,114 8,96 Q 23,78 64,68 Z" fill="#2e1111" />
+
+  <!-- The Sickly Yellow Lake -->
+  <path d="M 64,72 Q 100,80 112,96 Q 100,112 64,120 Q 28,112 16,96 Q 28,80 64,72 Z" fill="url(#fluid-grad)" filter="url(#lake-glow)" opacity="0.85" />
+  
+  <!-- Inner depth / waves -->
+  <path d="M 64,78 Q 90,85 100,96 Q 90,107 64,112 Q 38,107 28,96 Q 38,85 64,78 Z" fill="#d1c95e" opacity="0.4" />
+  
+  <!-- Floating Biological Debris -->
+  <circle cx="45" cy="96" r="4.5" fill="#6e1313" />
+  <circle cx="44" cy="95" r="2" fill="#8a2020" />
+  
+  <path d="M 80,98 Q 85,95 90,102 Q 82,105 80,98 Z" fill="#4a0909" />
+  
+  <circle cx="68" cy="85" r="3" fill="#8a2020" />
+  <circle cx="60" cy="110" r="2.5" fill="#6e1313" />
 </svg>
