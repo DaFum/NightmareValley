@@ -55,9 +55,9 @@ export function ResourceBar() {
       trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
       return;
     }
-    // Only recompute the per-minute rate once per game-second to avoid a
-    // setTrendPerMin re-render on every simulation tick.
-    if (elapsedSec < 1.0) return;
+    // Sample at most once per 5 game-seconds. Shorter windows produce
+    // noisy, flickering values when a single recipe completes in one tick.
+    if (elapsedSec < 5.0) return;
     const nextTrend: TrendMap = {};
     const keys = new Set([...Object.keys(stock), ...Object.keys(previous.stock)]);
     for (const key of keys) {

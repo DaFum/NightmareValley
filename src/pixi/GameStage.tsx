@@ -10,6 +10,8 @@ import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 
 import { useGameStore } from '../store/game.store';
+
+const CHUNK_SCREEN_SIZE = 512;
 import { useUIStore } from '../store/ui.store';
 import { useCameraStore } from '../store/camera.store';
 import { useRenderStore } from '../store/render.store';
@@ -64,7 +66,6 @@ export function GameStage() {
   const lodLevel: 'full' | 'medium' | 'low' = zoom >= 1.1 ? 'full' : zoom >= 0.75 ? 'medium' : 'low';
   const drawHeatmap = showFootfallHeatmap && lodLevel !== 'low';
   const drawWorkers = lodLevel !== 'low' || world.workers.length <= 120;
-  const CHUNK_SCREEN_SIZE = 512;
   const tileCount = world.tiles.length;
 
   // Tile screen positions are static after map load; only rebuild when tile count changes.

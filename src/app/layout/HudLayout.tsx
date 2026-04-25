@@ -1,6 +1,5 @@
 import React from 'react'
 import type { ReactNode } from 'react'
-import { useResponsiveLayout } from './useResponsiveLayout'
 
 export type HudLayoutProps = {
 	children?: ReactNode
@@ -19,12 +18,11 @@ export const HudLayout: React.FC<HudLayoutProps> = ({
 	left,
 	right,
 	bottom,
-	isMobile,
+	isMobile = false,
 	mobileSideSlot = 'stack-bottom',
 	panelPriority = ['top', 'right', 'bottom', 'left'],
 }) => {
-	const responsiveMobile = useResponsiveLayout()
-	const resolvedMobile = isMobile ?? responsiveMobile
+	const resolvedMobile = isMobile
 	const showSideSlots = !resolvedMobile || mobileSideSlot === 'stack-bottom'
 	const priority = new Set(panelPriority)
 
