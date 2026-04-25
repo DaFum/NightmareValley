@@ -1,8 +1,9 @@
-import { EconomySimulationState, simulateTick } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
+import { WorldState } from '../game/world/world.types';
+import { tickWorld } from '../game/world/world.tick';
 
 export interface SimulationStepResult {
-  nextState: EconomySimulationState;
+  nextState: WorldState;
   stepsProcessed: number;
   carryoverSec: number;
   droppedFrameDebt: boolean;
@@ -39,7 +40,7 @@ function defaultProfileMultiplier(profile?: SimulationStepProfile[]): number {
   return economy.multiplier;
 }
 
-function hashState(state: EconomySimulationState): number {
+function hashState(state: WorldState): number {
   const stockTotal = Object.values(state.players).reduce((sum, p) => {
     return sum + Object.values(p.stock as Record<string, number>).reduce((s, v) => s + (v | 0), 0);
   }, 0);
@@ -55,7 +56,7 @@ function hashState(state: EconomySimulationState): number {
 }
 
 export function runSimulationSteps(
-  initialState: EconomySimulationState,
+  initialState: WorldState,
   deltaSec: number,
   tickRate: number,
   fixedStepSec: number,
@@ -80,7 +81,7 @@ export function runSimulationSteps(
 
   while (accumulator >= fixedStepSec && stepsProcessed < maxSteps) {
     const stepDeltaSec = fixedStepSec * tickRate * stepMultiplier;
-    nextState = simulateTick(
+    nextState = tickWorld(
       nextState,
       stepDeltaSec,
       DEFAULT_SIMULATION_CONFIG

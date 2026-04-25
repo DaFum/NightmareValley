@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import {
   EconomySimulationState,
-  simulateTick,
   placeBuilding,
   upgradeBuilding,
   connectBuildingToRoad,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
+import { tickWorld } from '../game/world/world.tick';
+import { WorldState } from '../game/world/world.types';
 import { BuildingType, ResourceInventory, WorkerType } from "../game/core/economy.types";
 import { BuildingInstance, Position, WorkerInstance } from "../game/core/game.types";
 import { loadInitialMap } from "../game/map/map.loader";
@@ -27,12 +28,12 @@ export type DebugCommand =
   | { type: 'set-tick-rate'; value: number };
 
 export interface GameStore {
-  gameState: EconomySimulationState;
+  gameState: WorldState;
   isRunning: boolean;
   tickRate: number;
   lastError?: RuntimeIssue;
   activeScenario: GameScenarioProfile;
-  setGameState: (state: EconomySimulationState) => void;
+  setGameState: (state: WorldState) => void;
   setRunning: (running: boolean) => void;
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
@@ -178,9 +179,12 @@ function scenarioStock(profile: GameScenarioProfile): ResourceInventory {
   }
 }
 
-const initialGameState: EconomySimulationState = {
+const initialGameState: WorldState = {
   tick: 0,
   ageOfTeeth: 0,
+  seed: 1,
+  lastDeltaSec: 0,
+  scenarioProfile: 'challenging',
   players: {
     [player1Id]: {
       id: player1Id,
@@ -223,7 +227,7 @@ const initialGameState: EconomySimulationState = {
   worldPulse: 0,
 };
 
-function withScenarioProfile(state: EconomySimulationState, profile: GameScenarioProfile): EconomySimulationState {
+function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): WorldState {
   const player = state.players[player1Id];
   if (!player) return state;
   return {
@@ -265,7 +269,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!isRunning) return;
 
     try {
-      const nextState = simulateTick(gameState, deltaSec * tickRate, DEFAULT_SIMULATION_CONFIG);
+      const nextState = tickWorld(gameState, deltaSec * tickRate, DEFAULT_SIMULATION_CONFIG);
       set({ gameState: nextState });
     } catch (error) {
       console.error("Simulation tick failed:", error);
@@ -305,7 +309,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
-      set({ gameState: nextState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
@@ -316,7 +320,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = upgradeBuilding(gameState, ownerId, buildingId);
-      set({ gameState: nextState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });
@@ -327,7 +331,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = connectBuildingToRoad(gameState, buildingId);
-      set({ gameState: nextState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to connect building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_CONNECT_FAILURE', 'connectBuildingAt', get().gameState.tick) });
