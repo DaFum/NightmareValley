@@ -11,12 +11,28 @@ export function useIsoCamera() {
     let lastY = 0;
     let spacePressed = false;
 
+    const isTextInputActive = () => {
+      const active = document.activeElement;
+      if (!active) return false;
+      const tag = active.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return true;
+      if ((active as HTMLElement).isContentEditable) return true;
+      return false;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space") spacePressed = true;
+      if (e.code === "Space" && !isTextInputActive()) {
+        spacePressed = true;
+      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") spacePressed = false;
+    };
+
+    const handleBlur = () => {
+      spacePressed = false;
+      isDragging = false;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
@@ -25,6 +41,8 @@ export function useIsoCamera() {
         lastX = e.clientX;
         lastY = e.clientY;
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
       }
     };
 
@@ -66,6 +84,7 @@ export function useIsoCamera() {
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
     window.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
@@ -75,6 +94,7 @@ export function useIsoCamera() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);

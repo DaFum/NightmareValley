@@ -13,6 +13,8 @@ export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: Is
   const { registry } = useTextures();
 
   return (
+    // cacheAsBitmap: terrain is static — rasterising once avoids per-frame redraws.
+    // The footfall overlay is a separate layer and composites on top.
     <Container eventMode="none" cacheAsBitmap={true}>
       {tiles.map((tile) => {
         // Fallback for missing textures based on terrain type

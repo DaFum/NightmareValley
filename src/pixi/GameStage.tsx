@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { Container } from '@pixi/react';
 import * as PIXI from 'pixi.js';
 import { IsoTerrainLayer } from './layers/IsoTerrainLayer';
 import { IsoBuildingLayer } from './layers/IsoBuildingLayer';
 import { IsoWorkerLayer } from './layers/IsoWorkerLayer';
-import IsoRoadLayer from './layers/IsoRoadLayer';
+import IsoFootfallLayer from './layers/IsoFootfallLayer';
+import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 
 import { useGameStore } from '../store/game.store';
@@ -25,7 +26,9 @@ export function GameStage() {
   const cameraX = useCameraStore((state) => state.x);
   const cameraY = useCameraStore((state) => state.y);
   const zoom = useCameraStore((state) => state.zoom);
-  const roads = useGameStore((state) => state.gameState.transport.roadNodes);
+  const isDebugSpawningWarehouse = useUIStore((state) => state.isDebugSpawningWarehouse);
+  const setDebugSpawningWarehouse = useUIStore((state) => state.setDebugSpawningWarehouse);
+  const showFootfallHeatmap = useUIStore((state) => state.showFootfallHeatmap);
   const selectBuilding = useSelectionStore((state) => state.selectBuilding);
   const selectWorker = useSelectionStore((state) => state.selectWorker);
   const selectTile = useSelectionStore((state) => state.selectTile);
@@ -84,10 +87,29 @@ export function GameStage() {
   }, [togglePlayPause]);
 
   const isBrowser = typeof window !== 'undefined';
-  const centerX = isBrowser ? window.innerWidth / 2 : 512;
-  const centerY = isBrowser ? window.innerHeight * 0.42 : 320;
-  const viewportWidth = isBrowser ? window.innerWidth : 1024;
-  const viewportHeight = isBrowser ? window.innerHeight : 768;
+  const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
+  const [viewportHeight, setViewportHeight] = React.useState(isBrowser ? window.innerHeight : 768);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isBrowser) return;
+    const el = containerRef.current ?? document.documentElement;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setViewportWidth(Math.round(width));
+        setViewportHeight(Math.round(height));
+      }
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [isBrowser]);
+
+  const centerX = viewportWidth / 2;
+  const centerY = viewportHeight * 0.42;
+
   const visibleTiles = useMemo(() => {
     const padding = 192;
     const minX = (-centerX - cameraX - padding) / zoom;
@@ -109,18 +131,27 @@ export function GameStage() {
     viewportHeight / zoom
   ), [cameraX, cameraY, centerX, centerY, viewportHeight, viewportWidth, zoom]);
 
+  const getActivePlayerId = () => {
+    const playerIds = Object.keys(useGameStore.getState().gameState.players);
+    return playerIds[0] ?? 'player_1';
+  };
+
   const handlePointerDown = (e: any) => {
     if (typeof e.button === 'number' && e.button !== 0) return;
 
-    const cx = (typeof window !== 'undefined' ? window.innerWidth / 2 : centerX) + cameraX;
-    const cy = (typeof window !== 'undefined' ? window.innerHeight * 0.42 : centerY) + cameraY;
+    const cx = centerX + cameraX;
+    const cy = centerY + cameraY;
 
     const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, zoom, 64, 32);
 
+    if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
+      placeBuildingAt(getActivePlayerId(), "vaultOfDigestiveStone", hit.tileId);
+      setDebugSpawningWarehouse(false);
+      return;
+    }
+
     if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const playerIds = Object.keys(useGameStore.getState().gameState.players);
-      const playerId = playerIds.length > 0 ? playerIds[0] : 'player_1';
-      placeBuildingAt(playerId, selectedBuildingToPlace, hit.tileId);
+      placeBuildingAt(getActivePlayerId(), selectedBuildingToPlace, hit.tileId);
       selectBuildingToPlace(null);
       return;
     }
@@ -138,7 +169,8 @@ export function GameStage() {
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown}>
       <IsoTerrainLayer tiles={visibleTiles} />
       <IsoResourceLayer tiles={visibleTiles} />
-      <IsoRoadLayer roads={roads} />
+      <IsoFootfallLayer tiles={visibleTiles} />
+      {showFootfallHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />
       <IsoWorkerLayer workers={world.workers} />
     </Container>

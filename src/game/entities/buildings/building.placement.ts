@@ -9,7 +9,6 @@ export function canPlaceBuilding(territory: TerritoryState, tx: number, ty: numb
 			const t = getTileAt(territory, x, y);
 			if (!t) return { ok: false, reason: 'out_of_bounds' };
 			if (t.buildingId) return { ok: false, reason: 'occupied' };
-			if (t.roadNodeId) return { ok: false, reason: 'occupied_by_road' };
 			if (x === tx && y === ty) originTileId = t.id;
 		}
 	}

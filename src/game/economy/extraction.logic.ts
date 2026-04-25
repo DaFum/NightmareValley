@@ -31,6 +31,8 @@ export function processExtraction(
 
     building.progressSec += deltaSec;
 
+    let depositTile = findExtractionDepositTile(state, building, def.extraction.resource);
+
     while (building.progressSec >= cycleTime) {
       const currentAmount = getResourceAmount(
         building.outputBuffer,
@@ -44,12 +46,14 @@ export function processExtraction(
         break;
       }
 
-      const depositTile = findExtractionDepositTile(state, building, def.extraction.resource);
+      if (!depositTile || (depositTile.resourceDeposit?.[def.extraction.resource] ?? 0) <= 0) {
+        depositTile = findExtractionDepositTile(state, building, def.extraction.resource);
+      }
       const depositAmount = depositTile?.resourceDeposit?.[def.extraction.resource] ?? 0;
       const isRenewable = RENEWABLE_EXTRACTIONS.has(def.extraction.resource);
 
       if (!isRenewable && depositAmount <= 0) {
-        building.progressSec = 0;
+        building.progressSec = Math.min(building.progressSec, cycleTime);
         break;
       }
 
@@ -61,7 +65,7 @@ export function processExtraction(
       );
 
       if (amountToAdd <= 0 || !Number.isFinite(amountToAdd)) {
-        building.progressSec = 0;
+        building.progressSec = Math.min(building.progressSec, cycleTime);
         break;
       }
 

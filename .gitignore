@@ -140,6 +140,7 @@ vite.config.ts.timestamp-*
 
 # Editor and workspace
 .vscode/
+.claude/
 
 # Generated spritesheet assets and build output
 src/assets/spritesheets/**/*.png

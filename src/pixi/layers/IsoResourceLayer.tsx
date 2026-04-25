@@ -20,10 +20,17 @@ export default function IsoResourceLayer({ tiles }: IsoResourceLayerProps): JSX.
         const deposit = tile.resourceDeposit;
         if (!deposit) return null;
 
-        const entry = Object.entries(deposit).find(([, amount]) => (amount ?? 0) > 0);
-        if (!entry) return null;
+        const entries = Object.entries(deposit)
+          .filter(([, amount]) => (amount ?? 0) > 0)
+          .sort((a, b) => {
+            const diff = (b[1] ?? 0) - (a[1] ?? 0);
+            if (diff !== 0) return diff;
+            return a[0].localeCompare(b[0]);
+          });
 
-        const [resource] = entry as [ResourceType, number];
+        if (entries.length === 0) return null;
+
+        const [resource] = entries[0] as [ResourceType, number];
         const texture = registry.getTexture(`resource_${resource}`);
         if (!texture) return null;
 

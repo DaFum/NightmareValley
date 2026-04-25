@@ -10,23 +10,31 @@ type WorkerInspectorProps = {
 
 export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX.Element | null {
   const worker = useGameStore((state) => state.gameState.workers[workerId]);
-  const homeBuilding = useGameStore((state) => worker?.homeBuildingId ? state.gameState.buildings[worker.homeBuildingId] : undefined);
+  const homeBuilding = useGameStore((state) => {
+    const w = state.gameState.workers[workerId];
+    return w?.homeBuildingId ? state.gameState.buildings[w.homeBuildingId] : undefined;
+  });
   const activeTask = useGameStore((state) => state.gameState.transport.activeCarrierTasks[workerId]);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!worker) return null;
 
-  const def = WORKER_DEFINITIONS[worker.type];
+  const def = WORKER_DEFINITIONS[worker.type] || { name: 'Unknown Worker', description: 'No definition found.' };
+  const portraitSrc = imageMap[`workers/${worker.type}.png`];
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Worker inspector">
       <div className="inspector-panel__header">
-        <img
-          src={imageMap[`workers/${worker.type}.png`]}
-          alt=""
-          aria-hidden="true"
-          className="inspector-portrait"
-        />
+        {portraitSrc ? (
+          <img
+            src={portraitSrc}
+            alt=""
+            aria-hidden="true"
+            className="inspector-portrait"
+          />
+        ) : (
+          <div className="inspector-portrait" style={{ backgroundColor: '#222' }} />
+        )}
         <div>
           <span className="panel-kicker">Worker</span>
           <h2>{def.name}</h2>
@@ -48,7 +56,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
       {activeTask ? (
         <section className="inventory-block">
           <h3>Transport</h3>
-          <p className="inspector-note">{activeTask.resourceType} {Math.round(activeTask.progress * 100)}%</p>
+          <p className="inspector-note">{activeTask.resourceType} — {activeTask.phase === "toPickup" ? "heading to pickup" : "delivering"}</p>
         </section>
       ) : null}
     </aside>

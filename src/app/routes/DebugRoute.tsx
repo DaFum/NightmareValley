@@ -6,6 +6,13 @@ const DEBUG_ROUTE_ENABLED =
 	typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production'
 
 export default function DebugRoute(): JSX.Element {
+	const tick = useGameStore((state) => state.gameState.tick)
+	const isRunning = useGameStore((state) => state.isRunning)
+	const tickRate = useGameStore((state) => state.tickRate)
+	const lastError = useGameStore((state) => state.lastError)
+	const activePanel = useUIStore((state) => state.activePanel)
+	const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace)
+
 	if (!DEBUG_ROUTE_ENABLED) {
 		return (
 			<main className="not-found-route" role="main">
@@ -15,13 +22,6 @@ export default function DebugRoute(): JSX.Element {
 			</main>
 		)
 	}
-
-	const tick = useGameStore((state) => state.gameState.tick)
-	const isRunning = useGameStore((state) => state.isRunning)
-	const tickRate = useGameStore((state) => state.tickRate)
-	const lastError = useGameStore((state) => state.lastError)
-	const activePanel = useUIStore((state) => state.activePanel)
-	const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace)
 
 	return (
 		<main className="debug-route" role="main">

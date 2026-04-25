@@ -40,6 +40,8 @@ export function parseTiledMap(mapData: TiledMapData): TerritoryState {
           id: tileId,
           position: { x, y },
           terrain,
+          footfall: 0,
+          tier: "grass"
         };
         territory.tileIndex![`${x},${y}`] = tileId;
       }

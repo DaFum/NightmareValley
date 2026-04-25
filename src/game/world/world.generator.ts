@@ -34,7 +34,7 @@ export function generateInitialWorld(): EconomySimulationState {
         const gid = terrainLayer.data[index] || 0;
         const terrain = gidToTerrain[gid] || 'scarredEarth';
         const id = `tile_${x}_${y}`;
-        tiles[id] = { id, position: { x, y }, terrain };
+        tiles[id] = { id, position: { x, y }, terrain, footfall: 0, tier: "grass" };
       }
     }
   }
@@ -163,11 +163,11 @@ export function generateInitialWorld(): EconomySimulationState {
     workers,
     territory: { tiles },
     transport: {
-      roadNodes: {},
       jobs: {},
       activeCarrierTasks: {},
       networkStress: 0,
       averageLatencySec: 0,
+      queuedJobCount: 0,
     },
     worldPulse: 0,
   };

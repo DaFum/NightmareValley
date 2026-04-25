@@ -1,19 +1,14 @@
 import { BuildingId, WorkerId } from "../core/entity.ids";
 import { Position, BuildingInstance, WorkerInstance } from "../core/game.types";
+import Logger from "../../lib/logger";
 import { ResourceType, WorkerDefinition } from "../core/economy.types";
 import { EconomySimulationState, createId, distance, clamp, getNonZeroResources } from "../core/economy.simulation";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "./balancing.constants";
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "../core/economy.data";
 import { RECIPES } from "./recipes.data";
 import { getResourceAmount, addResource, removeResource } from "./stockpile.logic";
-import { findPath, calculatePathDistance } from "../pathing/path.a-star";
-
-export interface RoadNode {
-  id: string;
-  position: Position;
-  connectedNodeIds: string[];
-  pressure?: number;
-}
+import { findPath, calculatePathDistance, tierTileCost } from "../pathing/path.a-star";
+import { MapTile, TerritoryState } from "../core/game.types";
 
 export interface TransportJob {
   id: string;
@@ -35,15 +30,45 @@ export interface CarrierTask {
   dropoffBuildingId: BuildingId;
   resourceType: ResourceType;
   amount: number;
-  progress: number;
+  phase: "toPickup" | "toDropoff";
+  path: Position[];
+  pathIndex: number;
+  stepProgress: number;
 }
 
 export interface TransportState {
-  roadNodes: Record<string, RoadNode>;
   jobs: Record<string, TransportJob>;
   activeCarrierTasks: Record<string, CarrierTask>;
   networkStress: number;
   averageLatencySec: number;
+  queuedJobCount: number;
+}
+
+// =========================
+// TRANSPORT JOB FACTORY
+// =========================
+
+export function createTransportJob(
+  id: string,
+  fromBuildingId: BuildingId,
+  toBuildingId: BuildingId,
+  resourceType: ResourceType,
+  amount: number,
+  priority: number,
+  description?: string
+): TransportJob {
+  return {
+    id,
+    fromBuildingId,
+    toBuildingId,
+    resourceType,
+    amount,
+    priority,
+    reserved: 0,
+    delivered: 0,
+    status: "queued",
+    description,
+  };
 }
 
 // =========================
@@ -67,7 +92,13 @@ export function generateTransportJobs(
     if (created >= config.maxJobsPerTick) break;
 
     for (const resourceType of getNonZeroResources(source.outputBuffer)) {
-      const amountAvailable = getResourceAmount(source.outputBuffer, resourceType);
+      let totalReserved = 0;
+      for (const j of Object.values(state.transport.jobs)) {
+        if (j.fromBuildingId === source.id && j.resourceType === resourceType && j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled") {
+          totalReserved += j.reserved;
+        }
+      }
+      const amountAvailable = getResourceAmount(source.outputBuffer, resourceType) - totalReserved;
       if (amountAvailable <= 0) continue;
 
       const targets = findTargetBuildingsForResource(state, source, resourceType, config);
@@ -86,18 +117,16 @@ export function generateTransportJobs(
         if (existingJobSignatures.has(signature)) continue;
 
         const jobId = createId("job");
-        state.transport.jobs[jobId] = {
-          id: jobId,
-          fromBuildingId: source.id,
-          toBuildingId: target.id,
+        state.transport.jobs[jobId] = createTransportJob(
+          jobId,
+          source.id,
+          target.id,
           resourceType,
-          amount: amountToMove,
-          priority: getTransportPriority(target, resourceType, config),
-          reserved: 0,
-          delivered: 0,
-          status: "queued",
-          description: `Move ${resourceType} from ${source.type} to ${target.type}`,
-        };
+          amountToMove,
+          getTransportPriority(target, resourceType, config),
+          `Move ${resourceType} from ${source.type} to ${target.type}`
+        );
+        state.transport.queuedJobCount = (state.transport.queuedJobCount || 0) + 1;
 
         existingJobSignatures.add(signature);
         created += 1;
@@ -247,7 +276,17 @@ export function assignCarrierTasks(
     const bestJob = findBestJobForCarrier(state, carrier, ownerJobs, config);
     if (!bestJob) continue;
 
+    const source = state.buildings[bestJob.fromBuildingId];
+    if (!source) continue;
+
+    const pathResult = findPath(carrier.position, source.position, state, tierTileCost);
+    if (!pathResult.isComplete) {
+      Logger.debug(`Carrier ${carrier.id} could not find path to pickup ${source.id}`);
+      continue;
+    }
+
     bestJob.status = "claimed";
+    state.transport.queuedJobCount = Math.max(0, (state.transport.queuedJobCount || 0) - 1);
     bestJob.reserved = bestJob.amount;
 
     const task: CarrierTask = {
@@ -257,7 +296,10 @@ export function assignCarrierTasks(
       dropoffBuildingId: bestJob.toBuildingId,
       resourceType: bestJob.resourceType,
       amount: bestJob.amount,
-      progress: 0,
+      phase: "toPickup",
+      path: pathResult.points,
+      pathIndex: 0,
+      stepProgress: 0,
     };
 
     state.transport.activeCarrierTasks[carrier.id] = task;
@@ -298,12 +340,15 @@ export function findBestJobForCarrier(
 
     if (available < job.amount) continue;
 
-    const carrierToSourcePath = findPath(carrier.position, source.position, state);
-    const sourceToTargetPath = findPath(source.position, target.position, state);
-
-    const dist =
-      calculatePathDistance(carrierToSourcePath) +
-      calculatePathDistance(sourceToTargetPath);
+    // Use Manhattan distance for scoring to avoid O(n*jobs) A* searches here;
+    // the real A* path is computed once for the winning job in assignCarrierTasks.
+    const carrierToSourceDist =
+      Math.abs(carrier.position.x - source.position.x) +
+      Math.abs(carrier.position.y - source.position.y);
+    const sourceToTargetDist =
+      Math.abs(source.position.x - target.position.x) +
+      Math.abs(source.position.y - target.position.y);
+    const dist = carrierToSourceDist + sourceToTargetDist;
 
     const score = job.priority * 100 - dist;
     if (score > bestScore) {
@@ -319,7 +364,40 @@ export function findBestJobForCarrier(
 // CARRIER MOVEMENT
 // =========================
 
-export function moveCarrierTasks(
+export function getTileAtPosition(territory: TerritoryState, pos: Position): MapTile | undefined {
+  if (!territory) return undefined;
+  // Use existing tileIndex when available; lazily build it when missing
+  if (!territory.tileIndex) {
+    territory.tileIndex = {};
+    for (const [id, tile] of Object.entries(territory.tiles)) {
+      territory.tileIndex[`${tile.position.x},${tile.position.y}`] = id;
+    }
+  }
+  const id = territory.tileIndex[`${pos.x},${pos.y}`];
+  return id ? territory.tiles[id] : undefined;
+}
+
+export function validateFootfallThresholds(thresholds: Record<string, number>): void {
+  if (!(thresholds.dirt <= thresholds.cobble && thresholds.cobble <= thresholds.paved)) {
+    console.error(
+      `[transport.logic] footfallTierThresholds are misordered: expected dirt (${thresholds.dirt}) <= cobble (${thresholds.cobble}) <= paved (${thresholds.paved})`
+    );
+  }
+}
+
+export function recomputeTierFromFootfall(tile: MapTile, thresholds: Record<string, number>) {
+  if (tile.footfall >= thresholds.paved) {
+    tile.tier = "paved";
+  } else if (tile.footfall >= thresholds.cobble) {
+    tile.tier = "cobble";
+  } else if (tile.footfall >= thresholds.dirt) {
+    tile.tier = "dirt";
+  } else {
+    tile.tier = "grass";
+  }
+}
+
+export function advanceCarrierMovement(
   state: EconomySimulationState,
   deltaSec: number,
   config: SimulationConfig
@@ -332,13 +410,12 @@ export function moveCarrierTasks(
 
     if (!carrier || !source || !target || !job) {
       if (job) {
-        if (!source || !target) {
-          job.status = "lost"; // Terminal state, no source/target exists to fulfill it
-          job.reserved = Math.max(0, job.reserved - task.amount);
-        } else {
-          job.status = "queued";
-          job.reserved = Math.max(0, job.reserved - task.amount);
+        const wasQueued = job.status === "queued";
+        job.status = "lost";
+        if (wasQueued) {
+          state.transport.queuedJobCount = Math.max(0, (state.transport.queuedJobCount || 0) - 1);
         }
+        job.reserved = Math.max(0, job.reserved - task.amount);
       }
       if (carrier) {
         carrier.isIdle = true;
@@ -347,99 +424,128 @@ export function moveCarrierTasks(
       continue;
     }
 
-    const workerDef = WORKER_DEFINITIONS[carrier.type];
-    const sourceToTargetPath = findPath(source.position, target.position, state);
-    const totalDistance = calculatePathDistance(sourceToTargetPath) + 1;
+    const currentPos = task.path[task.pathIndex];
+    if (!currentPos) continue;
 
-    const speed = getCarrierSpeed(workerDef, deltaSec, config);
-    task.progress += speed / totalDistance;
+    // Use the *destination* tile's speed to match A*'s cost model: cost(A→B) = 1/multiplier[B].
+    const destPos = task.pathIndex + 1 < task.path.length
+      ? task.path[task.pathIndex + 1]
+      : task.path[task.pathIndex];
+    const destTile = getTileAtPosition(state.territory as TerritoryState, destPos);
+    let speedMult = destTile ? (config.tierSpeedMultipliers[destTile.tier] || 1) : 1;
 
-    carrier.morale = clamp(carrier.morale - 0.1 * deltaSec, 0, 100);
+    if (task.phase === "toDropoff" && config.carrierEncumbrancePenalty) {
+      const workerDef = WORKER_DEFINITIONS[carrier.type];
+      const capacity = workerDef ? workerDef.carryCapacity : 1;
+      const loadRatio = clamp(task.amount / capacity, 0, 1);
+      const encumbranceMultiplier = 1 - (loadRatio * config.carrierEncumbrancePenalty);
+      speedMult *= encumbranceMultiplier;
+    }
 
-    if (task.progress >= 1) {
-      task.progress = 1;
+    const step = config.carrierBaseSpeed * speedMult * deltaSec;
+
+    // Single-point path means the carrier is already at its destination tile.
+    // Skip accumulation and arrive immediately rather than waiting ~10 ticks.
+    if (task.path.length === 1) {
+      task.stepProgress = 1.0;
+    } else {
+      task.stepProgress += step;
+    }
+
+    while (task.stepProgress >= 1 && task.pathIndex + 1 < task.path.length) {
+      task.stepProgress -= 1;
+      task.pathIndex += 1;
+
+      const newPos = task.path[task.pathIndex];
+      carrier.position = { ...newPos };
+
+      const steppedTile = getTileAtPosition(state.territory as TerritoryState, newPos);
+      if (steppedTile) {
+        const prevFootfall = steppedTile.footfall;
+        steppedTile.footfall += 1;
+        // Recompute tier only when a boundary is crossed; avoids redundant work on hot paths.
+        const thresh = config.footfallTierThresholds;
+        if (
+          (steppedTile.footfall >= thresh.paved  && prevFootfall < thresh.paved)  ||
+          (steppedTile.footfall >= thresh.cobble && prevFootfall < thresh.cobble) ||
+          (steppedTile.footfall >= thresh.dirt   && prevFootfall < thresh.dirt)
+        ) {
+          recomputeTierFromFootfall(steppedTile, thresh);
+        }
+      }
+      // Update speedMult to the new destination tile so the remaining stepProgress
+      // this tick uses the correct speed for the next crossing.
+      const nextDestPos = task.pathIndex + 1 < task.path.length
+        ? task.path[task.pathIndex + 1]
+        : task.path[task.pathIndex];
+      const nextDestTile = getTileAtPosition(state.territory as TerritoryState, nextDestPos);
+      speedMult = nextDestTile ? (config.tierSpeedMultipliers[nextDestTile.tier] || 1) : 1;
+    }
+
+    // stepProgress accumulates fractional sub-tile distance each frame. 0.999 guards
+    // against floating-point overshoot at the final node after the while loop drains whole steps.
+    const ARRIVAL_THRESHOLD = 0.999;
+    if (task.pathIndex === task.path.length - 1 && task.stepProgress >= ARRIVAL_THRESHOLD) {
+      if (task.phase === "toPickup") {
+        const nextPathResult = findPath(source.position, target.position, state, tierTileCost);
+        if (!nextPathResult.isComplete) {
+          job.status = "lost";
+          job.reserved = Math.max(0, job.reserved - task.amount);
+          carrier.isIdle = true;
+          delete state.transport.activeCarrierTasks[workerId];
+          continue;
+        }
+
+        // Guard against reservation drift: verify source still holds enough before removing.
+        // removeResource throws if the buffer is short, which would crash the simulation.
+        const availableAtPickup = getResourceAmount(source.outputBuffer, task.resourceType);
+        if (availableAtPickup < task.amount) {
+          job.status = "lost";
+          job.reserved = Math.max(0, job.reserved - task.amount);
+          carrier.isIdle = true;
+          delete state.transport.activeCarrierTasks[workerId];
+          continue;
+        }
+        source.outputBuffer = removeResource(source.outputBuffer, task.resourceType, task.amount);
+
+        // Clear reservation so source can accept new jobs
+        job.reserved = Math.max(0, job.reserved - task.amount);
+
+        task.phase = "toDropoff";
+        task.path = nextPathResult.points;
+        task.pathIndex = 0;
+        task.stepProgress = 0;
+      } else if (task.phase === "toDropoff") {
+        if (target.type === "vaultOfDigestiveStone") {
+          target.internalStorage = addResource(target.internalStorage, task.resourceType, task.amount);
+        } else {
+          target.inputBuffer = addResource(target.inputBuffer, task.resourceType, task.amount);
+        }
+
+        job.delivered += task.amount;
+        job.status = "delivered";
+
+        carrier.isIdle = true;
+        delete state.transport.activeCarrierTasks[workerId];
+      }
     }
   }
 
   return state;
 }
 
-export function getCarrierSpeed(
-  workerDef: WorkerDefinition,
-  deltaSec: number,
-  config: SimulationConfig
-): number {
-  return workerDef.moveSpeed * config.carrierBaseSpeed * deltaSec;
-}
-
-// =========================
-// DELIVERY
-// =========================
-
-export function deliverCarrierTasks(
-  state: EconomySimulationState,
-  config: SimulationConfig
-): EconomySimulationState {
-  for (const [workerId, task] of Object.entries(state.transport.activeCarrierTasks)) {
-    if (task.progress < 1) continue;
-
-    const carrier = state.workers[workerId];
-    const source = state.buildings[task.pickupBuildingId];
-    const target = state.buildings[task.dropoffBuildingId];
-    const job = state.transport.jobs[task.jobId];
-
-    if (!carrier || !source || !target || !job) {
-      if (job) {
-        if (!source || !target) {
-          job.status = "lost";
-          job.reserved = Math.max(0, job.reserved - task.amount);
-        } else {
-          job.status = "queued";
-          job.reserved = Math.max(0, job.reserved - task.amount);
+export function decayFootfall(state: EconomySimulationState, config: SimulationConfig): EconomySimulationState {
+  if (state.tick % 10 === 0) {
+    validateFootfallThresholds(config.footfallTierThresholds);
+    if (state.territory && state.territory.tiles) {
+      for (const tile of Object.values(state.territory.tiles as Record<string, MapTile>)) {
+        if (tile.footfall > 0) {
+          tile.footfall = Math.max(0, tile.footfall - config.footfallDecayPerTenTicks);
+          recomputeTierFromFootfall(tile, config.footfallTierThresholds);
         }
       }
-      if (carrier) {
-        carrier.isIdle = true;
-      }
-      delete state.transport.activeCarrierTasks[workerId];
-      continue;
     }
-
-    const availableFromSource = getResourceAmount(source.outputBuffer, task.resourceType);
-    const targetNeed = getBuildingResourceNeed(target, task.resourceType, config);
-
-    const moved = Math.min(task.amount, availableFromSource, targetNeed);
-
-    if (moved > 0) {
-      source.outputBuffer = removeResource(source.outputBuffer, task.resourceType, moved);
-
-      if (target.type === "vaultOfDigestiveStone") {
-        target.internalStorage = addResource(target.internalStorage, task.resourceType, moved);
-      } else {
-        target.inputBuffer = addResource(target.inputBuffer, task.resourceType, moved);
-      }
-
-      job.delivered += moved;
-      job.status = "delivered";
-    } else {
-      if (targetNeed === 0) {
-        job.status = "lost"; // Treating "lost" as terminal per types, but meaning "cancelled"
-      } else if (availableFromSource === 0) {
-        job.status = "queued";
-      } else {
-        job.status = "lost";
-      }
-    }
-
-    // Safely clear reservation upon completion or failure
-    job.reserved = Math.max(0, job.reserved - task.amount);
-
-    carrier.position = { ...target.position };
-    carrier.isIdle = true;
-
-    delete state.transport.activeCarrierTasks[workerId];
   }
-
   return state;
 }
 
@@ -451,7 +557,7 @@ export function updateTransportMetrics(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
-  const queued = Object.values(state.transport.jobs).filter((j) => j.status === "queued").length;
+  const queued = state.transport.queuedJobCount ?? 0;
   const active = Object.keys(state.transport.activeCarrierTasks).length;
 
   state.transport.networkStress =

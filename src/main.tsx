@@ -7,6 +7,10 @@ import { Logger } from './lib/logger';
 if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (ev) => {
     if (import.meta.env.DEV && ev.reason instanceof Event && !('message' in ev.reason)) {
+      // Workaround: Vite HMR sometimes triggers abort Events or AbortSignal unhandled rejections without a message.
+      // Instead of silently swallowing these, log them as debug so they are visible during active debugging
+      // without spamming the error console.
+      Logger.debug('Unhandled promise rejection (likely Vite HMR/AbortSignal):', ev.reason, ev);
       return;
     }
     Logger.error('Unhandled promise rejection detected:', ev.reason, ev);

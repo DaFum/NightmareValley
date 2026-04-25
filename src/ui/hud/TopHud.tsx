@@ -30,6 +30,10 @@ export function TopHud() {
     try { if (minimalHud) localStorage.setItem('ui:minimalHud', '1'); else localStorage.removeItem('ui:minimalHud'); } catch {}
   }, [minimalHud]);
 
+  useEffect(() => {
+    try { localStorage.removeItem('ui:hudHidden'); } catch {}
+  }, []);
+
   return (
     <div className="top-hud-container">
       <div className="top-hud-inner">

@@ -19,7 +19,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
 
   if (!building || !player) return null;
 
-  const def = BUILDING_DEFINITIONS[building.type];
+  const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
   const upgradeCost = getUpgradeCost(building, building.level + 1);
   const canUpgrade = canAffordUpgrade(player, building);
 
