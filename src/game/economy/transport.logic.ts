@@ -440,7 +440,13 @@ export function advanceCarrierMovement(
 
     const step = config.carrierBaseSpeed * speedMult * deltaSec;
 
-    task.stepProgress += step;
+    // Single-point path means the carrier is already at its destination tile.
+    // Skip accumulation and arrive immediately rather than waiting ~10 ticks.
+    if (task.path.length === 1) {
+      task.stepProgress = 1.0;
+    } else {
+      task.stepProgress += step;
+    }
 
     while (task.stepProgress >= 1 && task.pathIndex + 1 < task.path.length) {
       task.stepProgress -= 1;
@@ -479,6 +485,16 @@ export function advanceCarrierMovement(
           continue;
         }
 
+        // Guard against reservation drift: verify source still holds enough before removing.
+        // removeResource throws if the buffer is short, which would crash the simulation.
+        const availableAtPickup = getResourceAmount(source.outputBuffer, task.resourceType);
+        if (availableAtPickup < task.amount) {
+          job.status = "lost";
+          job.reserved = Math.max(0, job.reserved - task.amount);
+          carrier.isIdle = true;
+          delete state.transport.activeCarrierTasks[workerId];
+          continue;
+        }
         source.outputBuffer = removeResource(source.outputBuffer, task.resourceType, task.amount);
 
         // Clear reservation so source can accept new jobs
