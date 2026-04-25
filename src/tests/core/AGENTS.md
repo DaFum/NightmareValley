@@ -20,6 +20,13 @@ Keep core simulation tests deterministic, focused, and easy to debug.
 - Act: run one function under test.
 - Assert: check the exact state deltas relevant to the scenario.
 
+## Test quality guidelines
+
+- Prefer assertions that reflect player-visible outcomes (delivered jobs, placement allowed/blocked, tier changes).
+- When fixing a bug, include one test that would fail on the old behavior and pass on the new behavior.
+- Keep fixtures compact: include only fields required by the function under test to reduce brittleness.
+- Name tests by behavior and condition (e.g., `"does not count candidate job against itself when source has exact stock"`).
+
 ## Test command shortcuts
 
 - Single file:

@@ -30,6 +30,15 @@ Ensure you use Node 18+ when running the project locally.
 - Capture screenshots with: `npm run screenshot:playwright`.
 - Output files are written to `screenshots/`.
 
+## High-signal workflow for agents
+
+1. **Read before editing:** open `README.md`, `Architektur.md`, and the nearest nested `AGENTS.md`.
+2. **Change narrowly:** prefer small, isolated edits over broad refactors.
+3. **Validate appropriately:**
+   - logic changes: `npm test -- --runInBand`
+   - rendering/asset changes: `npm run build:vite` (+ dev sanity check)
+4. **Report clearly:** include exact commands run, outcomes, and any known limitations.
+
 ## Scripts to update when changing agents
 
 When modifying or replacing agent automation, update these `package.json` scripts if needed:
@@ -73,6 +82,13 @@ When modifying or replacing agent automation, update these `package.json` script
 - Make small, focused changes. Run the dev server and include exact reproduction steps and console logs for runtime issues.
 - For Pixi-related fixes, prefer small targeted changes: replace `.interactive` usage with `eventMode` and prefer `renderer.events` accessors.
 - Do not copy large sections of existing docs into this file; link to them instead.
+
+## Common pitfalls to avoid
+
+- Running screenshot capture against `npm run preview` instead of dev server port `4173`.
+- Introducing new magic tile-size values instead of reusing shared iso constants.
+- Adding per-frame allocations or pathfinding calls inside hot render/update loops.
+- Leaving generated artifacts (e.g., screenshots) tracked in git.
 
 ## When to open an issue
 
