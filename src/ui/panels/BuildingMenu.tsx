@@ -1,4 +1,3 @@
-import React from 'react';
 import { useUIStore } from '../../store/ui.store';
 import { useGameStore } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';

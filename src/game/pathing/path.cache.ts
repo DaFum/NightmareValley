@@ -19,11 +19,10 @@ export class PathCache {
 		this.cache.clear();
 	}
 
-	invalidateForTile(tx: number, ty: number) {
+	invalidateForTile(_tx: number, _ty: number) {
 		// A tile change can affect any cached path that traverses that tile.
 		// Clearing the entire cache is the simplest safe approach.
 		this.clear();
 	}
 }
-
 

@@ -1,5 +1,3 @@
-import React from "react";
-
 import { Container, Sprite } from "@pixi/react";
 import { IsoWorkerRenderData } from "../../game/iso/iso.types";
 
@@ -19,7 +17,6 @@ export const IsoWorkerEntity: React.FC<IsoWorkerEntityProps> = ({ data }) => {
     tool,
     selected,
     hovered,
-    variant,
   } = data;
 
   // Since the manifest doesn't register detailed variants/animations for workers,

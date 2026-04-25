@@ -1,5 +1,5 @@
 import { TiledMapData } from "./map.types";
-import { TerritoryState, MapTile } from "../core/game.types";
+import { TerritoryState } from "../core/game.types";
 import { TerrainType } from "../core/economy.types";
 
 export function parseTiledMap(mapData: TiledMapData): TerritoryState {

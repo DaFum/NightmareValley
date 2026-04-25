@@ -1,4 +1,7 @@
 /// <reference types="vite/client" />
 
-export {}
+declare global {
+  const __DEV__: boolean;
+}
 
+export {}

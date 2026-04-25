@@ -2,7 +2,7 @@ import { EconomySimulationState } from "../core/economy.simulation";
 import { IsoRenderWorld } from "./render.types";
 import { tileToScreen } from "../iso/iso.project";
 import { getEntityZIndex } from "../iso/iso.depth";
-import { getBuildingDefinition, getWorkerDefinition } from "../core/economy.data";
+import { getBuildingDefinition } from "../core/economy.data";
 import { RECIPES } from "../economy/recipes.data";
 import { DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 

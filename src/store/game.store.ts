@@ -1,31 +1,55 @@
 import { create } from 'zustand';
 import {
   EconomySimulationState,
-  simulateTick,
   placeBuilding,
   upgradeBuilding,
   connectBuildingToRoad,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
+import { tickWorld } from '../game/world/world.tick';
+import { WorldState } from '../game/world/world.types';
 import { BuildingType, ResourceInventory, WorkerType } from "../game/core/economy.types";
 import { BuildingInstance, Position, WorkerInstance } from "../game/core/game.types";
 import { loadInitialMap } from "../game/map/map.loader";
 import { createTransportJob, buildingAcceptsResource } from "../game/economy/transport.logic";
 import { deepClone } from "../lib/deep-clone";
+import {
+  clampTickRate,
+  runSimulationSteps as runBoundedSimulationSteps,
+  SimulationStepProfile,
+} from './game-simulation.utils';
+import { RuntimeIssue, toRuntimeIssue } from './runtime-issue';
+
+export type GameScenarioProfile = 'sandbox' | 'challenging' | 'hardcore';
+
+export type DebugCommand =
+  | { type: 'dispatch-jobs'; count: number; resourceType: import("../game/core/economy.types").ResourceType }
+  | { type: 'reset-footfall' }
+  | { type: 'set-tick-rate'; value: number };
 
 export interface GameStore {
-  gameState: EconomySimulationState;
+  gameState: WorldState;
   isRunning: boolean;
   tickRate: number;
-  lastError?: Error | string | unknown;
-  setGameState: (state: EconomySimulationState) => void;
+  lastError?: RuntimeIssue;
+  activeScenario: GameScenarioProfile;
+  setGameState: (state: WorldState) => void;
+  setRunning: (running: boolean) => void;
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
+  setScenarioProfile: (profile: GameScenarioProfile) => void;
   advanceTick: (deltaSec: number) => void;
+  runSimulationSteps: (
+    deltaSec: number,
+    fixedStepSec: number,
+    maxSteps: number,
+    profile?: SimulationStepProfile[]
+  ) => { stepsProcessed: number; carryoverSec: number; droppedFrameDebt: boolean };
   placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => void;
   upgradeBuildingAt: (ownerId: string, buildingId: string) => void;
   connectBuildingAt: (buildingId: string) => void;
   toggleBuildingActive: (buildingId: string) => void;
+  runDebugCommand: (command: DebugCommand) => void;
   dispatchDebugJobsFromHQ: (count: number, resourceType: import("../game/core/economy.types").ResourceType) => void;
   resetFootfall: () => void;
 }
@@ -143,14 +167,29 @@ function createStarterWorker(
 
 const preparedInitialTerritory = prepareInitialTerritory(player1Id);
 
-const initialGameState: EconomySimulationState = {
+function scenarioStock(profile: GameScenarioProfile): ResourceInventory {
+  switch (profile) {
+    case 'sandbox':
+      return { toothPlanks: 160, sepulcherStone: 120, marrowGrain: 80, amnioticWater: 80, boneDust: 20, funeralLoaf: 30 };
+    case 'hardcore':
+      return { toothPlanks: 45, sepulcherStone: 30, marrowGrain: 12, amnioticWater: 12, boneDust: 0, funeralLoaf: 0 };
+    case 'challenging':
+    default:
+      return { toothPlanks: 80, sepulcherStone: 55, marrowGrain: 20, amnioticWater: 20, boneDust: 0, funeralLoaf: 0 };
+  }
+}
+
+const initialGameState: WorldState = {
   tick: 0,
   ageOfTeeth: 0,
+  seed: 1,
+  lastDeltaSec: 0,
+  scenarioProfile: 'challenging',
   players: {
     [player1Id]: {
       id: player1Id,
       name: "The First Ascendant",
-      stock: { toothPlanks: 80, sepulcherStone: 55, marrowGrain: 20, amnioticWater: 20, boneDust: 0, funeralLoaf: 0 },
+      stock: scenarioStock('challenging'),
       buildings: [
         vaultId,
       ],
@@ -188,20 +227,39 @@ const initialGameState: EconomySimulationState = {
   worldPulse: 0,
 };
 
+function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): WorldState {
+  const player = state.players[player1Id];
+  if (!player) return state;
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [player1Id]: {
+        ...player,
+        stock: scenarioStock(profile),
+      },
+    },
+  };
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: initialGameState,
   isRunning: false,
   tickRate: 1,
   lastError: undefined,
+  activeScenario: 'challenging',
 
   setGameState: (state) => set({ gameState: state }),
+  setRunning: (running) => set({ isRunning: running }),
   togglePlayPause: () => set((state) => ({ isRunning: !state.isRunning })),
   setTickRate: (rate) => {
-    let clampedRate = 1;
-    if (Number.isFinite(rate) && rate > 0) {
-      clampedRate = Math.max(1e-6, Math.min(1000, rate));
-    }
-    set({ tickRate: clampedRate });
+    set({ tickRate: clampTickRate(rate) });
+  },
+  setScenarioProfile: (profile) => {
+    set((state) => ({
+      activeScenario: profile,
+      gameState: withScenarioProfile(state.gameState, profile),
+    }));
   },
 
   advanceTick: (deltaSec) => {
@@ -211,11 +269,39 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!isRunning) return;
 
     try {
-      const nextState = simulateTick(gameState, deltaSec * tickRate, DEFAULT_SIMULATION_CONFIG);
+      const nextState = tickWorld(gameState, deltaSec * tickRate, DEFAULT_SIMULATION_CONFIG);
       set({ gameState: nextState });
     } catch (error) {
       console.error("Simulation tick failed:", error);
-      set({ isRunning: false, lastError: error });
+      set({ isRunning: false, lastError: toRuntimeIssue(error, 'SIM_TICK_FAILURE', 'advanceTick', gameState.tick) });
+    }
+  },
+
+  runSimulationSteps: (deltaSec, fixedStepSec, maxSteps, profile) => {
+    if (deltaSec <= 0 || fixedStepSec <= 0 || maxSteps <= 0) {
+      return { stepsProcessed: 0, carryoverSec: 0, droppedFrameDebt: false };
+    }
+
+    const { gameState, isRunning, tickRate } = get();
+    if (!isRunning) {
+      return { stepsProcessed: 0, carryoverSec: 0, droppedFrameDebt: false };
+    }
+
+    try {
+      const {
+        nextState,
+        stepsProcessed,
+        carryoverSec,
+        droppedFrameDebt,
+      } = runBoundedSimulationSteps(gameState, deltaSec, tickRate, fixedStepSec, maxSteps, {
+        profile,
+      });
+      set({ gameState: nextState });
+      return { stepsProcessed, carryoverSec, droppedFrameDebt };
+    } catch (error) {
+      console.error("Simulation frame failed:", error);
+      set({ isRunning: false, lastError: toRuntimeIssue(error, 'SIM_FRAME_FAILURE', 'runSimulationSteps', gameState.tick) });
+      return { stepsProcessed: 0, carryoverSec: 0, droppedFrameDebt: true };
     }
   },
 
@@ -223,10 +309,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
-      set({ gameState: nextState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to place building:", error);
-      set({ lastError: error });
+      set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
     }
   },
 
@@ -234,10 +320,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = upgradeBuilding(gameState, ownerId, buildingId);
-      set({ gameState: nextState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
-      set({ lastError: error });
+      set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });
     }
   },
 
@@ -245,10 +331,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       const { gameState } = get();
       const nextState = connectBuildingToRoad(gameState, buildingId);
-      set({ gameState: nextState });
+      set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to connect building:", error);
-      set({ lastError: error });
+      set({ lastError: toRuntimeIssue(error, 'BUILD_CONNECT_FAILURE', 'connectBuildingAt', get().gameState.tick) });
     }
   },
 
@@ -269,7 +355,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ gameState: nextState });
   },
 
+  runDebugCommand: (command) => {
+    switch (command.type) {
+      case 'dispatch-jobs':
+        get().dispatchDebugJobsFromHQ(command.count, command.resourceType);
+        break;
+      case 'reset-footfall':
+        get().resetFootfall();
+        break;
+      case 'set-tick-rate':
+        get().setTickRate(command.value);
+        break;
+      default:
+        break;
+    }
+  },
+
   dispatchDebugJobsFromHQ: (count, resourceType) => {
+    if (count <= 0) return;
     set((state) => {
       const gs = state.gameState;
       const hq = Object.values(gs.buildings).find(b => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone");

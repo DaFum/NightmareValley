@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ResourceBar } from './ResourceBar';
 import { PopulationBar } from './PopulationBar';
 import { WorldPulseBar } from './WorldPulseBar';

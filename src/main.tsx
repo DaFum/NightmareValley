@@ -1,12 +1,12 @@
 import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 import { Logger } from './lib/logger';
 
 // Global debugging helpers: capture unhandled promise rejections and errors
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !(window as Window & { __nvGlobalHandlersBound?: boolean }).__nvGlobalHandlersBound) {
   window.addEventListener('unhandledrejection', (ev) => {
-    if (import.meta.env.DEV && ev.reason instanceof Event && !('message' in ev.reason)) {
+    if (__DEV__ && ev.reason instanceof Event && !('message' in ev.reason)) {
       // Workaround: Vite HMR sometimes triggers abort Events or AbortSignal unhandled rejections without a message.
       // Instead of silently swallowing these, log them as debug so they are visible during active debugging
       // without spamming the error console.
@@ -19,6 +19,8 @@ if (typeof window !== 'undefined') {
   window.addEventListener('error', (ev) => {
     Logger.error('Global error event:', ev);
   });
+
+  (window as Window & { __nvGlobalHandlersBound?: boolean }).__nvGlobalHandlersBound = true;
 }
 
 const container = document.getElementById('root');
@@ -27,9 +29,15 @@ if (!container) {
   throw new Error("Missing '#root' element.");
 }
 
-const root = createRoot(container);
-root.render(
+const appNode = (
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+
+if ((container as HTMLElement).dataset.ssr === 'true') {
+  hydrateRoot(container, appNode);
+} else {
+  const root = createRoot(container);
+  root.render(appNode);
+}

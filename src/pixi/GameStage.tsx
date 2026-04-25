@@ -12,28 +12,49 @@ import IsoResourceLayer from './layers/IsoResourceLayer';
 import { useGameStore } from '../store/game.store';
 import { useUIStore } from '../store/ui.store';
 import { useCameraStore } from '../store/camera.store';
+import { useRenderStore } from '../store/render.store';
 import { useRenderWorld } from './hooks/useRenderWorld';
 import { useIsoCamera } from './hooks/useIsoCamera';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSelectionInput } from './hooks/useSelectionInput';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
+
+const CHUNK_SCREEN_SIZE = 512;
+// Starting buildings are placed at tiles (10,10)-(14,10); center on (12,10).
+// Uses ISO_TILE_WIDTH/HEIGHT (64/32) matching render.adapter.ts screen coords.
+const START_TILE = { x: 7, y: 7 };
+const START_SCREEN_X = (START_TILE.x - START_TILE.y) * (ISO_TILE_WIDTH / 2);
+const START_SCREEN_Y = (START_TILE.x + START_TILE.y) * (ISO_TILE_HEIGHT / 2);
 
 export function GameStage() {
-  const togglePlayPause = useGameStore((state) => state.togglePlayPause);
+  const setRunning = useGameStore((state) => state.setRunning);
+  const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
   const cameraX = useCameraStore((state) => state.x);
   const cameraY = useCameraStore((state) => state.y);
   const zoom = useCameraStore((state) => state.zoom);
   const showFootfallHeatmap = useUIStore((state) => state.showFootfallHeatmap);
+  const setRenderStats = useRenderStore((state) => state.setRenderStats);
 
   const { spacePressedRef } = useIsoCamera();
   const world = useRenderWorld();
   useGameLoop();
 
   useEffect(() => {
-    // Auto-start game on mount if it's not running
-    if (!useGameStore.getState().isRunning) {
-      togglePlayPause();
-    }
-  }, [togglePlayPause]);
+    // Auto-start simulation in an idempotent way.
+    // This avoids double-toggle issues under React StrictMode remounting.
+    setRunning(true);
+
+    // Center the camera on the starting tile so the starting area is in view.
+    // viewportHeight * (0.5 - 0.42) corrects for centerY = height * 0.42.
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+    const initialCameraX = -START_SCREEN_X * zoom;
+    const initialCameraY = Math.round(vh * 0.08 - START_SCREEN_Y * zoom);
+    setCameraPosition(initialCameraX, initialCameraY);
+
+    return () => {
+      setRunning(false);
+    };
+  }, [setRunning, setCameraPosition, zoom]);
 
   const isBrowser = typeof window !== 'undefined';
   const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
@@ -45,8 +66,9 @@ export function GameStage() {
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setViewportWidth(Math.round(width));
-        setViewportHeight(Math.round(height));
+        // Ignore zero-dimension reports from headless/hidden environments.
+        if (width > 0) setViewportWidth(Math.round(width));
+        if (height > 0) setViewportHeight(Math.round(height));
       }
     });
     observer.observe(el);
@@ -57,21 +79,75 @@ export function GameStage() {
 
   const centerX = viewportWidth / 2;
   const centerY = viewportHeight * 0.42;
+  const lodLevel: 'full' | 'medium' | 'low' = zoom >= 1.1 ? 'full' : zoom >= 0.75 ? 'medium' : 'low';
+  const drawHeatmap = showFootfallHeatmap && lodLevel !== 'low';
+  const drawWorkers = lodLevel !== 'low' || world.workers.length <= 120;
+
+  // Tile screen positions are static after map load; rebuild when tiles change to handle map reloads.
+  // Stores array indices instead of IDs to avoid O(N) map creation per frame.
+  const chunkIndex = useMemo(() => {
+    const grouped = new Map<string, number[]>();
+    for (let i = 0; i < world.tiles.length; i++) {
+      const tile = world.tiles[i];
+      const key = `${Math.floor(tile.screenX / CHUNK_SCREEN_SIZE)},${Math.floor(tile.screenY / CHUNK_SCREEN_SIZE)}`;
+      const indices = grouped.get(key);
+      if (indices) indices.push(i);
+      else grouped.set(key, [i]);
+    }
+    return grouped;
+  }, [world.tiles]);
+
+  const visibleIndices = useMemo(() => {
+    const padding = lodLevel === 'full' ? 192 : 128;
+    const minX = (-centerX - cameraX - padding) / zoom;
+    const maxX = (viewportWidth - centerX - cameraX + padding) / zoom;
+    const minY = (-centerY - cameraY - padding) / zoom;
+    const maxY = (viewportHeight - centerY - cameraY + padding) / zoom;
+    const minChunkX = Math.floor(minX / CHUNK_SCREEN_SIZE);
+    const maxChunkX = Math.floor(maxX / CHUNK_SCREEN_SIZE);
+    const minChunkY = Math.floor(minY / CHUNK_SCREEN_SIZE);
+    const maxChunkY = Math.floor(maxY / CHUNK_SCREEN_SIZE);
+    const selected: number[] = [];
+
+    for (let cx = minChunkX; cx <= maxChunkX; cx++) {
+      for (let cy = minChunkY; cy <= maxChunkY; cy++) {
+        const indices = chunkIndex.get(`${cx},${cy}`);
+        if (!indices) continue;
+        for (const i of indices) {
+          // Note: relying on screenX/screenY bounds mapping.
+          // We can't easily check world.tiles[i] here without including world.tiles in dependency array,
+          // but we can trust the chunk index for rough culling, or assume tiles are static in screen space.
+          // Since screenX/screenY are derived from tile.position, which is static, we can use the roughly culled chunks.
+          // However, to be exact, we could store screenX/screenY alongside the chunk index.
+          // Since the chunk index is built from world.tiles once, we can just return all indices in these chunks.
+          selected.push(i);
+        }
+      }
+    }
+    return selected;
+  }, [cameraX, cameraY, centerX, centerY, chunkIndex, lodLevel, viewportHeight, viewportWidth, zoom]);
 
   const visibleTiles = useMemo(() => {
-    const padding = 192;
+    const padding = lodLevel === 'full' ? 192 : 128;
     const minX = (-centerX - cameraX - padding) / zoom;
     const maxX = (viewportWidth - centerX - cameraX + padding) / zoom;
     const minY = (-centerY - cameraY - padding) / zoom;
     const maxY = (viewportHeight - centerY - cameraY + padding) / zoom;
 
-    return world.tiles.filter((tile) => (
-      tile.screenX >= minX &&
-      tile.screenX <= maxX &&
-      tile.screenY >= minY &&
-      tile.screenY <= maxY
-    ));
-  }, [cameraX, cameraY, centerX, centerY, viewportHeight, viewportWidth, world.tiles, zoom]);
+    const filtered: (typeof world.tiles)[number][] = [];
+    for (let i = 0; i < visibleIndices.length; i++) {
+      const tile = world.tiles[visibleIndices[i]];
+      if (
+        tile.screenX >= minX &&
+        tile.screenX <= maxX &&
+        tile.screenY >= minY &&
+        tile.screenY <= maxY
+      ) {
+        filtered.push(tile);
+      }
+    }
+    return filtered;
+  }, [cameraX, cameraY, centerX, centerY, lodLevel, viewportHeight, viewportWidth, zoom, world.tiles, visibleIndices]);
   const hitArea = useMemo(() => new PIXI.Rectangle(
     (-centerX - cameraX) / zoom,
     (-centerY - cameraY) / zoom,
@@ -89,14 +165,23 @@ export function GameStage() {
     spacePressedRef,
   });
 
+  useEffect(() => {
+    setRenderStats({
+      visibleTiles: visibleTiles.length,
+      visibleBuildings: world.buildings.length,
+      visibleWorkers: world.workers.length,
+      lodLevel,
+    });
+  }, [lodLevel, setRenderStats, visibleTiles.length, world.buildings.length, world.workers.length]);
+
   return (
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown}>
       <IsoTerrainLayer tiles={visibleTiles} />
       <IsoResourceLayer tiles={visibleTiles} />
       <IsoFootfallLayer tiles={visibleTiles} />
-      {showFootfallHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
+      {drawHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />
-      <IsoWorkerLayer workers={world.workers} />
+      {drawWorkers && <IsoWorkerLayer workers={world.workers} />}
     </Container>
   );
 }

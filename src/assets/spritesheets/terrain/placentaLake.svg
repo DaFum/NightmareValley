@@ -1,4 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
-  <rect width="64" height="32" fill="#5a8fbf"/>
-  <text x="32" y="20" font-size="8" text-anchor="middle" fill="#ffffff">placentaLake</text>
+  <defs>
+    <radialGradient id="g" cx="35" cy="14" r="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0E1E40"/>
+      <stop offset="100%" stop-color="#030810"/>
+    </radialGradient>
+    <clipPath id="d">
+      <polygon points="32,0 64,16 32,32 0,16"/>
+    </clipPath>
+  </defs>
+  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
+  <g clip-path="url(#d)">
+    <path d="M22 18 Q32 14 42 18" stroke="#141E3C" stroke-width="1.2" fill="none" opacity="0.9"/>
+    <path d="M16 22 Q32 12 48 22" stroke="#101A38" stroke-width="1" fill="none" opacity="0.7"/>
+    <path d="M10 24 Q32 10 54 24" stroke="#0C1830" stroke-width="1" fill="none" opacity="0.5"/>
+    <rect x="28" y="10" width="2" height="1" rx="0.5" fill="#2A3E60" opacity="0.65"/>
+    <rect x="38" y="16" width="2" height="1" rx="0.5" fill="#243458" opacity="0.55"/>
+    <rect x="20" y="16" width="1" height="1" rx="0.5" fill="#2A3E60" opacity="0.55"/>
+    <rect x="44" y="12" width="1" height="1" rx="0.5" fill="#1E3050" opacity="0.50"/>
+  </g>
 </svg>

@@ -1,7 +1,5 @@
-import React from "react";
 
-
-import { Container, Sprite, Text, Graphics } from "@pixi/react";
+import { Container, Graphics } from "@pixi/react";
 
 
 function pileSize(fill: number) {

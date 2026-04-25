@@ -11,7 +11,9 @@
     "dev": "vite",
     "build:vite": "vite build",
     "preview": "vite preview",
-    "screenshot:playwright": "node scripts/playwright-screenshots.mjs"
+    "screenshot:playwright": "node scripts/playwright-screenshots.mjs",
+    "symbols:generate": "node scripts/generate-symbols.mjs",
+    "symbols:check": "node scripts/generate-symbols.mjs --check"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
@@ -36,6 +38,9 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/tests/jest.setup.ts"
+    ],
     "moduleNameMapper": {
       "(.*/)?vite-asset-loader$": "<rootDir>/src/pixi/utils/__mocks__/vite-asset-loader.ts"
     },

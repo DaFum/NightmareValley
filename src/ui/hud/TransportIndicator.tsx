@@ -1,4 +1,3 @@
-import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
 const TRANSPORT_STRESS_WARN_THRESHOLD = 6;

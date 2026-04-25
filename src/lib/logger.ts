@@ -1,5 +1,3 @@
-type Level = 'debug' | 'info' | 'warn' | 'error';
-
 export const isProduction = process.env.NODE_ENV === 'production';
 
 export const Logger = {
@@ -30,5 +28,4 @@ export const Logger = {
 };
 
 export default Logger;
-
 

@@ -1,4 +1,4 @@
-import { AiAction, AiState, RNG, createSeededRng } from './ai.types';
+import { AiAction, AiState, createSeededRng } from './ai.types';
 import { createAiState, advanceTick } from './ai.state';
 import { decideEconomyActions } from './ai.economy';
 import { decideExpansion } from './ai.expansion';
@@ -26,5 +26,4 @@ export function runAiTick(state: AiState | undefined, world: any): { state: AiSt
 
 	return { state: nextState, actions };
 }
-
 

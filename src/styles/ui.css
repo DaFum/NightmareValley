@@ -73,6 +73,25 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   bottom: 24px;
 }
 
+.hud-layout--mobile .hud-layout__left,
+.hud-layout--mobile .hud-layout__right {
+  top: auto;
+  transform: none;
+}
+
+.hud-layout--mobile .hud-layout__left {
+  left: 12px;
+  right: 12px;
+  bottom: 146px;
+}
+
+.hud-layout--mobile .hud-layout__right {
+  left: 12px;
+  right: 12px;
+  bottom: 82px;
+  max-width: none;
+}
+
 .not-found-route,
 .debug-route,
 .app-error-fallback,

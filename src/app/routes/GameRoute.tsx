@@ -1,4 +1,3 @@
-import React from 'react'
 import { GameLayout } from '../layout/GameLayout'
 import { BuildingMenu } from '../../ui/panels/BuildingMenu'
 

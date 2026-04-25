@@ -1,12 +1,16 @@
 import { WorldState } from './world.types';
-import { generateProceduralTiledMap } from '../map/procedural';
-import { parseTiledMap } from '../map/tiled.adapter';
+import { generateInitialWorld } from './world.generator';
 
 export function createWorld(seed?: number, width = 64, height = 64): WorldState {
-	const s = typeof seed === 'number' ? seed : Math.floor(Math.random() * 0xffffffff);
-	const map = generateProceduralTiledMap({ width, height, seed: s });
-	const territory = parseTiledMap(map);
-	return { tick: 0, seed: s, territory, players: {} };
+	const resolvedSeed = typeof seed === 'number' ? seed : Math.floor(Math.random() * 0xffffffff);
+	const base = generateInitialWorld(resolvedSeed, width, height);
+
+	return {
+		...base,
+		seed: resolvedSeed,
+		lastDeltaSec: 0,
+		scenarioProfile: 'challenging',
+		biomeModifier: 1,
+		temporaryModifiers: undefined,
+	};
 }
-
-

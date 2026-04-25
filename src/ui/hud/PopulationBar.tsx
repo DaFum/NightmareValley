@@ -1,4 +1,3 @@
-import React from 'react';
 import { useGameStore } from '../../store/game.store';
 
 import { useShallow } from 'zustand/react/shallow';

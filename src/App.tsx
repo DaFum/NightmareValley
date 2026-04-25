@@ -2,12 +2,13 @@ import React from 'react';
 import { RootLayout } from './app/layout/RootLayout';
 import { GameRoute } from './app/routes/GameRoute';
 import NotFoundRoute from './app/routes/NotFoundRoute';
-import DebugRoute from './app/routes/DebugRoute';
 import './styles/globals.css';
 import './styles/ui.css';
 
-const DEBUG_ROUTE_ENABLED =
-  typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
+const DEBUG_ROUTE_ENABLED = __DEV__;
+const LazyDebugRoute = DEBUG_ROUTE_ENABLED
+  ? React.lazy(() => import('./app/routes/DebugRoute'))
+  : null;
 
 function getCurrentPath(): string {
   if (typeof window === 'undefined') return '/';
@@ -63,8 +64,12 @@ export function App() {
   let route: React.ReactNode;
   if (path === '/' || path === '/game') {
     route = <GameRoute />;
-  } else if (path === '/debug' && DEBUG_ROUTE_ENABLED) {
-    route = <DebugRoute />;
+  } else if (path === '/debug' && DEBUG_ROUTE_ENABLED && LazyDebugRoute) {
+    route = (
+      <React.Suspense fallback={<main className="route-loading">Loading debug tools…</main>}>
+        <LazyDebugRoute />
+      </React.Suspense>
+    );
   } else {
     route = <NotFoundRoute />;
   }

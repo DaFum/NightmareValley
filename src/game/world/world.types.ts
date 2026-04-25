@@ -1,11 +1,17 @@
-import { TerritoryState, PlayerState } from '../core/game.types';
-import { OwnerId } from '../core/entity.ids';
+import { EconomySimulationState } from '../core/economy.simulation';
 
-export interface WorldState {
-	tick: number;
+/**
+ * WorldState now embeds the full economy simulation state so world ticks and
+ * game loops operate against a single source of truth.
+ */
+export interface WorldState extends EconomySimulationState {
 	seed: number;
-	territory: TerritoryState;
-	players?: Record<OwnerId, PlayerState>;
+	lastDeltaSec: number;
+	scenarioProfile?: 'sandbox' | 'challenging' | 'hardcore';
+	biomeModifier?: number;
+	temporaryModifiers?: {
+		productionBoost?: number;
+		transportBoost?: number;
+		expiresAtAge?: number;
+	};
 }
-
-

@@ -1,5 +1,3 @@
-import { AiAction } from './ai.types';
-
 export function computePriority(weights: Record<string, number>, inputs: Record<string, number>): number {
 	let sum = 0;
 	for (const k of Object.keys(weights)) {
@@ -24,5 +22,4 @@ export function chooseHighest<T>(items: T[], scoreFn: (t: T) => number): T | nul
 	}
 	return best;
 }
-
 

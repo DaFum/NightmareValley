@@ -1,4 +1,3 @@
-import React from 'react';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
 import BuildingInspector from './BuildingInspector';

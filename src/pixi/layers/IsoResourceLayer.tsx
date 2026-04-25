@@ -1,4 +1,3 @@
-import React from 'react';
 import { Sprite } from '@pixi/react';
 import { ResourceType } from '../../game/core/economy.types';
 import { IsoRenderWorld } from '../../game/render/render.types';
