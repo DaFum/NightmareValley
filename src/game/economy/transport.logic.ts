@@ -443,16 +443,7 @@ export function advanceCarrierMovement(
       const loadRatio = clamp(task.amount / capacity, 0, 1);
       return clamp(1 - (loadRatio * config.carrierEncumbrancePenalty), 0.05, 1);
     })();
-
-    const getEdgeSpeed = () => {
-      // Use destination-tile speed to match A*'s weighted edge model: cost(A→B) = 1/multiplier[B].
-      const destPos = task.pathIndex + 1 < task.path.length
-        ? task.path[task.pathIndex + 1]
-        : task.path[task.pathIndex];
-      const destTile = getTileAtPosition(state.territory as TerritoryState, destPos);
-      const tierSpeed = destTile ? (config.tierSpeedMultipliers[destTile.tier] || 1) : 1;
-      return config.carrierBaseSpeed * workerMoveSpeed * tierSpeed * encumbranceMultiplier;
-    };
+    const baseMoveSpeed = config.carrierBaseSpeed * workerMoveSpeed * encumbranceMultiplier;
 
     let reachedDestinationThisTick = false;
 
@@ -464,7 +455,11 @@ export function advanceCarrierMovement(
     } else {
       let remainingTime = deltaSec;
       while (remainingTime > 0 && task.pathIndex + 1 < task.path.length) {
-        const edgeSpeed = Math.max(0, getEdgeSpeed());
+        // Use destination-tile speed to match A*'s weighted edge model: cost(A→B) = 1/multiplier[B].
+        const destPos = task.path[task.pathIndex + 1];
+        const destTile = getTileAtPosition(state.territory as TerritoryState, destPos);
+        const tierSpeed = destTile ? (config.tierSpeedMultipliers[destTile.tier] || 1) : 1;
+        const edgeSpeed = Math.max(0, baseMoveSpeed * tierSpeed);
         if (edgeSpeed <= 0) break;
 
         const progressToNextTile = 1 - task.stepProgress;
