@@ -1,7 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type * as PIXI from 'pixi.js';
 import type { MutableRefObject } from 'react';
 import type { IsoRenderWorld } from '../../game/render/render.types';
+import Logger from '../../lib/logger';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
 import { useUIStore } from '../../store/ui.store';
@@ -43,6 +44,10 @@ export function useSelectionInput({
     cameraY,
     zoom,
   });
+  const resolveIsoHitRef = useRef(resolveIsoHit);
+  useEffect(() => {
+    resolveIsoHitRef.current = resolveIsoHit;
+  }, [resolveIsoHit]);
 
   const getActivePlayerId = useCallback(() => {
     const playerIds = Object.keys(useGameStore.getState().gameState.players);
@@ -53,10 +58,23 @@ export function useSelectionInput({
     if (event.button !== 0) return;
     if (spacePressedRef.current) return;
 
-    const hit = resolveIsoHit(event.global.x, event.global.y);
+    const hit = resolveIsoHitRef.current(event.global.x, event.global.y);
+    const placementModeActive = isDebugSpawningWarehouse || !!selectedBuildingToPlace;
+    const placementBlocked = !!hit.tileId && (!!hit.buildingId || !!hit.workerId);
+    if (placementModeActive && placementBlocked) {
+      if (isDebugSpawningWarehouse) setDebugSpawningWarehouse(false);
+      if (selectedBuildingToPlace) selectBuildingToPlace(null);
+      return;
+    }
+
     if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
       const activePlayerId = getActivePlayerId();
-      if (!activePlayerId) return;
+      if (!activePlayerId) {
+        Logger.warn('useSelectionInput: no active player for debug warehouse placement; clearing placement flags.');
+        setDebugSpawningWarehouse(false);
+        selectBuildingToPlace(null);
+        return;
+      }
       placeBuildingAt(activePlayerId, 'vaultOfDigestiveStone', hit.tileId);
       setDebugSpawningWarehouse(false);
       return;
@@ -64,7 +82,12 @@ export function useSelectionInput({
 
     if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
       const activePlayerId = getActivePlayerId();
-      if (!activePlayerId) return;
+      if (!activePlayerId) {
+        Logger.warn('useSelectionInput: no active player for building placement; clearing placement flags.');
+        setDebugSpawningWarehouse(false);
+        selectBuildingToPlace(null);
+        return;
+      }
       placeBuildingAt(activePlayerId, selectedBuildingToPlace, hit.tileId);
       selectBuildingToPlace(null);
       return;
@@ -81,7 +104,6 @@ export function useSelectionInput({
     getActivePlayerId,
     isDebugSpawningWarehouse,
     placeBuildingAt,
-    resolveIsoHit,
     selectBuilding,
     selectBuildingToPlace,
     selectTile,

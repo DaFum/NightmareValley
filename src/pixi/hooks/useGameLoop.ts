@@ -2,13 +2,13 @@ import { useRef } from 'react';
 import { useTick } from '@pixi/react';
 import { useGameStore } from '../../store/game.store';
 
+export const SIMULATION_STEP_SEC = 0.1;
+export const MAX_STEPS_PER_FRAME = 5;
+
 export function useGameLoop() {
   const advanceTick = useGameStore((state) => state.advanceTick);
   const isRunning = useGameStore((state) => state.isRunning);
   const accumulatorRef = useRef(0);
-
-  const SIMULATION_STEP_SEC = 0.1;
-  const MAX_STEPS_PER_FRAME = 5;
 
   useTick((_delta, ticker) => {
     const deltaSec = Math.min(ticker.deltaMS / 1000, 0.25);
@@ -29,7 +29,7 @@ export function useGameLoop() {
       steps += 1;
     }
 
-    if (steps === MAX_STEPS_PER_FRAME) {
+    if (steps === MAX_STEPS_PER_FRAME && accumulatorRef.current >= SIMULATION_STEP_SEC) {
       accumulatorRef.current = 0;
     }
   });

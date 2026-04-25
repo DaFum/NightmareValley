@@ -26,6 +26,7 @@ Ensure you use Node 18+ when running the project locally.
 
 - Install browser deps if needed: `npx playwright install chromium` (and on fresh Linux environments, `npx playwright install-deps chromium`).
 - Start the app locally on the expected host/port: `npm run dev -- --host 127.0.0.1 --port 4173 --strictPort`.
+- Use the dev server on **port 4173** (not `npm run preview`): the heatmap screenshot depends on development-only UI/flags.
 - Capture screenshots with: `npm run screenshot:playwright`.
 - Output files are written to `screenshots/`.
 
