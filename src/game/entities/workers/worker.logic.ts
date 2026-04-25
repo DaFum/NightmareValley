@@ -6,7 +6,7 @@ import { createGridFromTerritory } from "../../pathing/path.grid";
 export function updateWorkersAI(
   state: EconomySimulationState,
   deltaSec: number,
-  config: SimulationConfig
+  _config: SimulationConfig
 ): EconomySimulationState {
 
   const moveSpeed = 1.0; // grid tiles per second

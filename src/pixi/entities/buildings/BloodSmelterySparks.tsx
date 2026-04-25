@@ -1,7 +1,5 @@
-import React from "react";
 
-
-import { Container, Sprite, Text, Graphics } from "@pixi/react";
+import { Graphics } from "@pixi/react";
 
 
 export function BloodSmelterySparks({

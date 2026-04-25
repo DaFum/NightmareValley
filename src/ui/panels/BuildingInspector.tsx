@@ -1,4 +1,3 @@
-import React from 'react';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordUpgrade, getUpgradeCost } from '../../game/economy/production.logic';
 import { useGameStore } from '../../store/game.store';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Container, Sprite } from '@pixi/react';
 import { useTextures } from '../utils/textureRegistry';
 import { IsoRenderWorld } from '../../game/render/render.types';

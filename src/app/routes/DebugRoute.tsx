@@ -1,9 +1,9 @@
-import React from 'react'
 import { useGameStore } from '../../store/game.store'
 import { useUIStore } from '../../store/ui.store'
+import { useDebugStore } from '../../store/debug.store'
+import { useRenderStore } from '../../store/render.store'
 
-const DEBUG_ROUTE_ENABLED =
-	typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production'
+const DEBUG_ROUTE_ENABLED = __DEV__
 
 export default function DebugRoute(): JSX.Element {
 	const tick = useGameStore((state) => state.gameState.tick)
@@ -12,6 +12,12 @@ export default function DebugRoute(): JSX.Element {
 	const lastError = useGameStore((state) => state.lastError)
 	const activePanel = useUIStore((state) => state.activePanel)
 	const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace)
+	const debugWarnings = useDebugStore((state) => state.warnings)
+	const renderWarnings = useRenderStore((state) => state.warnings)
+	const renderStats = useRenderStore((state) => state.stats)
+  const lastErrorText = lastError
+    ? `${lastError.code}: ${lastError.message}${lastError.tick ? ` @tick ${lastError.tick}` : ''}`
+    : 'none'
 
 	if (!DEBUG_ROUTE_ENABLED) {
 		return (
@@ -32,10 +38,11 @@ export default function DebugRoute(): JSX.Element {
 				<div><dt>Tick rate</dt><dd>{tickRate}x</dd></div>
 				<div><dt>Active panel</dt><dd>{activePanel ?? 'none'}</dd></div>
 				<div><dt>Placement</dt><dd>{selectedBuildingToPlace ?? 'none'}</dd></div>
-				<div><dt>Last error</dt><dd>{lastError ? String(lastError) : 'none'}</dd></div>
+				<div><dt>Last error</dt><dd>{lastErrorText}</dd></div>
+				<div><dt>LOD</dt><dd>{renderStats.lodLevel ?? 'full'}</dd></div>
+				<div><dt>Warnings</dt><dd>{[...debugWarnings, ...renderWarnings].join(' | ') || 'none'}</dd></div>
 			</dl>
 			<a className="hud-button" href="/">Return to game</a>
 		</main>
 	)
 }
-

@@ -160,7 +160,7 @@ export async function loadSpritesheets(): Promise<void> {
     let frameX = r.x;
     let frameY = r.y;
 
-    // If the provided box is zero-sized (placeholder), treat it as "whole image"
+    // If the provided box is zero-sized, treat it as "whole image"
     // and use the base texture's natural dimensions. This lets manifest
     // entries reference individual image files without needing their exact
     // pixel bounds at build-time.
@@ -212,7 +212,7 @@ export async function loadSpritesheets(): Promise<void> {
           key = `${topKey}_${logicalName}`;
         }
 
-        // Special-case terrain entries: when manifest uses a placeholder
+        // Special-case terrain entries: when manifest uses a zero-sized
         // box [0,0,0,0] for whole-image terrain sheets, extract a single
         // tile-sized frame (64x32) instead of registering the full image.
         // This prevents drawing the full large contact image for every

@@ -1,7 +1,5 @@
-import React from "react";
 
-
-import { Container, Sprite, Text, Graphics } from "@pixi/react";
+import { Container, Text, Graphics } from "@pixi/react";
 
 import * as PIXI from "pixi.js";
 import { RenderBloodSmeltery } from "../../../game/render/render.types";

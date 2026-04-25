@@ -1,18 +1,39 @@
 import { WorldState } from './world.types';
+import { simulateTick } from '../core/economy.simulation';
+import { DEFAULT_SIMULATION_CONFIG, SimulationConfig } from '../economy/balancing.constants';
 
-export function tickWorld(world: WorldState, deltaSec = 1): WorldState {
-	// Incorporate deltaSec into progression logic if needed here
-	// Placeholder: integrate subsystem ticks (AI, economy, transport) here
+export function tickWorld(
+	world: WorldState,
+	deltaSec = 1,
+	config: SimulationConfig = DEFAULT_SIMULATION_CONFIG
+): WorldState {
+	const safeDelta = Number.isFinite(deltaSec) && deltaSec > 0 ? deltaSec : 1;
+	const scenarioMultiplier = world.scenarioProfile === 'hardcore' ? 0.9 : world.scenarioProfile === 'sandbox' ? 1.15 : 1;
+	const biomeModifier = Number.isFinite(world.biomeModifier) && (world.biomeModifier ?? 0) > 0 ? (world.biomeModifier as number) : 1;
+	const temporaryProductionBoost = world.temporaryModifiers?.productionBoost ?? 1;
+	const temporaryTransportBoost = world.temporaryModifiers?.transportBoost ?? 1;
+	const temporaryBoost = (temporaryProductionBoost + temporaryTransportBoost) / 2;
+	const effectiveDelta = safeDelta * scenarioMultiplier * biomeModifier * temporaryBoost;
+	const next = simulateTick(world, effectiveDelta, config);
+	const eventDue = Math.floor(next.ageOfTeeth) % 120 === 0 && next.ageOfTeeth > 0;
+	const expiredTemporary = world.temporaryModifiers?.expiresAtAge
+		? next.ageOfTeeth >= world.temporaryModifiers.expiresAtAge
+		: false;
+
 	return {
-		...world,
-		tick: world.tick + deltaSec,
-		territory: {
-			...world.territory,
-			tiles: { ...world.territory.tiles },
-			...(world.territory.tileIndex ? { tileIndex: { ...world.territory.tileIndex } } : {})
-		},
-		players: world.players ? { ...world.players } : undefined
+		...next,
+		seed: world.seed,
+		lastDeltaSec: safeDelta,
+		scenarioProfile: world.scenarioProfile,
+		biomeModifier: world.biomeModifier,
+		temporaryModifiers: expiredTemporary
+			? undefined
+			: eventDue
+				? {
+					productionBoost: 1.08,
+					transportBoost: 1.04,
+					expiresAtAge: next.ageOfTeeth + 30,
+				}
+				: world.temporaryModifiers,
 	};
 }
-
-

@@ -1,7 +1,8 @@
-import React from 'react';
 import { useGameStore } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
+import { ResourceType } from '../../game/core/economy.types';
 
+import React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 const resourceFileByLabel: Record<string, string> = {
@@ -13,30 +14,89 @@ const resourceFileByLabel: Record<string, string> = {
   Loaf: 'resources/funeralLoaf.png',
 };
 
-export function ResourceBar() {
-  // Try to use real data from the store, but fall back to thematic placeholder if store structure isn't ready
+const compactNumberFormatter = new Intl.NumberFormat(undefined, {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
 
+const exactNumberFormatter = new Intl.NumberFormat();
+const signedCompactFormatter = new Intl.NumberFormat(undefined, {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+  signDisplay: 'always',
+});
+
+type TrendMap = Partial<Record<ResourceType, number>>;
+
+export function ResourceBar() {
+  const ageOfTeeth = useGameStore((state) => state.gameState.ageOfTeeth);
+  const buildings = useGameStore((state) => state.gameState.buildings);
+  const transport = useGameStore((state) => state.gameState.transport);
   const stock = useGameStore(useShallow((state) => {
     const playerIds = Object.keys(state.gameState.players);
     if (playerIds.length > 0) return state.gameState.players[playerIds[0]].stock;
     return {};
   }));
+  const trendRef = React.useRef<{ age: number; stock: TrendMap } | null>(null);
+  const [trendPerMin, setTrendPerMin] = React.useState<TrendMap>({});
 
-  const teeth = stock.toothPlanks ?? 0;
-  const marrow = stock.marrowGrain ?? 0;
-  const stone = stock.sepulcherStone ?? 0;
-  const bile = stock.amnioticWater ?? 0;
-  const loaf = stock.funeralLoaf ?? 0;
-  const dust = stock.boneDust ?? 0;
+  React.useEffect(() => {
+    const previous = trendRef.current;
+    if (!previous) {
+      trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
+      return;
+    }
+    const elapsedSec = ageOfTeeth - previous.age;
+    if (!Number.isFinite(elapsedSec) || elapsedSec <= 0) return;
+    const nextTrend: TrendMap = {};
+    const keys = new Set([...Object.keys(stock), ...Object.keys(previous.stock)]);
+    for (const key of keys) {
+      const resource = key as ResourceType;
+      const prev = previous.stock[resource] ?? 0;
+      const curr = (stock[resource] as number | undefined) ?? 0;
+      nextTrend[resource] = ((curr - prev) / elapsedSec) * 60;
+    }
+    setTrendPerMin(nextTrend);
+    trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
+  }, [ageOfTeeth, stock]);
+
+  const topStats = React.useMemo(() => {
+    const sources: Partial<Record<ResourceType, number>> = {};
+    const sinks: Partial<Record<ResourceType, number>> = {};
+    for (const building of Object.values(buildings)) {
+      for (const [resource, amount] of Object.entries(building.outputBuffer)) {
+        sources[resource as ResourceType] = (sources[resource as ResourceType] ?? 0) + (amount ?? 0);
+      }
+      for (const [resource, amount] of Object.entries(building.inputBuffer)) {
+        sinks[resource as ResourceType] = (sinks[resource as ResourceType] ?? 0) + (amount ?? 0);
+      }
+    }
+    return { sources, sinks, queuedJobs: transport.queuedJobCount ?? 0 };
+  }, [buildings, transport.queuedJobCount]);
+
+  const resources = [
+    { label: 'Teeth', key: 'toothPlanks' as const, value: stock.toothPlanks ?? 0, tone: 'bone' as const },
+    { label: 'Stone', key: 'sepulcherStone' as const, value: stock.sepulcherStone ?? 0, tone: 'stone' as const },
+    { label: 'Marrow', key: 'marrowGrain' as const, value: stock.marrowGrain ?? 0, tone: 'marrow' as const },
+    { label: 'Dust', key: 'boneDust' as const, value: stock.boneDust ?? 0, tone: 'bone' as const },
+    { label: 'Bile', key: 'amnioticWater' as const, value: stock.amnioticWater ?? 0, tone: 'bile' as const },
+    { label: 'Loaf', key: 'funeralLoaf' as const, value: stock.funeralLoaf ?? 0, tone: 'flesh' as const },
+  ];
 
   return (
     <div className="resource-strip" aria-label="Resources">
-      <ResourceChip label="Teeth" value={teeth} tone="bone" />
-      <ResourceChip label="Stone" value={stone} tone="stone" />
-      <ResourceChip label="Marrow" value={marrow} tone="marrow" />
-      <ResourceChip label="Dust" value={dust} tone="bone" />
-      <ResourceChip label="Bile" value={bile} tone="bile" />
-      <ResourceChip label="Loaf" value={loaf} tone="flesh" />
+      {resources.map((resource) => (
+        <ResourceChip
+          key={resource.label}
+          label={resource.label}
+          value={resource.value}
+          trendPerMin={trendPerMin[resource.key] ?? 0}
+          topSource={topStats.sources[resource.key] ?? 0}
+          topSink={topStats.sinks[resource.key] ?? 0}
+          queuedJobs={topStats.queuedJobs}
+          tone={resource.tone}
+        />
+      ))}
     </div>
   );
 }
@@ -44,17 +104,30 @@ export function ResourceBar() {
 type ResourceChipProps = {
   label: string;
   value: number;
+  trendPerMin: number;
+  topSource: number;
+  topSink: number;
+  queuedJobs: number;
   tone: 'bone' | 'stone' | 'marrow' | 'bile' | 'flesh';
 };
 
-function ResourceChip({ label, value, tone }: ResourceChipProps) {
+function ResourceChip({ label, value, trendPerMin, topSource, topSink, queuedJobs, tone }: ResourceChipProps) {
   const image = imageMap[resourceFileByLabel[label]];
+  const formattedValue = compactNumberFormatter.format(value);
+  const trendLabel = `${signedCompactFormatter.format(trendPerMin)}/m`;
+  const trendColor = trendPerMin >= 0 ? '#7ee787' : '#ff7b72';
+  const tooltip = `${label}: ${exactNumberFormatter.format(value)} | Trend ${trendLabel} | Source buffer ${exactNumberFormatter.format(topSource)} | Sink buffer ${exactNumberFormatter.format(topSink)} | Queue ${queuedJobs}`;
 
   return (
-    <div className={`resource-chip resource-chip--${tone}`}>
+    <div
+      className={`resource-chip resource-chip--${tone}`}
+      title={tooltip}
+      aria-label={tooltip}
+    >
       {image ? <img src={image} alt="" aria-hidden="true" /> : null}
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong>{formattedValue}</strong>
+      <small style={{ color: trendColor }}>{trendLabel}</small>
     </div>
   );
 }

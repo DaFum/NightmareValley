@@ -48,8 +48,8 @@ describe("transport.movement", () => {
     const tgtId = createId("bld");
     const jobId = createId("job");
 
-    const t0 = createTile(0, 0, "grass");
-    const t1 = createTile(1, 0, "grass");
+    createTile(0, 0, "grass");
+    createTile(1, 0, "grass");
 
     state.buildings[srcId] = { id: srcId, position: { x: 0, y: 0 } } as BuildingInstance;
     state.buildings[tgtId] = { id: tgtId, position: { x: 1, y: 0 } } as BuildingInstance;
@@ -88,7 +88,7 @@ describe("transport.movement", () => {
     const tgtId = createId("bld");
     const jobId = createId("job");
 
-    const t0 = createTile(0, 0, "dirt"); // speed mult 1.2
+    createTile(0, 0, "dirt"); // speed mult 1.2
     const t1 = createTile(1, 0, "grass");
 
     createTile(2, 0, "grass");
@@ -127,8 +127,8 @@ describe("transport.movement", () => {
     const tgtId = createId("bld");
     const jobId = createId("job");
 
-    const t0 = createTile(0, 0);
-    const t1 = createTile(1, 0);
+    createTile(0, 0);
+    createTile(1, 0);
 
     state.buildings[srcId] = {
       id: srcId, position: { x: 1, y: 0 }, outputBuffer: { sinewTimber: 1 }

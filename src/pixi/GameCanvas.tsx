@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LocalStage as Stage } from './LocalStage';
 import { GameStage } from './GameStage';

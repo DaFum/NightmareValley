@@ -1,4 +1,3 @@
-import React from 'react'
 import type { ReactNode } from 'react'
 
 export function IsoBuildingLabel({ children }: { children?: ReactNode }): JSX.Element | null {

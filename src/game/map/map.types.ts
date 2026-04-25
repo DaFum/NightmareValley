@@ -1,5 +1,3 @@
-import { Position } from "../core/game.types";
-
 export interface TiledMapData {
   width: number;
   height: number;

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
 import type { ResourceType } from '../../game/core/economy.types';
