@@ -25,7 +25,7 @@ export function GameLayout({
       </section>
       <HudLayout top={hud} right={<InspectorPanel />} bottom={panels} />
       {process.env.NODE_ENV === 'development' && (
-        <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', zIndex: 1000 }}>
+        <div style={{ position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 1000 }}>
           <DebugLogisticsPanel />
         </div>
       )}

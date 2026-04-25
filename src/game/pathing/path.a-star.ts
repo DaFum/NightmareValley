@@ -39,12 +39,20 @@ export function findPathAStar(
   const openList: AStarNode[] = [];
   const closedSet: Set<string> = new Set();
 
+  // Compute minEdgeCost once before any node is created so startNode.h uses the same
+  // scaled heuristic as neighbor nodes, keeping A* admissible with tier speed multipliers.
+  let minEdgeCost = 1.0;
+  if (tileCost) {
+    const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || { paved: 2.0 }));
+    minEdgeCost = 1 / (maxMultiplier || 1);
+  }
+
   const startNode: AStarNode = {
     x: start.x,
     y: start.y,
     f: 0,
     g: 0,
-    h: Math.abs(start.x - goal.x) + Math.abs(start.y - goal.y),
+    h: (Math.abs(start.x - goal.x) + Math.abs(start.y - goal.y)) * minEdgeCost,
     parent: null
   };
   startNode.f = startNode.g + startNode.h;
@@ -111,15 +119,7 @@ export function findPathAStar(
 
       const g = current.g + baseEdgeCost; // Distance to neighbor
 
-      // To keep A* admissible with our tier speed multipliers (which lower costs below 1),
-      // we need to multiply the manhattan distance by the minimum possible tile cost.
-      // E.g. paved speed is 2.0, so min cost is 0.5.
-      let minEdgeCost = 1.0;
-      if (tileCost) {
-        const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || { paved: 2.0 }));
-        minEdgeCost = 1 / (maxMultiplier || 1);
-      }
-
+      // minEdgeCost is computed once before the while loop starts (see above).
       const h = (Math.abs(neighbor.x - goal.x) + Math.abs(neighbor.y - goal.y)) * minEdgeCost;
       const f = g + h;
 

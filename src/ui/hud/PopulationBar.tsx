@@ -16,7 +16,7 @@ export function PopulationBar() {
     return { active: 13, max: 20 };
   }));
   const { active, max } = population;
-  const maxSafe = max <= 0 ? 0 : max;
+  const maxSafe = Number.isFinite(max) ? Math.max(max, 0) : 0;
   const fill = maxSafe > 0 ? Math.min(Math.max((active / maxSafe) * 100, 0), 100) : 0;
 
   return (

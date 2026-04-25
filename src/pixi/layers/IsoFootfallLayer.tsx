@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { Graphics } from '@pixi/react';
 import * as PIXI from 'pixi.js';
 import { IsoTileRenderData } from '../../game/render/render.types';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../../game/iso/iso.constants';
 
 type IsoFootfallLayerProps = {
   tiles: IsoTileRenderData[];
@@ -11,9 +12,6 @@ export default function IsoFootfallLayer({ tiles }: IsoFootfallLayerProps): JSX.
   const drawFootfall = useCallback((g: PIXI.Graphics) => {
     g.clear();
     g.lineStyle(0); // Reset stroke
-
-    const TILE_WIDTH = 64;
-    const TILE_HEIGHT = 32;
 
     for (const tile of tiles) {
       if (tile.tier === 'grass') continue;
@@ -34,15 +32,18 @@ export default function IsoFootfallLayer({ tiles }: IsoFootfallLayerProps): JSX.
           color = 0x6a6a6a;
           alpha = 0.65;
           break;
+        default:
+          // Unknown tier — skip to avoid rendering a black diamond
+          continue;
       }
 
       g.beginFill(color, alpha);
 
       // Draw iso diamond
-      g.moveTo(tile.screenX, tile.screenY - TILE_HEIGHT / 2);
-      g.lineTo(tile.screenX + TILE_WIDTH / 2, tile.screenY);
-      g.lineTo(tile.screenX, tile.screenY + TILE_HEIGHT / 2);
-      g.lineTo(tile.screenX - TILE_WIDTH / 2, tile.screenY);
+      g.moveTo(tile.screenX, tile.screenY - ISO_TILE_HEIGHT / 2);
+      g.lineTo(tile.screenX + ISO_TILE_WIDTH / 2, tile.screenY);
+      g.lineTo(tile.screenX, tile.screenY + ISO_TILE_HEIGHT / 2);
+      g.lineTo(tile.screenX - ISO_TILE_WIDTH / 2, tile.screenY);
 
       g.endFill();
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { Container } from '@pixi/react';
 import * as PIXI from 'pixi.js';
@@ -89,16 +89,21 @@ export function GameStage() {
   const isBrowser = typeof window !== 'undefined';
   const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
   const [viewportHeight, setViewportHeight] = React.useState(isBrowser ? window.innerHeight : 768);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isBrowser) return;
-    const handleResize = () => {
-      setViewportWidth(window.innerWidth);
-      setViewportHeight(window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
+    const el = containerRef.current ?? document.documentElement;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setViewportWidth(Math.round(width));
+        setViewportHeight(Math.round(height));
+      }
+    });
+    observer.observe(el);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
     };
   }, [isBrowser]);
 
@@ -126,6 +131,11 @@ export function GameStage() {
     viewportHeight / zoom
   ), [cameraX, cameraY, centerX, centerY, viewportHeight, viewportWidth, zoom]);
 
+  const getActivePlayerId = () => {
+    const playerIds = Object.keys(useGameStore.getState().gameState.players);
+    return playerIds[0] ?? 'player_1';
+  };
+
   const handlePointerDown = (e: any) => {
     if (typeof e.button === 'number' && e.button !== 0) return;
 
@@ -135,17 +145,13 @@ export function GameStage() {
     const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, zoom, 64, 32);
 
     if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const playerIds = Object.keys(useGameStore.getState().gameState.players);
-      const playerId = playerIds.length > 0 ? playerIds[0] : 'player_1';
-      placeBuildingAt(playerId, "vaultOfDigestiveStone", hit.tileId);
+      placeBuildingAt(getActivePlayerId(), "vaultOfDigestiveStone", hit.tileId);
       setDebugSpawningWarehouse(false);
       return;
     }
 
     if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const playerIds = Object.keys(useGameStore.getState().gameState.players);
-      const playerId = playerIds.length > 0 ? playerIds[0] : 'player_1';
-      placeBuildingAt(playerId, selectedBuildingToPlace, hit.tileId);
+      placeBuildingAt(getActivePlayerId(), selectedBuildingToPlace, hit.tileId);
       selectBuildingToPlace(null);
       return;
     }

@@ -3,20 +3,21 @@ import { TerritoryState, MapTile } from "../../game/core/game.types";
 
 describe("weighted A* pathfinding", () => {
   it("prefers a longer paved route over a shorter grass route", () => {
-    // Grid:
-    // S D D D G
-    // G G G D G
-    // G G G T G
+    // 5x4 grid with paved ('P') tiles forming a longer but cheaper route:
+    // S . . . .
+    // P . . . .
+    // P P P T .
+    // . . . . .
     // Start (0,0), Target (3,2)
-    // Direct path: (0,0)->(1,0)->(2,0)->(3,0)->(3,1)->(3,2)
-    // Path cost via dirt depends on tier speed multipliers.
+    // Direct grass route cost: 5 steps × 1.0 = 5.0
+    // Paved detour cost: 5 steps × 0.5 = 2.5  (preferred)
 
     const tiles: Record<string, MapTile> = {};
     const tileIndex: Record<string, string> = {};
 
     const addTile = (x: number, y: number, tier: "grass" | "dirt" | "cobble" | "paved") => {
       const id = `tile_${x}_${y}`;
-      tiles[id] = { id, position: { x, y }, tier, footfall: 0 } as MapTile;
+      tiles[id] = { id, position: { x, y }, terrain: 'scarredEarth', tier, footfall: 0 } as MapTile;
       tileIndex[`${x},${y}`] = id;
     };
 
@@ -52,5 +53,11 @@ describe("weighted A* pathfinding", () => {
     expect(path.points).toContainEqual({ x: 1, y: 2 });
     expect(path.points).toContainEqual({ x: 2, y: 2 });
     expect(path.points).toContainEqual({ x: 3, y: 2 });
+    // The direct grass shortcut through (1,0),(2,0),(3,0) should NOT be taken
+    const grassShortcut = [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }];
+    const pathStr = JSON.stringify(path.points);
+    for (const pt of grassShortcut) {
+      expect(pathStr).not.toContain(JSON.stringify(pt));
+    }
   });
 });

@@ -68,7 +68,7 @@ describe("transport.movement", () => {
       stepProgress: 0
     };
 
-    const config = { ...DEFAULT_SIMULATION_CONFIG, carrierBaseSpeed: 1 };
+    const config = { ...DEFAULT_SIMULATION_CONFIG, carrierBaseSpeed: 1, tierSpeedMultipliers: { grass: 1, dirt: 1.2, cobble: 1.5, paved: 2.0 } };
     advanceCarrierMovement(state, 0.5, config);
 
     const task = state.transport.activeCarrierTasks[carrierId];

@@ -109,7 +109,10 @@ export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData 
 
       // Hand-shaped opening valley: enough authored structure for a
       // Settlers-style first economy while the outer map stays procedural.
-      if (width >= 24 && height >= 24) {
+      // Override coordinates go up to x=15, y=13 — only apply when the map is large enough.
+      const MAX_OVERRIDE_X = 15;
+      const MAX_OVERRIDE_Y = 13;
+      if (width > MAX_OVERRIDE_X && height > MAX_OVERRIDE_Y) {
         if (x >= 2 && x <= 4 && y >= 8 && y <= 10) terrain = 'weepingForest';
         if (x >= 10 && x <= 13 && y >= 4 && y <= 7) {
           terrain = (x + y) % 3 === 0 ? 'cathedralRock' : 'ribMountain';

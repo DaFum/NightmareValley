@@ -20,13 +20,14 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
   if (!worker) return null;
 
   const def = WORKER_DEFINITIONS[worker.type] || { name: 'Unknown Worker', description: 'No definition found.' };
+  const portraitSrc = imageMap[`workers/${worker.type}.png`];
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Worker inspector">
       <div className="inspector-panel__header">
-        {imageMap[`workers/${worker.type}.png`] ? (
+        {portraitSrc ? (
           <img
-            src={imageMap[`workers/${worker.type}.png`]}
+            src={portraitSrc}
             alt=""
             aria-hidden="true"
             className="inspector-portrait"

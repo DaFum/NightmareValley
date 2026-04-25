@@ -185,8 +185,8 @@ export function mapWorkersToIsoWorkers(
       const targetBuilding = state.buildings[targetBuildingId];
 
       if (targetBuilding) {
-        const dx = targetBuilding.position.x - worker.position.x;
-        const dy = targetBuilding.position.y - worker.position.y;
+        const dx = targetBuilding.position.x - renderX;
+        const dy = targetBuilding.position.y - renderY;
         if (dx > 0 && dy >= 0) dir = "SE";
         else if (dx <= 0 && dy > 0) dir = "SW";
         else if (dx < 0 && dy <= 0) dir = "NW";

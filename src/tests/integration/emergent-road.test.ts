@@ -27,11 +27,12 @@ describe("Emergent Road Feedback Loop", () => {
       worldPulse: 0
     };
 
-    // 32x32 grass grid
+    // 32x32 grid of neutral terrain (scarredEarth = passable, no resource bias)
     for (let x = 0; x < 32; x++) {
       for (let y = 0; y < 32; y++) {
         const id = `tile_${x}_${y}`;
-        state.territory.tiles[id] = { id, position: { x, y }, terrain: "weepingForest", footfall: 0, tier: "grass" } as MapTile;
+        const tile: MapTile = { id, position: { x, y }, terrain: "scarredEarth", footfall: 0, tier: "grass" };
+        state.territory.tiles[id] = tile;
         state.territory.tileIndex![`${x},${y}`] = id;
       }
     }
@@ -39,20 +40,29 @@ describe("Emergent Road Feedback Loop", () => {
     const hqId = createId("bld");
     const destId = createId("bld");
 
-    state.buildings[hqId] = {
+    const hqBuilding: BuildingInstance = {
       id: hqId, type: "vaultOfDigestiveStone", ownerId: "p1", position: { x: 5, y: 5 },
-      internalStorage: { sinewTimber: 1000 }, outputBuffer: { sinewTimber: 1000 }, inputBuffer: {}
-    } as any;
-
-    state.buildings[destId] = {
+      level: 1, integrity: 100, connectedToRoad: true, progressSec: 0, isActive: true,
+      internalStorage: { sinewTimber: 1000 }, outputBuffer: { sinewTimber: 1000 }, inputBuffer: {},
+      assignedWorkers: [],
+    };
+    const destBuilding: BuildingInstance = {
       id: destId, type: "vaultOfDigestiveStone", ownerId: "p1", position: { x: 25, y: 25 },
-      internalStorage: {}, outputBuffer: {}, inputBuffer: {}
-    } as any;
+      level: 1, integrity: 100, connectedToRoad: true, progressSec: 0, isActive: true,
+      internalStorage: {}, outputBuffer: {}, inputBuffer: {},
+      assignedWorkers: [],
+    };
+    state.buildings[hqId] = hqBuilding;
+    state.buildings[destId] = destBuilding;
 
-    // 5 carriers
+    // 5 carriers starting at the HQ position
     for (let i = 0; i < 5; i++) {
       const wId = createId("wrk");
-      state.workers[wId] = { id: wId, type: "burdenThrall", ownerId: "p1", position: { x: 5, y: 5 }, isIdle: true } as any;
+      const carrier: WorkerInstance = {
+        id: wId, type: "burdenThrall", ownerId: "p1", position: { x: 5, y: 5 },
+        isIdle: true, morale: 100, infection: 0, scars: 0,
+      };
+      state.workers[wId] = carrier;
     }
 
     let currentState = state;
@@ -75,6 +85,14 @@ describe("Emergent Road Feedback Loop", () => {
 
       currentState = simulateTick(currentState, 1.0, config);
       ticks++;
+    }
+
+    if (ticks >= maxTicks) {
+      const pending = Object.values(currentState.transport.jobs).filter(j => j.status !== "delivered");
+      throw new Error(
+        `Simulation did not complete within ${maxTicks} ticks. ` +
+        `${pending.length} jobs still pending: ${pending.map(j => `${j.id}(${j.status})`).join(', ')}`
+      );
     }
 
     const tiles = Object.values(currentState.territory.tiles);

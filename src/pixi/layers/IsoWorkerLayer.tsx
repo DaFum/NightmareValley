@@ -9,6 +9,9 @@ interface IsoWorkerLayerProps {
 
 const WORKER_SCALE = 0.13;
 const WORKER_ANCHOR = { x: 0.5, y: 1 } as const;
+// Carry sprite is proportionally larger and offset upward relative to the worker scale
+const CARRY_SCALE = WORKER_SCALE * (0.2 / 0.13);
+const CARRY_OFFSET_Y = -Math.round(16 * (WORKER_SCALE / 0.13));
 
 export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
   const { registry } = useTextures();
@@ -49,8 +52,8 @@ export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
               <Sprite
                 texture={carryingTex}
                 anchor={{ x: 0.5, y: 1 }}
-                y={-16}
-                scale={0.2}
+                y={CARRY_OFFSET_Y}
+                scale={CARRY_SCALE}
                 zIndex={1}
               />
             )}

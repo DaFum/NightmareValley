@@ -45,6 +45,33 @@ export interface TransportState {
 }
 
 // =========================
+// TRANSPORT JOB FACTORY
+// =========================
+
+export function createTransportJob(
+  id: string,
+  fromBuildingId: BuildingId,
+  toBuildingId: BuildingId,
+  resourceType: ResourceType,
+  amount: number,
+  priority: number,
+  description?: string
+): TransportJob {
+  return {
+    id,
+    fromBuildingId,
+    toBuildingId,
+    resourceType,
+    amount,
+    priority,
+    reserved: 0,
+    delivered: 0,
+    status: "queued",
+    description,
+  };
+}
+
+// =========================
 // TRANSPORT JOB GENERATION
 // =========================
 
@@ -90,18 +117,15 @@ export function generateTransportJobs(
         if (existingJobSignatures.has(signature)) continue;
 
         const jobId = createId("job");
-        state.transport.jobs[jobId] = {
-          id: jobId,
-          fromBuildingId: source.id,
-          toBuildingId: target.id,
+        state.transport.jobs[jobId] = createTransportJob(
+          jobId,
+          source.id,
+          target.id,
           resourceType,
-          amount: amountToMove,
-          priority: getTransportPriority(target, resourceType, config),
-          reserved: 0,
-          delivered: 0,
-          status: "queued",
-          description: `Move ${resourceType} from ${source.type} to ${target.type}`,
-        };
+          amountToMove,
+          getTransportPriority(target, resourceType, config),
+          `Move ${resourceType} from ${source.type} to ${target.type}`
+        );
         state.transport.queuedJobCount = (state.transport.queuedJobCount || 0) + 1;
 
         existingJobSignatures.add(signature);
@@ -316,12 +340,15 @@ export function findBestJobForCarrier(
 
     if (available < job.amount) continue;
 
-    const carrierToSourcePath = findPath(carrier.position, source.position, state);
-    const sourceToTargetPath = findPath(source.position, target.position, state);
-
-    const dist =
-      calculatePathDistance(carrierToSourcePath) +
-      calculatePathDistance(sourceToTargetPath);
+    // Use Manhattan distance for scoring to avoid O(n*jobs) A* searches here;
+    // the real A* path is computed once for the winning job in assignCarrierTasks.
+    const carrierToSourceDist =
+      Math.abs(carrier.position.x - source.position.x) +
+      Math.abs(carrier.position.y - source.position.y);
+    const sourceToTargetDist =
+      Math.abs(source.position.x - target.position.x) +
+      Math.abs(source.position.y - target.position.y);
+    const dist = carrierToSourceDist + sourceToTargetDist;
 
     const score = job.priority * 100 - dist;
     if (score > bestScore) {
@@ -339,11 +366,23 @@ export function findBestJobForCarrier(
 
 export function getTileAtPosition(territory: TerritoryState, pos: Position): MapTile | undefined {
   if (!territory) return undefined;
-  if (territory.tileIndex) {
-    const id = territory.tileIndex[`${pos.x},${pos.y}`];
-    return id ? territory.tiles[id] : undefined;
+  // Use existing tileIndex when available; lazily build it when missing
+  if (!territory.tileIndex) {
+    territory.tileIndex = {};
+    for (const [id, tile] of Object.entries(territory.tiles)) {
+      territory.tileIndex[`${tile.position.x},${tile.position.y}`] = id;
+    }
   }
-  return territory.tiles[`tile_${pos.x}_${pos.y}`];
+  const id = territory.tileIndex[`${pos.x},${pos.y}`];
+  return id ? territory.tiles[id] : undefined;
+}
+
+export function validateFootfallThresholds(thresholds: Record<string, number>): void {
+  if (!(thresholds.dirt <= thresholds.cobble && thresholds.cobble <= thresholds.paved)) {
+    console.error(
+      `[transport.logic] footfallTierThresholds are misordered: expected dirt (${thresholds.dirt}) <= cobble (${thresholds.cobble}) <= paved (${thresholds.paved})`
+    );
+  }
 }
 
 export function recomputeTierFromFootfall(tile: MapTile, thresholds: Record<string, number>) {
@@ -470,6 +509,7 @@ export function advanceCarrierMovement(
 
 export function decayFootfall(state: EconomySimulationState, config: SimulationConfig): EconomySimulationState {
   if (state.tick % 10 === 0) {
+    validateFootfallThresholds(config.footfallTierThresholds);
     if (state.territory && state.territory.tiles) {
       for (const tile of Object.values(state.territory.tiles as Record<string, MapTile>)) {
         if (tile.footfall > 0) {

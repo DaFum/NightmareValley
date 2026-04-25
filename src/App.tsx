@@ -14,25 +14,32 @@ function getCurrentPath(): string {
   return window.location.pathname || '/';
 }
 
+type PatchedWindow = Window & {
+  __historyPatched?: boolean;
+  __originalPushState?: typeof history.pushState;
+  __originalReplaceState?: typeof history.replaceState;
+};
+
 // Use a window property as the patch guard so HMR module re-evaluation does not
 // double-patch history (module-scoped variables reset on each hot reload cycle).
-if (typeof window !== 'undefined' && typeof history !== 'undefined' && !(window as Window & { __historyPatched?: boolean }).__historyPatched) {
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
+// Originals are also stored on window so wrappers always call the true originals even after HMR.
+if (typeof window !== 'undefined' && typeof history !== 'undefined' && !(window as PatchedWindow).__historyPatched) {
+  (window as PatchedWindow).__originalPushState = history.pushState;
+  (window as PatchedWindow).__originalReplaceState = history.replaceState;
 
   history.pushState = function (...args) {
-    const result = originalPushState.apply(this, args);
+    const result = (window as PatchedWindow).__originalPushState!.apply(this, args);
     window.dispatchEvent(new Event('pushstate'));
     return result;
   };
 
   history.replaceState = function (...args) {
-    const result = originalReplaceState.apply(this, args);
+    const result = (window as PatchedWindow).__originalReplaceState!.apply(this, args);
     window.dispatchEvent(new Event('replacestate'));
     return result;
   };
 
-  (window as Window & { __historyPatched?: boolean }).__historyPatched = true;
+  (window as PatchedWindow).__historyPatched = true;
 }
 
 export function App() {

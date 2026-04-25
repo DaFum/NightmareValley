@@ -53,7 +53,7 @@ export default function InspectorPanel(): JSX.Element | null {
                   {imgSrc ? (
                     <img src={imgSrc} alt={resource} aria-hidden="true" />
                   ) : (
-                    <span>{resource[0].toUpperCase()}</span>
+                    <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                   )}
                   {amount}
                 </span>

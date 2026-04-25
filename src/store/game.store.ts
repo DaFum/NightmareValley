@@ -10,6 +10,7 @@ import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { BuildingType, ResourceInventory, WorkerType } from "../game/core/economy.types";
 import { BuildingInstance, Position, WorkerInstance } from "../game/core/game.types";
 import { loadInitialMap } from "../game/map/map.loader";
+import { createTransportJob, buildingAcceptsResource } from "../game/economy/transport.logic";
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -273,15 +274,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const hq = Object.values(gs.buildings).find(b => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone");
       if (!hq) return state;
 
-      const otherVaults = Object.values(gs.buildings).filter(b => b.id !== hq.id && b.type === "vaultOfDigestiveStone");
-      if (otherVaults.length === 0) {
-        console.warn("No second warehouse found for debug jobs.");
-        return state;
-      }
+      // Find nearest compatible target building (any building that accepts the resource)
+      const candidates = Object.values(gs.buildings).filter(
+        b => b.id !== hq.id && buildingAcceptsResource(b, resourceType)
+      );
 
       let nearest: BuildingInstance | null = null;
       let minDist = Infinity;
-      for (const v of otherVaults) {
+      for (const v of candidates) {
         const dx = v.position.x - hq.position.x;
         const dy = v.position.y - hq.position.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -296,17 +296,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const newJobs = { ...gs.transport.jobs };
       for (let i = 0; i < count; i++) {
         const jobId = createId('job');
-        newJobs[jobId] = {
-          id: jobId,
-          fromBuildingId: hq.id,
-          toBuildingId: nearest.id,
+        newJobs[jobId] = createTransportJob(
+          jobId,
+          hq.id,
+          nearest.id,
           resourceType,
-          amount: 1,
-          priority: DEFAULT_SIMULATION_CONFIG.defaultTransportPriority + 100,
-          reserved: 0,
-          delivered: 0,
-          status: "queued"
-        };
+          1,
+          DEFAULT_SIMULATION_CONFIG.defaultTransportPriority + 100
+        );
       }
 
       return {
