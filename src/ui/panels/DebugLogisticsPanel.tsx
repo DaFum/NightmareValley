@@ -47,6 +47,7 @@ export default function DebugLogisticsPanel() {
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
           <input
             type="checkbox"
+            aria-label="Show footfall heatmap"
             checked={showFootfallHeatmap}
             onChange={toggleFootfallHeatmap}
           />

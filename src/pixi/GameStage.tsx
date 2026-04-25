@@ -10,8 +10,6 @@ import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 
 import { useGameStore } from '../store/game.store';
-
-const CHUNK_SCREEN_SIZE = 512;
 import { useUIStore } from '../store/ui.store';
 import { useCameraStore } from '../store/camera.store';
 import { useRenderStore } from '../store/render.store';
@@ -19,9 +17,18 @@ import { useRenderWorld } from './hooks/useRenderWorld';
 import { useIsoCamera } from './hooks/useIsoCamera';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSelectionInput } from './hooks/useSelectionInput';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
+
+const CHUNK_SCREEN_SIZE = 512;
+// HQ is placed at tile (7,7); center the camera on it at startup.
+// Uses ISO_TILE_WIDTH/HEIGHT (64/32) matching render.adapter.ts screen coords.
+const HQ_TILE = { x: 7, y: 7 };
+const HQ_SCREEN_X = (HQ_TILE.x - HQ_TILE.y) * (ISO_TILE_WIDTH / 2);
+const HQ_SCREEN_Y = (HQ_TILE.x + HQ_TILE.y) * (ISO_TILE_HEIGHT / 2);
 
 export function GameStage() {
   const setRunning = useGameStore((state) => state.setRunning);
+  const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
   const cameraX = useCameraStore((state) => state.x);
   const cameraY = useCameraStore((state) => state.y);
   const zoom = useCameraStore((state) => state.zoom);
@@ -36,10 +43,17 @@ export function GameStage() {
     // Auto-start simulation in an idempotent way.
     // This avoids double-toggle issues under React StrictMode remounting.
     setRunning(true);
+
+    // Center the camera on the HQ tile so the starting area is in view.
+    // viewportHeight * (0.5 - 0.42) corrects for centerY = height * 0.42.
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+    const initialCameraY = Math.round(vh * 0.08 - HQ_SCREEN_Y);
+    setCameraPosition(HQ_SCREEN_X, initialCameraY);
+
     return () => {
       setRunning(false);
     };
-  }, [setRunning]);
+  }, [setRunning, setCameraPosition]);
 
   const isBrowser = typeof window !== 'undefined';
   const [viewportWidth, setViewportWidth] = React.useState(isBrowser ? window.innerWidth : 1024);
