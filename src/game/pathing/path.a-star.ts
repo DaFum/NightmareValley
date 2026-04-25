@@ -52,6 +52,20 @@ export function findPathAStar(
   if (tileCost) {
     const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || DEFAULT_TIER_MULTIPLIERS));
     minEdgeCost = 1 / (maxMultiplier || 1);
+
+    // Dev-time guard for heuristic admissibility contract.
+    if (process.env.NODE_ENV !== "production" && state?.territory?.tiles) {
+      let observedMin = Number.POSITIVE_INFINITY;
+      for (const tile of Object.values(state.territory.tiles)) {
+        const v = tileCost(tile);
+        if (Number.isFinite(v)) observedMin = Math.min(observedMin, v);
+      }
+      if (observedMin < minEdgeCost) {
+        throw new Error(
+          `[findPathAStar] Inadmissible tileCost detected: min ${observedMin} < required ${minEdgeCost}.`
+        );
+      }
+    }
   }
 
   const startNode: AStarNode = {

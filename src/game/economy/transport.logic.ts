@@ -336,7 +336,8 @@ export function findBestJobForCarrier(
     let totalReserved = 0;
     for (const otherJob of Object.values(state.transport.jobs)) {
       if (otherJob.fromBuildingId === source.id && otherJob.resourceType === job.resourceType) {
-        totalReserved += otherJob.reserved;
+        // Queued jobs use amount as pending demand; claimed jobs use reserved.
+        totalReserved += otherJob.status === "queued" ? otherJob.amount : otherJob.reserved;
       }
     }
 
@@ -450,8 +451,10 @@ export function advanceCarrierMovement(
     // Single-point path means the carrier is already at its destination tile.
     // Skip accumulation and arrive immediately rather than waiting ~10 ticks.
     if (task.path.length === 1) {
-      task.stepProgress = 1.0;
-      reachedDestinationThisTick = true;
+      if (deltaSec > 0) {
+        task.stepProgress = 1.0;
+        reachedDestinationThisTick = true;
+      }
     } else {
       let remainingTime = deltaSec;
       while (remainingTime > 0 && task.pathIndex + 1 < task.path.length) {
@@ -595,8 +598,13 @@ export function updateTransportMetrics(
       if (!from || !to) return sum;
       return sum + gridManhattanDistance(from.position, to.position);
     }, 0);
-
-    state.transport.averageLatencySec = sumDistance / claimedOrQueued.length;
+    // Convert tile distance to a seconds estimate using baseline carrier speed
+    // (encumbrance/terrain/path effects are intentionally excluded from this coarse metric).
+    const baselineTilesPerSec = Math.max(
+      0.0001,
+      config.carrierBaseSpeed * (getWorkerDefinition("burdenThrall")?.moveSpeed ?? 1)
+    );
+    state.transport.averageLatencySec = (sumDistance / claimedOrQueued.length) / baselineTilesPerSec;
   }
 
   return state;

@@ -253,4 +253,36 @@ describe("transport.movement", () => {
     // 0.05s remain after crossing into tile (1,0); on grass that becomes 0.05 progress.
     expect(task.stepProgress).toBeCloseTo(0.05);
   });
+
+  it("does not trigger single-point arrival when deltaSec is zero", () => {
+    const carrierId = createId("wrk");
+    const srcId = createId("bld");
+    const tgtId = createId("bld");
+    const jobId = createId("job");
+
+    createTile(0, 0, "grass");
+    state.buildings[srcId] = { id: srcId, position: { x: 0, y: 0 }, outputBuffer: { sinewTimber: 1 } } as any;
+    state.buildings[tgtId] = { id: tgtId, position: { x: 0, y: 0 }, inputBuffer: {} } as any;
+    state.workers[carrierId] = { id: carrierId, type: "burdenThrall", position: { x: 0, y: 0 } } as WorkerInstance;
+    state.transport.jobs[jobId] = { id: jobId, status: "claimed", amount: 1, delivered: 0, reserved: 1 } as any;
+
+    state.transport.activeCarrierTasks[carrierId] = {
+      workerId: carrierId,
+      jobId,
+      pickupBuildingId: srcId,
+      dropoffBuildingId: tgtId,
+      resourceType: "sinewTimber",
+      amount: 1,
+      phase: "toPickup",
+      path: [{ x: 0, y: 0 }],
+      pathIndex: 0,
+      stepProgress: 0
+    };
+
+    advanceCarrierMovement(state, 0, DEFAULT_SIMULATION_CONFIG);
+
+    expect(state.transport.activeCarrierTasks[carrierId]).toBeDefined();
+    expect(state.transport.jobs[jobId].status).toBe("claimed");
+    expect(state.transport.activeCarrierTasks[carrierId].stepProgress).toBe(0);
+  });
 });
