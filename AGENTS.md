@@ -22,6 +22,13 @@ Ensure you use Node 18+ when running the project locally.
 - Run tests: `npm test`
 - Build for production (Vite): `npm run build:vite`
 
+## Playwright screenshots (quick usage)
+
+- Install browser deps if needed: `npx playwright install chromium` (and on fresh Linux environments, `npx playwright install-deps chromium`).
+- Start the app locally on the expected host/port: `npm run dev -- --host 127.0.0.1 --port 4173 --strictPort`.
+- Capture screenshots with: `npm run screenshot:playwright`.
+- Output files are written to `screenshots/`.
+
 ## Scripts to update when changing agents
 
 When modifying or replacing agent automation, update these `package.json` scripts if needed:
