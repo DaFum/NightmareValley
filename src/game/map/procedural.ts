@@ -23,8 +23,7 @@ function hashNoise(x: number, y: number, seed: number) {
   let n = x | 0;
   n = (n << 13) ^ n;
   let h = (n * (n * n * 15731 + 789221) + 1376312589) ^ (y | 0) ^ seed;
-  h = (h >>> 0) % 4294967295;
-  return (h >>> 0) / 4294967295;
+  return (h >>> 0) / 4294967296;
 }
 
 function lerp(a: number, b: number, t: number) {

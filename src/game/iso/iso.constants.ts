@@ -12,5 +12,3 @@ export const DEFAULT_ISO_SETTINGS = {
 // Tile dimensions used by the rendering layers (footfall overlay, terrain, workers, etc.)
 export const ISO_TILE_WIDTH = 64;
 export const ISO_TILE_HEIGHT = 32;
-
-
