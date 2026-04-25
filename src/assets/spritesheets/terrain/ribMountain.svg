@@ -1,21 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#363854"/>
-      <stop offset="100%" stop-color="#141620"/>
+    <radialGradient id="ground-center" cx="50%" cy="66%" r="40%">
+      <stop offset="0%" stop-color="#333333" />
+      <stop offset="100%" stop-color="#1a1a1a" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="rib-color" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e3dac9" />
+      <stop offset="100%" stop-color="#8c8579" />
     </linearGradient>
-    <clipPath id="d">
-      <polygon points="32,0 64,16 32,32 0,16"/>
-    </clipPath>
   </defs>
-  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
-  <g clip-path="url(#d)">
-    <polygon points="28,4 46,10 40,20 22,14" fill="#3E4262" opacity="0.55"/>
-    <polygon points="14,18 28,14 24,26 10,22" fill="#2A2C44" opacity="0.5"/>
-    <polygon points="46,12 60,18 54,26 40,20" fill="#2A2C44" opacity="0.45"/>
-    <polygon points="32,0 14,10 22,14 40,6" fill="#484A68" opacity="0.28"/>
-    <line x1="30" y1="6" x2="20" y2="20" stroke="#4A4C60" stroke-width="1" opacity="0.75"/>
-    <line x1="38" y1="8" x2="52" y2="22" stroke="#3E4060" stroke-width="0.8" opacity="0.65"/>
-    <line x1="16" y1="14" x2="30" y2="20" stroke="#4A4C60" stroke-width="0.8" opacity="0.65"/>
-  </g>
+
+  <!-- Base 3D Geometry -->
+  <polygon points="0,96 64,128 64,144 0,112" fill="#1c1c1c" stroke="#1c1c1c" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#0d0d0d" stroke="#0d0d0d" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="1" stroke-linejoin="round" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="url(#ground-center)" />
+
+  <!-- Marrow/Blood pooling at the base -->
+  <ellipse cx="64" cy="96" rx="40" ry="18" fill="#2b0a0a" />
+
+  <!-- Background Ribs -->
+  <path d="M 30,85 Q 35,40 64,25 Q 45,50 40,85" fill="#a1998b" stroke="#0f0f0f" stroke-width="1.5" />
+  <path d="M 98,85 Q 93,40 64,25 Q 83,50 88,85" fill="#8c8579" stroke="#0f0f0f" stroke-width="1.5" />
+
+  <!-- Midground Ribs -->
+  <path d="M 20,100 Q 25,35 64,15 Q 40,45 32,100" fill="url(#rib-color)" stroke="#0f0f0f" stroke-width="1.5" />
+  <path d="M 108,100 Q 103,35 64,15 Q 88,45 96,100" fill="#b5ab9a" stroke="#0f0f0f" stroke-width="1.5" />
+
+  <!-- Foreground Ribs -->
+  <path d="M 42,112 Q 47,60 64,45 Q 55,70 52,112" fill="url(#rib-color)" stroke="#0f0f0f" stroke-width="1.5" />
+  <path d="M 86,112 Q 81,60 64,45 Q 73,70 76,112" fill="#c4bba7" stroke="#0f0f0f" stroke-width="1.5" />
+  
+  <!-- Hanging gore -->
+  <path d="M 64,15 Q 66,25 64,40" fill="none" stroke="#8a0303" stroke-width="2" stroke-linecap="round" />
+  <path d="M 45,60 Q 45,65 47,75" fill="none" stroke="#6e1313" stroke-width="1.5" stroke-linecap="round" />
 </svg>
