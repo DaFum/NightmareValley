@@ -1,13 +1,13 @@
 import { BuildingId, WorkerId } from "../core/entity.ids";
 import { Position, BuildingInstance, WorkerInstance } from "../core/game.types";
 import Logger from "../../lib/logger";
-import { ResourceType, WorkerDefinition } from "../core/economy.types";
-import { EconomySimulationState, createId, distance, clamp, getNonZeroResources } from "../core/economy.simulation";
-import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "./balancing.constants";
-import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "../core/economy.data";
+import { ResourceType } from "../core/economy.types";
+import { EconomySimulationState, createId, clamp, getNonZeroResources } from "../core/economy.simulation";
+import { SimulationConfig } from "./balancing.constants";
+import { BUILDING_DEFINITIONS, getWorkerDefinition } from "../core/economy.data";
 import { RECIPES } from "./recipes.data";
 import { getResourceAmount, addResource, removeResource } from "./stockpile.logic";
-import { findPath, calculatePathDistance, tierTileCost } from "../pathing/path.a-star";
+import { findPath, tierTileCost } from "../pathing/path.a-star";
 import { MapTile, TerritoryState } from "../core/game.types";
 
 export interface TransportJob {
@@ -42,6 +42,10 @@ export interface TransportState {
   networkStress: number;
   averageLatencySec: number;
   queuedJobCount: number;
+}
+
+export function gridManhattanDistance(a: Position, b: Position): number {
+  return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
 
 // =========================
@@ -110,7 +114,7 @@ export function generateTransportJobs(
         const neededAmount = getBuildingResourceNeed(target, resourceType, config);
         if (neededAmount <= 0) continue;
 
-        const carrierCapacity = WORKER_DEFINITIONS["burdenThrall"].carryCapacity;
+        const carrierCapacity = getWorkerDefinition("burdenThrall").carryCapacity;
         const amountToMove = Math.min(config.maxJobBatchSize ?? carrierCapacity, carrierCapacity, amountAvailable, neededAmount);
         if (amountToMove <= 0) continue;
 
@@ -155,10 +159,10 @@ export function findTargetBuildingsForResource(
 
     if (bNeed !== aNeed) return bNeed - aNeed;
 
-    const aPath = findPath(source.position, a.position, state);
-    const bPath = findPath(source.position, b.position, state);
-    const aDistance = calculatePathDistance(aPath);
-    const bDistance = calculatePathDistance(bPath);
+    // Use Manhattan distance as a cheap deterministic tiebreaker.
+    // Full A* in a sort comparator can become O(n log n * pathfind) and dominate job generation.
+    const aDistance = gridManhattanDistance(source.position, a.position);
+    const bDistance = gridManhattanDistance(source.position, b.position);
 
     return aDistance - bDistance;
   });
@@ -332,7 +336,8 @@ export function findBestJobForCarrier(
     let totalReserved = 0;
     for (const otherJob of Object.values(state.transport.jobs)) {
       if (otherJob.fromBuildingId === source.id && otherJob.resourceType === job.resourceType) {
-        totalReserved += otherJob.reserved;
+        // Queued jobs use amount as pending demand; claimed jobs use reserved.
+        totalReserved += otherJob.status === "queued" ? otherJob.amount : otherJob.reserved;
       }
     }
 
@@ -343,12 +348,8 @@ export function findBestJobForCarrier(
 
     // Use Manhattan distance for scoring to avoid O(n*jobs) A* searches here;
     // the real A* path is computed once for the winning job in assignCarrierTasks.
-    const carrierToSourceDist =
-      Math.abs(carrier.position.x - source.position.x) +
-      Math.abs(carrier.position.y - source.position.y);
-    const sourceToTargetDist =
-      Math.abs(source.position.x - target.position.x) +
-      Math.abs(source.position.y - target.position.y);
+    const carrierToSourceDist = gridManhattanDistance(carrier.position, source.position);
+    const sourceToTargetDist = gridManhattanDistance(source.position, target.position);
     const dist = carrierToSourceDist + sourceToTargetDist;
 
     const score = job.priority * 100 - dist;
@@ -435,65 +436,78 @@ export function advanceCarrierMovement(
       continue;
     }
 
-    // Use the *destination* tile's speed to match A*'s cost model: cost(A→B) = 1/multiplier[B].
-    const destPos = task.pathIndex + 1 < task.path.length
-      ? task.path[task.pathIndex + 1]
-      : task.path[task.pathIndex];
-    const destTile = getTileAtPosition(state.territory as TerritoryState, destPos);
-    let speedMult = destTile ? (config.tierSpeedMultipliers[destTile.tier] || 1) : 1;
-
-    if (task.phase === "toDropoff" && config.carrierEncumbrancePenalty) {
-      const workerDef = WORKER_DEFINITIONS[carrier.type];
+    const workerDef = getWorkerDefinition(carrier.type);
+    const workerMoveSpeed = workerDef?.moveSpeed ?? 1;
+    const encumbranceMultiplier = (() => {
+      if (task.phase !== "toDropoff" || !config.carrierEncumbrancePenalty) return 1;
       const capacity = workerDef ? workerDef.carryCapacity : 1;
       const loadRatio = clamp(task.amount / capacity, 0, 1);
-      const encumbranceMultiplier = clamp(1 - (loadRatio * config.carrierEncumbrancePenalty), 0.05, 1);
-      speedMult *= encumbranceMultiplier;
-    }
+      return clamp(1 - (loadRatio * config.carrierEncumbrancePenalty), 0.05, 1);
+    })();
+    const baseMoveSpeed = config.carrierBaseSpeed * workerMoveSpeed * encumbranceMultiplier;
 
-    const step = config.carrierBaseSpeed * speedMult * deltaSec;
+    let reachedDestinationThisTick = false;
 
     // Single-point path means the carrier is already at its destination tile.
     // Skip accumulation and arrive immediately rather than waiting ~10 ticks.
     if (task.path.length === 1) {
-      task.stepProgress = 1.0;
+      if (deltaSec > 0) {
+        task.stepProgress = 1.0;
+        reachedDestinationThisTick = true;
+      }
     } else {
-      task.stepProgress += step;
-    }
+      let remainingTime = deltaSec;
+      while (remainingTime > 0 && task.pathIndex + 1 < task.path.length) {
+        // Use destination-tile speed to match A*'s weighted edge model: cost(A→B) = 1/multiplier[B].
+        const destPos = task.path[task.pathIndex + 1];
+        const destTile = getTileAtPosition(state.territory as TerritoryState, destPos);
+        const tierSpeed = destTile ? (config.tierSpeedMultipliers[destTile.tier] || 1) : 1;
+        const edgeSpeed = Math.max(0, baseMoveSpeed * tierSpeed);
+        if (edgeSpeed <= 0) break;
 
-    while (task.stepProgress >= 1 && task.pathIndex + 1 < task.path.length) {
-      task.stepProgress -= 1;
-      task.pathIndex += 1;
+        const progressToNextTile = 1 - task.stepProgress;
+        const timeToNextTile = progressToNextTile / edgeSpeed;
 
-      const newPos = task.path[task.pathIndex];
-      carrier.position = { ...newPos };
+        if (remainingTime < timeToNextTile) {
+          task.stepProgress += remainingTime * edgeSpeed;
+          remainingTime = 0;
+          break;
+        }
 
-      const steppedTile = getTileAtPosition(state.territory as TerritoryState, newPos);
-      if (steppedTile) {
-        const prevFootfall = steppedTile.footfall;
-        steppedTile.footfall += 1;
-        // Recompute tier only when a boundary is crossed; avoids redundant work on hot paths.
-        const thresh = config.footfallTierThresholds;
-        if (
-          (steppedTile.footfall >= thresh.paved  && prevFootfall < thresh.paved)  ||
-          (steppedTile.footfall >= thresh.cobble && prevFootfall < thresh.cobble) ||
-          (steppedTile.footfall >= thresh.dirt   && prevFootfall < thresh.dirt)
-        ) {
-          recomputeTierFromFootfall(steppedTile, thresh);
+        remainingTime -= timeToNextTile;
+        task.stepProgress = 0;
+        task.pathIndex += 1;
+        if (task.pathIndex === task.path.length - 1) {
+          reachedDestinationThisTick = true;
+        }
+
+        const newPos = task.path[task.pathIndex];
+        carrier.position = { ...newPos };
+
+        const steppedTile = getTileAtPosition(state.territory as TerritoryState, newPos);
+        if (steppedTile) {
+          const prevFootfall = steppedTile.footfall;
+          steppedTile.footfall += 1;
+          // Recompute tier only when a boundary is crossed; avoids redundant work on hot paths.
+          const thresh = config.footfallTierThresholds;
+          if (
+            (steppedTile.footfall >= thresh.paved  && prevFootfall < thresh.paved)  ||
+            (steppedTile.footfall >= thresh.cobble && prevFootfall < thresh.cobble) ||
+            (steppedTile.footfall >= thresh.dirt   && prevFootfall < thresh.dirt)
+          ) {
+            recomputeTierFromFootfall(steppedTile, thresh);
+          }
         }
       }
-      // Update speedMult to the new destination tile so the remaining stepProgress
-      // this tick uses the correct speed for the next crossing.
-      const nextDestPos = task.pathIndex + 1 < task.path.length
-        ? task.path[task.pathIndex + 1]
-        : task.path[task.pathIndex];
-      const nextDestTile = getTileAtPosition(state.territory as TerritoryState, nextDestPos);
-      speedMult = nextDestTile ? (config.tierSpeedMultipliers[nextDestTile.tier] || 1) : 1;
     }
 
     // stepProgress accumulates fractional sub-tile distance each frame. 0.999 guards
     // against floating-point overshoot at the final node after the while loop drains whole steps.
     const ARRIVAL_THRESHOLD = 0.999;
-    if (task.pathIndex === task.path.length - 1 && task.stepProgress >= ARRIVAL_THRESHOLD) {
+    if (
+      task.pathIndex === task.path.length - 1 &&
+      (task.stepProgress >= ARRIVAL_THRESHOLD || reachedDestinationThisTick)
+    ) {
       if (task.phase === "toPickup") {
         const nextPathResult = findPath(source.position, target.position, state, tierTileCost);
         if (!nextPathResult.isComplete) {
@@ -582,10 +596,15 @@ export function updateTransportMetrics(
       const from = state.buildings[job.fromBuildingId];
       const to = state.buildings[job.toBuildingId];
       if (!from || !to) return sum;
-      return sum + distance(from.position, to.position);
+      return sum + gridManhattanDistance(from.position, to.position);
     }, 0);
-
-    state.transport.averageLatencySec = sumDistance / claimedOrQueued.length;
+    // Convert tile distance to a seconds estimate using baseline carrier speed
+    // (encumbrance/terrain/path effects are intentionally excluded from this coarse metric).
+    const baselineTilesPerSec = Math.max(
+      0.0001,
+      config.carrierBaseSpeed * (getWorkerDefinition("burdenThrall")?.moveSpeed ?? 1)
+    );
+    state.transport.averageLatencySec = (sumDistance / claimedOrQueued.length) / baselineTilesPerSec;
   }
 
   return state;

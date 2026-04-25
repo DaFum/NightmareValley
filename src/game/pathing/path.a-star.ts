@@ -16,6 +16,11 @@ import { DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 
 const DEFAULT_TIER_MULTIPLIERS = { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 };
 
+// Heuristic admissibility contract: when `tileCost` is provided, every value it returns
+// MUST be >= 1 / max(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers). The current caller
+// `findPath` uses `tierTileCost`, which respects that bound by construction. If a future
+// caller introduces a faster edge type, update DEFAULT_TIER_MULTIPLIERS or scale the
+// heuristic accordingly — otherwise A* may return suboptimal paths.
 export function findPathAStar(
   grid: PathingGrid,
   start: Position,
@@ -47,6 +52,20 @@ export function findPathAStar(
   if (tileCost) {
     const maxMultiplier = Math.max(...Object.values(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers || DEFAULT_TIER_MULTIPLIERS));
     minEdgeCost = 1 / (maxMultiplier || 1);
+
+    // Dev-time guard for heuristic admissibility contract.
+    if (process.env.NODE_ENV !== "production" && state?.territory?.tiles) {
+      let observedMin = Number.POSITIVE_INFINITY;
+      for (const tile of Object.values(state.territory.tiles)) {
+        const v = tileCost(tile);
+        if (Number.isFinite(v)) observedMin = Math.min(observedMin, v);
+      }
+      if (observedMin < minEdgeCost) {
+        throw new Error(
+          `[findPathAStar] Inadmissible tileCost detected: min ${observedMin} < required ${minEdgeCost}.`
+        );
+      }
+    }
   }
 
   const startNode: AStarNode = {
