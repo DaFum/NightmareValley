@@ -1667,5 +1667,81 @@
     "Stages contain 32 building sprites each; only the first 25 are assigned to named BuildingType entries, remaining 7 are exported as extras.",
     "Resource sheet contains 31 sprites; first 21 are assigned to ResourceType entries, remaining 10 are exported as extras.",
     "Worker sheet contains 18 sprites; only the first 18 are assigned to WorkerType entries, leaving fatBoiler and ashCollector missing from the provided sheet."
-  ]
+  ],
+  "terrain": {
+    "assigned": {
+      "scarredEarth": {
+        "file": "terrain/scarredEarth.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "weepingForest": {
+        "file": "terrain/weepingForest.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "ribMountain": {
+        "file": "terrain/ribMountain.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "placentaLake": {
+        "file": "terrain/placentaLake.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "scarPath": {
+        "file": "terrain/scarPath.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "occupiedScar": {
+        "file": "terrain/occupiedScar.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "ashBog": {
+        "file": "terrain/ashBog.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      },
+      "cathedralRock": {
+        "file": "terrain/cathedralRock.svg",
+        "box": [
+          0,
+          0,
+          64,
+          32
+        ]
+      }
+    }
+  }
 }

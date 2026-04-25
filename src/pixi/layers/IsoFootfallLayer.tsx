@@ -21,16 +21,16 @@ export default function IsoFootfallLayer({ tiles }: IsoFootfallLayerProps): JSX.
 
       switch (tile.tier) {
         case 'dirt':
-          color = 0x8a6a3a;
-          alpha = 0.45;
+          color = 0x7a5028;
+          alpha = 0.52;
           break;
         case 'cobble':
-          color = 0x9a9a8a;
-          alpha = 0.55;
+          color = 0x484038;
+          alpha = 0.62;
           break;
         case 'paved':
-          color = 0x6a6a6a;
-          alpha = 0.65;
+          color = 0x302828;
+          alpha = 0.72;
           break;
         default:
           // Unknown tier — skip to avoid rendering a black diamond
