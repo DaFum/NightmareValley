@@ -1,22 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1C1C2C"/>
-      <stop offset="100%" stop-color="#090912"/>
+    <radialGradient id="rock-center" cx="50%" cy="66%" r="40%">
+      <stop offset="0%" stop-color="#262626" />
+      <stop offset="100%" stop-color="#141414" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="bone-light" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#b5a996" />
+      <stop offset="100%" stop-color="#595246" />
     </linearGradient>
-    <clipPath id="d">
-      <polygon points="32,0 64,16 32,32 0,16"/>
-    </clipPath>
+    <linearGradient id="bone-dark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#595246" />
+      <stop offset="100%" stop-color="#1f1c18" />
+    </linearGradient>
   </defs>
-  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
-  <g clip-path="url(#d)">
-    <polygon points="32,0 16,8 24,14 40,8" fill="#242438" opacity="0.30"/>
-    <line x1="8" y1="12" x2="40" y2="4" stroke="#1E1E2E" stroke-width="1" opacity="0.85"/>
-    <line x1="8" y1="20" x2="56" y2="8" stroke="#1E1E2E" stroke-width="1" opacity="0.85"/>
-    <line x1="8" y1="28" x2="56" y2="16" stroke="#1E1E2E" stroke-width="1" opacity="0.75"/>
-    <line x1="20" y1="8" x2="36" y2="28" stroke="#1E1E2E" stroke-width="1" opacity="0.75"/>
-    <line x1="32" y1="4" x2="48" y2="28" stroke="#1E1E2E" stroke-width="1" opacity="0.75"/>
-    <line x1="44" y1="8" x2="56" y2="22" stroke="#1E1E2E" stroke-width="1" opacity="0.65"/>
-    <rect x="28" y="14" width="8" height="4" rx="1" fill="none" stroke="#2C2C40" stroke-width="1" opacity="0.60"/>
-  </g>
+
+  <!-- Base 3D Geometry -->
+  <polygon points="0,96 64,128 64,144 0,112" fill="#141414" stroke="#141414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#050505" stroke="#050505" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#141414" stroke="#141414" stroke-width="1" stroke-linejoin="round" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="url(#rock-center)" />
+
+  <!-- Background Spikes -->
+  <polygon points="40,80 50,70 30,25 25,75" fill="url(#bone-dark)" />
+  <polygon points="40,80 50,70 30,25" fill="url(#bone-light)" />
+  
+  <polygon points="90,85 100,75 110,35 85,80" fill="url(#bone-dark)" />
+  <polygon points="90,85 100,75 110,35" fill="url(#bone-light)" />
+
+  <!-- Main Cathedral Rock -->
+  <polygon points="64,105 85,90 64,10 45,90" fill="url(#bone-dark)" />
+  <polygon points="64,105 85,90 64,10" fill="url(#bone-light)" />
+  
+  <!-- Gothic detailing / Ribbing on main rock -->
+  <path d="M 64,10 L 64,105" stroke="#141414" stroke-width="1.5" />
+  <path d="M 54,50 L 64,40 L 75,55" fill="none" stroke="#1f1c18" stroke-width="1" />
+  <path d="M 50,70 L 64,60 L 79,75" fill="none" stroke="#1f1c18" stroke-width="1" />
 </svg>
