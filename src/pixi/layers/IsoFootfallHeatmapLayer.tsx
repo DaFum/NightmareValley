@@ -33,11 +33,13 @@ export default function IsoFootfallHeatmapLayer({ tiles }: IsoFootfallHeatmapLay
       const bucketAlpha = ((b + 0.5) / HEATMAP_BUCKETS) * 0.7;
       g.beginFill(0xff0000, bucketAlpha);
       for (const tile of buckets[b]) {
-        // Draw iso diamond
-        g.moveTo(tile.screenX, tile.screenY - ISO_TILE_HEIGHT / 2);
-        g.lineTo(tile.screenX + ISO_TILE_WIDTH / 2, tile.screenY);
-        g.lineTo(tile.screenX, tile.screenY + ISO_TILE_HEIGHT / 2);
-        g.lineTo(tile.screenX - ISO_TILE_WIDTH / 2, tile.screenY);
+        // Draw iso diamond as a closed polygon so Pixi v7 fills each sub-path reliably.
+        g.drawPolygon([
+          tile.screenX, tile.screenY - ISO_TILE_HEIGHT / 2,
+          tile.screenX + ISO_TILE_WIDTH / 2, tile.screenY,
+          tile.screenX, tile.screenY + ISO_TILE_HEIGHT / 2,
+          tile.screenX - ISO_TILE_WIDTH / 2, tile.screenY,
+        ]);
       }
       g.endFill();
     }

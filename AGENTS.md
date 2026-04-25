@@ -58,6 +58,7 @@ When modifying or replacing agent automation, update these `package.json` script
 ## Agent customization files
 
 - [copilot-instructions.md](copilot-instructions.md) — Repository-wide Copilot instructions (Required rules for assets, Pixi conventions, texture handling, and a PR checklist). Agents should consult this before making edits.
+- Nested AGENTS files are now used for high-churn folders (economy logic, Pixi layers, and core tests). When editing under those folders, read the closest `AGENTS.md` first and treat it as the authoritative local contract.
 
 ## Conventions & PR guidance
 
@@ -75,6 +76,17 @@ When modifying or replacing agent automation, update these `package.json` script
 
 - Add small skills for the common flows: `run-dev`, `fix-pixi-deprecations`, `add-spritesheet`.
 
+## Scope map for nested AGENTS
+
+- `src/game/economy/AGENTS.md`
+  - Applies to economy simulation, transport, balancing, stockpile logic.
+  - Contains guardrails for pathing-cost assumptions, movement invariants, and performance-sensitive loops.
+- `src/pixi/layers/AGENTS.md`
+  - Applies to visual layer components and overlay rendering behavior.
+  - Contains Pixi drawing conventions and notes for batching/shape closure.
+- `src/tests/core/AGENTS.md`
+  - Applies to core simulation tests.
+  - Contains guidance for deterministic fixtures, behavior-first assertions, and regression test structure.
+
 ---
 Generated/updated by AI assistant to help future automated edits and PRs.
-

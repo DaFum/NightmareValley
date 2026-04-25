@@ -16,6 +16,11 @@ import { DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 
 const DEFAULT_TIER_MULTIPLIERS = { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 };
 
+// Heuristic admissibility contract: when `tileCost` is provided, every value it returns
+// MUST be >= 1 / max(DEFAULT_SIMULATION_CONFIG.tierSpeedMultipliers). The current caller
+// `findPath` uses `tierTileCost`, which respects that bound by construction. If a future
+// caller introduces a faster edge type, update DEFAULT_TIER_MULTIPLIERS or scale the
+// heuristic accordingly — otherwise A* may return suboptimal paths.
 export function findPathAStar(
   grid: PathingGrid,
   start: Position,
