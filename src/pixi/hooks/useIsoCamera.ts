@@ -1,22 +1,48 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useCameraStore } from "../../store/camera.store";
 
 export function useIsoCamera() {
   const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
   const setZoom = useCameraStore((state) => state.setZoom);
+  const spacePressedRef = useRef(false);
 
   useEffect(() => {
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
 
+    const isTextInputActive = () => {
+      const active = document.activeElement;
+      if (!active) return false;
+      const tag = active.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return true;
+      if ((active as HTMLElement).isContentEditable) return true;
+      return false;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !isTextInputActive()) {
+        spacePressedRef.current = true;
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") spacePressedRef.current = false;
+    };
+
+    const handleBlur = () => {
+      spacePressedRef.current = false;
+      isDragging = false;
+    };
+
     const handlePointerDown = (e: PointerEvent) => {
-      // Only drag with middle or right click, or if we want left click dragging
-      // Let's enable left click drag for now for ease of testing
-      if (e.target instanceof HTMLCanvasElement) {
+      if (e.target instanceof HTMLCanvasElement && (e.button === 1 || e.button === 2 || spacePressedRef.current)) {
         isDragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
       }
     };
 
@@ -36,6 +62,7 @@ export function useIsoCamera() {
       const currentY = useCameraStore.getState().y;
 
       setCameraPosition(currentX + dx, currentY + dy);
+      e.preventDefault();
     };
 
     const handlePointerUp = () => {
@@ -48,18 +75,33 @@ export function useIsoCamera() {
       const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
       const newZoom = Math.max(0.2, Math.min(3, currentZoom + zoomDelta));
       setZoom(newZoom);
+      e.preventDefault();
     };
 
+    const handleContextMenu = (e: MouseEvent) => {
+      if (e.target instanceof HTMLCanvasElement) e.preventDefault();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
     window.addEventListener("pointerdown", handlePointerDown);
     window.addEventListener("pointermove", handlePointerMove);
     window.addEventListener("pointerup", handlePointerUp);
-    window.addEventListener("wheel", handleWheel);
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [setCameraPosition, setZoom]);
+  }, [setCameraPosition, setZoom, spacePressedRef]);
+
+  return { spacePressedRef };
 }

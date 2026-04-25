@@ -7,6 +7,15 @@ export interface IsoBuildingLayerProps {
   buildings: IsoBuildingRenderData[];
 }
 
+const BUILDING_SCALE = 0.28;
+const BUILDING_ANCHOR = { x: 0.5, y: 1 } as const;
+const CENTER_ANCHOR = { x: 0.5, y: 0.5 } as const;
+
+// Static props hoisted to module scope to avoid re-allocation on every render
+const shadowProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 0, alpha: 0.3, scale: 0.8 };
+const selectionProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 1 };
+const hoverProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 1, alpha: 0.5 };
+
 export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings }) => {
   const { registry } = useTextures();
 
@@ -29,6 +38,9 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
         const selectionTex = registry.getTexture("selection_ellipse_building");
         const hoverTex = registry.getTexture("hover_ellipse_building");
 
+        // buildingProps depends on state so stays local
+        const buildingProps = { anchor: BUILDING_ANCHOR, y: 16, scale: BUILDING_SCALE, zIndex: 2, tint: state === "damaged" ? 0xddaaaa : 0xffffff };
+
         return (
           <Container
             key={id}
@@ -39,40 +51,31 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
             eventMode="none"
           >
             {shadowTex ? (
-              <Sprite texture={shadowTex} anchor={0.5} y={10} zIndex={0} alpha={0.3} />
+              <Sprite texture={shadowTex} {...shadowProps} />
             ) : (
-              <Sprite image="generic_building_shadow" anchor={0.5} y={10} zIndex={0} alpha={0.3} />
+              <Sprite image="generic_building_shadow" {...shadowProps} />
             )}
 
             {selected && (
               selectionTex ? (
-                <Sprite texture={selectionTex} anchor={0.5} y={10} zIndex={1} />
+                <Sprite texture={selectionTex} {...selectionProps} />
               ) : (
-                <Sprite image="selection_ellipse_building" anchor={0.5} y={10} zIndex={1} />
+                <Sprite image="selection_ellipse_building" {...selectionProps} />
               )
             )}
+
             {hovered && !selected && (
               hoverTex ? (
-                <Sprite texture={hoverTex} anchor={0.5} y={10} zIndex={1} alpha={0.5} />
+                <Sprite texture={hoverTex} {...hoverProps} />
               ) : (
-                <Sprite image="hover_ellipse_building" anchor={0.5} y={10} zIndex={1} alpha={0.5} />
+                <Sprite image="hover_ellipse_building" {...hoverProps} />
               )
             )}
 
             {mainTex ? (
-              <Sprite
-                texture={mainTex}
-                anchor={0.5}
-                zIndex={2}
-                tint={state === "damaged" ? 0xddaaaa : 0xffffff}
-              />
+              <Sprite texture={mainTex} {...buildingProps} />
             ) : (
-              <Sprite
-                image={spriteKey}
-                anchor={0.5}
-                zIndex={2}
-                tint={state === "damaged" ? 0xddaaaa : 0xffffff}
-              />
+              <Sprite image={spriteKey} {...buildingProps} />
             )}
           </Container>
         );

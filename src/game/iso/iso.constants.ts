@@ -9,4 +9,9 @@ export const DEFAULT_ISO_SETTINGS = {
 	tileHeight: TILE_HEIGHT,
 };
 
-
+// Half-tile dimensions consumed by the footfall overlay layers. Numerically equivalent
+// to HALF_TILE_WIDTH / HALF_TILE_HEIGHT; kept as a separate alias so the overlay code
+// reads with intent. Terrain and worker layers redefine local TILE_WIDTH/HEIGHT in
+// render.adapter.ts and do NOT use these constants.
+export const ISO_TILE_WIDTH = 64;
+export const ISO_TILE_HEIGHT = 32;

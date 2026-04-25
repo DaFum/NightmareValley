@@ -7,10 +7,15 @@ interface IsoTerrainLayerProps {
   tiles: IsoRenderWorld['tiles'];
 }
 
-export function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
+const TILE_ANCHOR = { x: 0.5, y: 0.5 } as const;
+
+export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
   const { registry } = useTextures();
 
   return (
+    // cacheAsBitmap is intentionally absent: `tiles` is the frustum-culled visibleTiles
+    // set which changes on every camera pan, so caching would re-rasterise every frame
+    // and hurt performance rather than help. React.memo handles prop-level memoisation.
     <Container eventMode="none">
       {tiles.map((tile) => {
         // Fallback for missing textures based on terrain type
@@ -36,10 +41,10 @@ export function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
             texture={texture}
             x={tile.screenX}
             y={tile.screenY}
-            anchor={{ x: 0.5, y: 0.5 }}
+            anchor={TILE_ANCHOR}
           />
         );
       })}
     </Container>
   );
-}
+});

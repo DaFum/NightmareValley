@@ -1,9 +1,17 @@
 import { create } from 'zustand';
-import { EconomySimulationState, simulateTick, placeBuilding } from '../game/core/economy.simulation';
+import {
+  EconomySimulationState,
+  simulateTick,
+  placeBuilding,
+  upgradeBuilding,
+  connectBuildingToRoad,
+} from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
-import { MapTile } from "../game/core/game.types";
-import { BuildingType } from "../game/core/economy.types";
+import { BuildingType, ResourceInventory, WorkerType } from "../game/core/economy.types";
+import { BuildingInstance, Position, WorkerInstance } from "../game/core/game.types";
 import { loadInitialMap } from "../game/map/map.loader";
+import { createTransportJob, buildingAcceptsResource } from "../game/economy/transport.logic";
+import { deepClone } from "../lib/deep-clone";
 
 export interface GameStore {
   gameState: EconomySimulationState;
@@ -15,20 +23,125 @@ export interface GameStore {
   setTickRate: (rate: number) => void;
   advanceTick: (deltaSec: number) => void;
   placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => void;
+  upgradeBuildingAt: (ownerId: string, buildingId: string) => void;
+  connectBuildingAt: (buildingId: string) => void;
+  toggleBuildingActive: (buildingId: string) => void;
+  dispatchDebugJobsFromHQ: (count: number, resourceType: import("../game/core/economy.types").ResourceType) => void;
+  resetFootfall: () => void;
 }
 
 
 import { createId } from '../game/core/economy.simulation';
 
 const player1Id = createId('player');
-const millId = createId('bld');
-const ovenId = createId('bld');
-const millerId = createId('wrk');
-const acolyteId = createId('wrk');
+const vaultId = createId('bld');
 const carrier1Id = createId('wrk');
 const carrier2Id = createId('wrk');
+const carrier3Id = createId('wrk');
 
 const initialTerritory = loadInitialMap();
+
+function prepareInitialTerritory(ownerId: string) {
+  const territory = deepClone(initialTerritory);
+  const ownedRadius = 13;
+  const start = { x: 7, y: 7 };
+  const ownedTileIds: string[] = [];
+
+  for (const tile of Object.values(territory.tiles)) {
+    tile.footfall = 0;
+    tile.tier = "grass";
+
+    const dx = tile.position.x - start.x;
+    const dy = tile.position.y - start.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= ownedRadius) {
+      tile.ownerId = ownerId;
+      ownedTileIds.push(tile.id);
+    }
+
+    if (tile.terrain === 'weepingForest') {
+      tile.resourceDeposit = { sinewTimber: 100 };
+    } else if (tile.terrain === 'ribMountain' || tile.terrain === 'cathedralRock') {
+      tile.resourceDeposit = {
+        sepulcherStone: 80,
+        veinIronOre: tile.position.x % 3 === 0 ? 30 : 0,
+        graveCoal: tile.position.y % 4 === 0 ? 30 : 0,
+      };
+    } else if (tile.terrain === 'ashBog') {
+      tile.resourceDeposit = { marrowGrain: 70 };
+    } else if (tile.terrain === 'placentaLake') {
+      tile.resourceDeposit = { amnioticWater: 100, eyelessFish: 40 };
+    }
+  }
+
+  const markBuilding = (x: number, y: number, buildingId: string) => {
+    const tileId = territory.tileIndex?.[`${x},${y}`] ?? `tile_${x}_${y}`;
+    const tile = territory.tiles[tileId];
+    if (tile) {
+      tile.ownerId = ownerId;
+      tile.buildingId = buildingId;
+    }
+  };
+
+  markBuilding(7, 7, vaultId);
+
+  return { territory, ownedTileIds };
+}
+
+function createStarterBuilding(
+  id: string,
+  type: BuildingType,
+  position: Position,
+  assignedWorkers: string[],
+  buffers: {
+    inputBuffer?: ResourceInventory;
+    outputBuffer?: ResourceInventory;
+    internalStorage?: ResourceInventory;
+    currentRecipeId?: string;
+  } = {}
+): BuildingInstance {
+  return {
+    id,
+    type,
+    ownerId: player1Id,
+    level: 1,
+    integrity: 100,
+    position,
+    connectedToRoad: true,
+    inputBuffer: buffers.inputBuffer ?? {},
+    outputBuffer: buffers.outputBuffer ?? {},
+    internalStorage: buffers.internalStorage ?? {},
+    assignedWorkers,
+    currentRecipeId: buffers.currentRecipeId,
+    progressSec: 0,
+    isActive: true,
+    corruption: 0,
+  };
+}
+
+function createStarterWorker(
+  id: string,
+  type: WorkerType,
+  position: Position,
+  homeBuildingId?: string,
+  isIdle = false
+): WorkerInstance {
+  return {
+    id,
+    type,
+    ownerId: player1Id,
+    homeBuildingId,
+    currentBuildingId: homeBuildingId,
+    position,
+    isIdle,
+    morale: 100,
+    infection: 0,
+    scars: 0,
+  };
+}
+
+const preparedInitialTerritory = prepareInitialTerritory(player1Id);
 
 const initialGameState: EconomySimulationState = {
   tick: 0,
@@ -37,10 +150,16 @@ const initialGameState: EconomySimulationState = {
     [player1Id]: {
       id: player1Id,
       name: "The First Ascendant",
-      stock: { toothPlanks: 666, marrowGrain: 100, amnioticWater: 100, boneDust: 0, funeralLoaf: 0 },
-      buildings: [millId, ovenId],
-      workers: [millerId, acolyteId, carrier1Id, carrier2Id],
-      territoryTileIds: Object.keys(initialTerritory.tiles),
+      stock: { toothPlanks: 80, sepulcherStone: 55, marrowGrain: 20, amnioticWater: 20, boneDust: 0, funeralLoaf: 0 },
+      buildings: [
+        vaultId,
+      ],
+      workers: [
+        carrier1Id,
+        carrier2Id,
+        carrier3Id,
+      ],
+      territoryTileIds: preparedInitialTerritory.ownedTileIds,
       populationLimit: 20,
       doctrine: "industry",
       dread: 0,
@@ -48,96 +167,23 @@ const initialGameState: EconomySimulationState = {
     }
   },
   buildings: {
-    [millId]: {
-      id: millId,
-      type: "dustCathedralMill",
-      ownerId: player1Id,
-      level: 1,
-      integrity: 100,
-      position: { x: 3, y: 3 },
-      connectedToRoad: true,
-      inputBuffer: { marrowGrain: 10 },
-      outputBuffer: {},
-      internalStorage: {},
-      assignedWorkers: [millerId],
-      currentRecipeId: "grindMarrowGrain",
-      progressSec: 0,
-      isActive: true
-    },
-    [ovenId]: {
-      id: ovenId,
-      type: "ovenOfLastBread",
-      ownerId: player1Id,
-      level: 1,
-      integrity: 100,
-      position: { x: 7, y: 3 },
-      connectedToRoad: true,
-      inputBuffer: { amnioticWater: 10 }, // Missing bone dust to start, which the mill should provide
-      outputBuffer: {},
-      internalStorage: {},
-      assignedWorkers: [acolyteId],
-      currentRecipeId: "bakeFuneralLoaf",
-      progressSec: 0,
-      isActive: true
-    }
+    [vaultId]: createStarterBuilding(vaultId, "vaultOfDigestiveStone", { x: 7, y: 7 }, [], {
+      internalStorage: { sinewTimber: 100 },
+      outputBuffer: { sinewTimber: 100 }
+    }),
   },
   workers: {
-    [millerId]: {
-      id: millerId,
-      type: "dustMiller",
-      ownerId: player1Id,
-      homeBuildingId: millId,
-      position: { x: 3, y: 3 },
-      isIdle: false,
-      morale: 100,
-      infection: 0,
-      scars: 0
-    },
-    [acolyteId]: {
-      id: acolyteId,
-      type: "ovenAcolyte",
-      ownerId: player1Id,
-      homeBuildingId: ovenId,
-      position: { x: 7, y: 3 },
-      isIdle: false,
-      morale: 100,
-      infection: 0,
-      scars: 0
-    },
-    [carrier1Id]: {
-      id: carrier1Id,
-      type: "burdenThrall",
-      ownerId: player1Id,
-      position: { x: 5, y: 5 },
-      isIdle: true,
-      morale: 100,
-      infection: 0,
-      scars: 0
-    },
-    [carrier2Id]: {
-      id: carrier2Id,
-      type: "burdenThrall",
-      ownerId: player1Id,
-      position: { x: 5, y: 6 },
-      isIdle: true,
-      morale: 100,
-      infection: 0,
-      scars: 0
-    }
+    [carrier1Id]: createStarterWorker(carrier1Id, "burdenThrall", { x: 7, y: 8 }, undefined, true),
+    [carrier2Id]: createStarterWorker(carrier2Id, "burdenThrall", { x: 8, y: 8 }, undefined, true),
+    [carrier3Id]: createStarterWorker(carrier3Id, "burdenThrall", { x: 8, y: 7 }, undefined, true),
   },
-  territory: initialTerritory,
+  territory: preparedInitialTerritory.territory,
   transport: {
-    roadNodes: {
-      "road_3_3": { id: "road_3_3", position: { x: 3, y: 3 }, connectedNodeIds: ["road_4_3"] },
-      "road_4_3": { id: "road_4_3", position: { x: 4, y: 3 }, connectedNodeIds: ["road_3_3", "road_5_3"] },
-      "road_5_3": { id: "road_5_3", position: { x: 5, y: 3 }, connectedNodeIds: ["road_4_3", "road_6_3"] },
-      "road_6_3": { id: "road_6_3", position: { x: 6, y: 3 }, connectedNodeIds: ["road_5_3", "road_7_3"] },
-      "road_7_3": { id: "road_7_3", position: { x: 7, y: 3 }, connectedNodeIds: ["road_6_3"] },
-    },
     jobs: {},
     activeCarrierTasks: {},
     networkStress: 0,
     averageLatencySec: 0,
+    queuedJobCount: 0,
   },
   worldPulse: 0,
 };
@@ -183,4 +229,117 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ lastError: error });
     }
   },
+
+  upgradeBuildingAt: (ownerId, buildingId) => {
+    try {
+      const { gameState } = get();
+      const nextState = upgradeBuilding(gameState, ownerId, buildingId);
+      set({ gameState: nextState });
+    } catch (error) {
+      console.error("Failed to upgrade building:", error);
+      set({ lastError: error });
+    }
+  },
+
+  connectBuildingAt: (buildingId) => {
+    try {
+      const { gameState } = get();
+      const nextState = connectBuildingToRoad(gameState, buildingId);
+      set({ gameState: nextState });
+    } catch (error) {
+      console.error("Failed to connect building:", error);
+      set({ lastError: error });
+    }
+  },
+
+  toggleBuildingActive: (buildingId) => {
+    const { gameState } = get();
+    const building = gameState.buildings[buildingId];
+    if (!building) return;
+    const nextState = {
+      ...gameState,
+      buildings: {
+        ...gameState.buildings,
+        [buildingId]: {
+          ...building,
+          isActive: !building.isActive,
+        },
+      },
+    };
+    set({ gameState: nextState });
+  },
+
+  dispatchDebugJobsFromHQ: (count, resourceType) => {
+    set((state) => {
+      const gs = state.gameState;
+      const hq = Object.values(gs.buildings).find(b => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone");
+      if (!hq) return state;
+
+      // Find nearest compatible target building (any building that accepts the resource)
+      const candidates = Object.values(gs.buildings).filter(
+        b => b.id !== hq.id && buildingAcceptsResource(b, resourceType)
+      );
+
+      let nearest: BuildingInstance | null = null;
+      let minDist = Infinity;
+      for (const v of candidates) {
+        const dx = v.position.x - hq.position.x;
+        const dy = v.position.y - hq.position.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < minDist) {
+          minDist = dist;
+          nearest = v;
+        }
+      }
+
+      if (!nearest) return state;
+
+      const newJobs = { ...gs.transport.jobs };
+      for (let i = 0; i < count; i++) {
+        const jobId = createId('job');
+        newJobs[jobId] = createTransportJob(
+          jobId,
+          hq.id,
+          nearest.id,
+          resourceType,
+          1,
+          DEFAULT_SIMULATION_CONFIG.defaultTransportPriority + 100
+        );
+      }
+
+      return {
+        gameState: {
+          ...gs,
+          transport: {
+            ...gs.transport,
+            jobs: newJobs,
+            queuedJobCount: (gs.transport.queuedJobCount || 0) + count
+          }
+        }
+      };
+    });
+  },
+
+  resetFootfall: () => {
+    set((state) => {
+      const gs = state.gameState;
+      const tiles = { ...gs.territory.tiles };
+      for (const tileId in tiles) {
+        tiles[tileId] = {
+          ...tiles[tileId],
+          footfall: 0,
+          tier: "grass"
+        };
+      }
+      return {
+        gameState: {
+          ...gs,
+          territory: {
+            ...gs.territory,
+            tiles
+          }
+        }
+      };
+    });
+  }
 }));

@@ -1,3 +1,6 @@
+import type { ResourceInventory } from "../core/economy.types";
+import { TileTier } from "../core/game.types";
+import { IsoBuildingRenderData, IsoWorkerRenderData } from "../iso/iso.types";
 
 export type IsoTileRenderData = {
   id: string;
@@ -5,8 +8,10 @@ export type IsoTileRenderData = {
   screenY: number;
   textureKey: string;
   chunkId: string;
+  resourceDeposit?: ResourceInventory;
+  footfall: number;
+  tier: TileTier;
 };
-import { IsoBuildingRenderData, IsoWorkerRenderData } from "../iso/iso.types";
 
 export type RenderBloodSmeltery = {
   id: string;

@@ -25,6 +25,22 @@ npm run build:vite
 npm run preview
 ```
 
+Mounting the app
+
+`src/App.tsx` exports both a named and default `App` component. The normal Vite entrypoint in `src/main.tsx` mounts it like this:
+
+```tsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+
+createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
 Troubleshooting
 
 - If the dev server fails to start, ensure no other process is using the default Vite port (5173) or set `--port`.

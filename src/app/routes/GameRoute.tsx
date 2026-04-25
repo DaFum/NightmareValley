@@ -1,6 +1,10 @@
 import React from 'react'
+import { GameLayout } from '../layout/GameLayout'
+import { BuildingMenu } from '../../ui/panels/BuildingMenu'
 
-export default function GameRoute(): JSX.Element | null {
-	return null
+export function GameRoute(): JSX.Element {
+	return <GameLayout panels={<BuildingMenu />} />
 }
+
+export default GameRoute
 

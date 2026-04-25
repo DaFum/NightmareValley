@@ -1,3 +1,5 @@
+import type { TileTier } from '../core/game.types';
+
 export interface SimulationConfig {
   defaultTransportPriority: number;
   maxJobsPerTick: number;
@@ -12,6 +14,10 @@ export interface SimulationConfig {
   stressPerQueuedJob: number;
   stressPerActiveCarrier: number;
   maxJobBatchSize?: number;
+  footfallTierThresholds: Record<TileTier, number>;
+  tierSpeedMultipliers: Record<TileTier, number>;
+  footfallDecayPerTenTicks: number;
+  carrierEncumbrancePenalty: number; // e.g. 0.3 means 30% speed reduction at max capacity
 }
 
 export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.freeze({
@@ -28,4 +34,8 @@ export const DEFAULT_SIMULATION_CONFIG: Readonly<SimulationConfig> = Object.free
   stressPerQueuedJob: 0.2,
   stressPerActiveCarrier: 0.5,
   maxJobBatchSize: 10,
+  footfallTierThresholds: { grass: 0, dirt: 10, cobble: 50, paved: 200 },
+  tierSpeedMultipliers: { grass: 1.0, dirt: 1.2, cobble: 1.5, paved: 2.0 },
+  footfallDecayPerTenTicks: 0.2,
+  carrierEncumbrancePenalty: 0.3,
 });

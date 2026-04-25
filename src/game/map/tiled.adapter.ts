@@ -1,7 +1,6 @@
 import { TiledMapData } from "./map.types";
 import { TerritoryState, MapTile } from "../core/game.types";
 import { TerrainType } from "../core/economy.types";
-import { createId } from "../core/economy.simulation";
 
 export function parseTiledMap(mapData: TiledMapData): TerritoryState {
   const territory: TerritoryState = { tiles: {}, tileIndex: {} };
@@ -35,12 +34,14 @@ export function parseTiledMap(mapData: TiledMapData): TerritoryState {
         if (gid === 0) continue; // Empty tile
 
         const terrain = resolveTerrainFromGid(gid);
-        const tileId = createId("tile");
+        const tileId = `tile_${x}_${y}`;
 
         territory.tiles[tileId] = {
           id: tileId,
           position: { x, y },
           terrain,
+          footfall: 0,
+          tier: "grass"
         };
         territory.tileIndex![`${x},${y}`] = tileId;
       }

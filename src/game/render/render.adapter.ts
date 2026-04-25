@@ -18,16 +18,11 @@ function hashStringToInt(s: string): number {
   return Math.abs(hash);
 }
 
-export function mapEconomyStateToIsoWorld(
-  state: EconomySimulationState
-): IsoRenderWorld {
-  const world: IsoRenderWorld = {
-    tiles: [],
-    buildings: [],
-    workers: [],
-  };
+export function mapTerrainToIsoTiles(
+  state: Pick<EconomySimulationState, "territory">
+): IsoRenderWorld["tiles"] {
+  const tiles: IsoRenderWorld["tiles"] = [];
 
-  // Convert map tiles
   for (const [tileId, mapTile] of Object.entries(state.territory.tiles)) {
     const { x: sx, y: sy } = tileToScreen(
       mapTile.position.x,
@@ -36,16 +31,26 @@ export function mapEconomyStateToIsoWorld(
       TILE_HEIGHT
     );
 
-    world.tiles.push({
+    tiles.push({
       id: tileId,
       screenX: sx,
       screenY: sy,
       textureKey: `terrain_${mapTile.terrain}`,
       chunkId: "0,0", // simplified
+      resourceDeposit: mapTile.resourceDeposit,
+      footfall: mapTile.footfall,
+      tier: mapTile.tier,
     });
   }
 
-  // Convert buildings
+  return tiles;
+}
+
+export function mapBuildingsToIsoBuildings(
+  state: Pick<EconomySimulationState, "buildings">
+): IsoRenderWorld["buildings"] {
+  const buildings: IsoRenderWorld["buildings"] = [];
+
   for (const building of Object.values(state.buildings)) {
     const { x: sx, y: sy } = tileToScreen(
       building.position.x,
@@ -102,7 +107,7 @@ export function mapEconomyStateToIsoWorld(
     // lookups resolve the same keys that the texture loader registers.
     const spriteKey = `buildings_stage${buildStage}_${building.type}`;
 
-    world.buildings.push({
+    buildings.push({
       id: building.id,
       type: building.type,
       tileX: building.position.x,
@@ -129,11 +134,30 @@ export function mapEconomyStateToIsoWorld(
     });
   }
 
-  // Convert workers
+  return buildings;
+}
+
+export function mapWorkersToIsoWorkers(
+  state: Pick<EconomySimulationState, "workers" | "transport" | "buildings">
+): IsoRenderWorld["workers"] {
+  const workers: IsoRenderWorld["workers"] = [];
+
   for (const worker of Object.values(state.workers)) {
+    const activeTask = state.transport.activeCarrierTasks[worker.id];
+    let renderX = worker.position.x;
+    let renderY = worker.position.y;
+
+    if (activeTask && activeTask.path && activeTask.path.length > 1 && activeTask.pathIndex + 1 < activeTask.path.length) {
+      const p1 = activeTask.path[activeTask.pathIndex];
+      const p2 = activeTask.path[activeTask.pathIndex + 1];
+      const prog = activeTask.stepProgress;
+      renderX = p1.x + (p2.x - p1.x) * prog;
+      renderY = p1.y + (p2.y - p1.y) * prog;
+    }
+
     const { x: sx, y: sy } = tileToScreen(
-      worker.position.x,
-      worker.position.y,
+      renderX,
+      renderY,
       TILE_WIDTH,
       TILE_HEIGHT
     );
@@ -146,18 +170,23 @@ export function mapEconomyStateToIsoWorld(
     let animation: IsoRenderWorld["workers"][0]["animation"] = "idle";
     let carrying: string | undefined = undefined;
 
-    const activeTask = state.transport.activeCarrierTasks[worker.id];
     if (activeTask) {
-      renderState = "carrying";
-      animation = "carry";
-      carrying = activeTask.resourceType;
+      if (activeTask.phase === "toPickup") {
+        renderState = "walking";
+        animation = "walk";
+        carrying = undefined;
+      } else {
+        renderState = "carrying";
+        animation = "carry";
+        carrying = activeTask.resourceType;
+      }
 
-      const dropoffBuilding = state.buildings[activeTask.dropoffBuildingId];
-      const targetBuilding = dropoffBuilding;
+      const targetBuildingId = activeTask.phase === "toPickup" ? activeTask.pickupBuildingId : activeTask.dropoffBuildingId;
+      const targetBuilding = state.buildings[targetBuildingId];
 
       if (targetBuilding) {
-        const dx = targetBuilding.position.x - worker.position.x;
-        const dy = targetBuilding.position.y - worker.position.y;
+        const dx = targetBuilding.position.x - renderX;
+        const dy = targetBuilding.position.y - renderY;
         if (dx > 0 && dy >= 0) dir = "SE";
         else if (dx <= 0 && dy > 0) dir = "SW";
         else if (dx < 0 && dy <= 0) dir = "NW";
@@ -173,7 +202,7 @@ export function mapEconomyStateToIsoWorld(
     if (worker.type === "fleshMason") tool = "hammer";
     if (worker.type === "graveToothBreaker") tool = "pickaxe";
 
-    world.workers.push({
+    workers.push({
       id: worker.id,
       type: worker.type,
       worldX: worker.position.x,
@@ -196,5 +225,15 @@ export function mapEconomyStateToIsoWorld(
     });
   }
 
-  return world;
+  return workers;
+}
+
+export function mapEconomyStateToIsoWorld(
+  state: EconomySimulationState
+): IsoRenderWorld {
+  return {
+    tiles: mapTerrainToIsoTiles(state),
+    buildings: mapBuildingsToIsoBuildings(state),
+    workers: mapWorkersToIsoWorkers(state),
+  };
 }

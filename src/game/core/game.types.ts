@@ -53,16 +53,19 @@ export interface Job<T = unknown> {
   target?: T;
 }
 
+export type TileTier = "grass" | "dirt" | "cobble" | "paved";
+
 export interface MapTile {
   id: TileId;
   position: Position;
   terrain: TerrainType;
   ownerId?: OwnerId;
   buildingId?: BuildingId;
-  roadNodeId?: string;
   fertility?: number;
   corruption?: number;
   resourceDeposit?: Partial<Record<ResourceType, number>>;
+  footfall: number;
+  tier: TileTier;
 }
 
 /**

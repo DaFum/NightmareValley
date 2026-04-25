@@ -2,8 +2,8 @@ import React from 'react';
 import { useUIStore } from '../../store/ui.store';
 import { useGameStore } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
-import { BuildingType } from '../../game/core/economy.types';
 import { canAffordBuilding } from '../../game/economy/production.logic';
+import imageMap from '../../pixi/utils/vite-asset-loader';
 
 export function BuildingMenu() {
   const { activePanel, togglePanel, selectedBuildingToPlace, selectBuildingToPlace } = useUIStore();
@@ -21,83 +21,65 @@ export function BuildingMenu() {
   const buildingsToRender = Object.values(BUILDING_DEFINITIONS);
 
   return (
-    <>
+    <div className="build-dock">
       <button
         onClick={() => togglePanel('buildingMenu')}
-        className={`macabre-panel ${isOpen ? 'active' : ''}`}
-        style={{
-          position: 'absolute',
-          bottom: '24px',
-          left: '24px',
-          padding: '12px 24px',
-          color: 'var(--bone)',
-          fontFamily: 'var(--font-display)',
-          fontSize: '20px',
-          cursor: 'pointer',
-          zIndex: 101,
-          border: '1px solid var(--coagulated-blood)',
-          background: isOpen ? 'var(--void-shadow)' : 'rgba(10, 5, 6, 0.85)'
-        }}
+        className={`macabre-panel build-dock__toggle ${isOpen ? 'active' : ''}`}
+        aria-expanded={isOpen}
+        aria-controls="building-menu-panel"
       >
-        Erect Monuments
+        Build
       </button>
 
       {isOpen && (
         <div
-          className="macabre-panel animate-bleed-in"
-          style={{
-            position: 'absolute',
-            bottom: '80px',
-            left: '24px',
-            width: '350px',
-            maxHeight: '60vh',
-            overflowY: 'auto',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            zIndex: 101
-          }}
+          id="building-menu-panel"
+          className="macabre-panel build-menu-panel animate-bleed-in"
         >
-          <h2 className="macabre-text-glow" style={{ margin: 0, fontFamily: 'var(--font-display)', color: 'var(--fresh-blood)' }}>
+          <h2 className="macabre-text-glow build-menu-panel__title">
             Architecture of Duty
           </h2>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="building-list">
             {buildingsToRender.map(def => {
               const canAfford = canAffordBuilding(player, def.type);
               const isSelected = selectedBuildingToPlace === def.type;
 
               return (
-                <div
+                <button
                   key={def.type}
                   onClick={() => canAfford ? selectBuildingToPlace(isSelected ? null : def.type) : null}
-                  style={{
-                    padding: '12px',
-                    border: `1px solid ${isSelected ? 'var(--fresh-blood)' : 'var(--coagulated-blood)'}`,
-                    background: isSelected ? 'rgba(90, 12, 19, 0.3)' : 'rgba(0,0,0,0.5)',
-                    cursor: canAfford ? 'pointer' : 'not-allowed',
-                    opacity: canAfford ? 1 : 0.5,
-                    transition: 'all 0.2s'
-                  }}
+                  className={`building-option ${isSelected ? 'selected' : ''}`}
+                  disabled={!canAfford}
                 >
-                  <h3 style={{ margin: '0 0 8px 0', color: 'var(--bone)' }}>{def.name}</h3>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '14px', fontStyle: 'italic', color: 'var(--marrow)' }}>
-                    {def.description}
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <span className="building-option__header">
+                    <img
+                      src={imageMap[`buildings/stage4/${def.type}.png`]}
+                      alt=""
+                      aria-hidden="true"
+                      className="building-option__icon"
+                    />
+                    <span className="building-option__name">{def.name}</span>
+                  </span>
+                  <span className="building-option__description">{def.description}</span>
+                  <span className="building-option__costs">
                     {Object.entries(def.buildCost.resources).map(([res, amt]) => (
-                      <span key={res} style={{ fontSize: '12px', background: 'var(--void-black)', padding: '2px 6px', border: '1px solid var(--coagulated-blood)' }}>
-                        {res}: {amt}
+                      <span key={res} className="resource-pill">
+                        <img
+                          src={imageMap[`resources/${res}.png`]}
+                          alt=""
+                          aria-hidden="true"
+                        />
+                        {amt}
                       </span>
                     ))}
-                  </div>
-                </div>
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
