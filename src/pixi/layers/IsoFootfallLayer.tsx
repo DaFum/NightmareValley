@@ -39,11 +39,13 @@ export default function IsoFootfallLayer({ tiles }: IsoFootfallLayerProps): JSX.
 
       g.beginFill(color, alpha);
 
-      // Draw iso diamond
-      g.moveTo(tile.screenX, tile.screenY - ISO_TILE_HEIGHT / 2);
-      g.lineTo(tile.screenX + ISO_TILE_WIDTH / 2, tile.screenY);
-      g.lineTo(tile.screenX, tile.screenY + ISO_TILE_HEIGHT / 2);
-      g.lineTo(tile.screenX - ISO_TILE_WIDTH / 2, tile.screenY);
+      // Draw iso diamond as a closed polygon so Pixi v7 fills each sub-path reliably.
+      g.drawPolygon([
+        tile.screenX, tile.screenY - ISO_TILE_HEIGHT / 2,
+        tile.screenX + ISO_TILE_WIDTH / 2, tile.screenY,
+        tile.screenX, tile.screenY + ISO_TILE_HEIGHT / 2,
+        tile.screenX - ISO_TILE_WIDTH / 2, tile.screenY,
+      ]);
 
       g.endFill();
     }
