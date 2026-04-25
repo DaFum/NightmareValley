@@ -33,7 +33,7 @@ export function GameStage() {
   const selectWorker = useSelectionStore((state) => state.selectWorker);
   const selectTile = useSelectionStore((state) => state.selectTile);
 
-  useIsoCamera();
+  const { spacePressedRef } = useIsoCamera();
   const world = useRenderWorld();
 
   useEffect(() => {
@@ -136,8 +136,9 @@ export function GameStage() {
     return playerIds[0] ?? 'player_1';
   };
 
-  const handlePointerDown = (e: any) => {
-    if (typeof e.button === 'number' && e.button !== 0) return;
+  const handlePointerDown = (e: PIXI.FederatedPointerEvent) => {
+    if (e.button !== 0) return;
+    if (spacePressedRef.current) return;
 
     const cx = centerX + cameraX;
     const cy = centerY + cameraY;

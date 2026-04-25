@@ -1,15 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useCameraStore } from "../../store/camera.store";
 
 export function useIsoCamera() {
   const setCameraPosition = useCameraStore((state) => state.setCameraPosition);
   const setZoom = useCameraStore((state) => state.setZoom);
+  const spacePressedRef = useRef(false);
 
   useEffect(() => {
     let isDragging = false;
     let lastX = 0;
     let lastY = 0;
-    let spacePressed = false;
 
     const isTextInputActive = () => {
       const active = document.activeElement;
@@ -22,21 +22,21 @@ export function useIsoCamera() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && !isTextInputActive()) {
-        spacePressed = true;
+        spacePressedRef.current = true;
       }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") spacePressed = false;
+      if (e.code === "Space") spacePressedRef.current = false;
     };
 
     const handleBlur = () => {
-      spacePressed = false;
+      spacePressedRef.current = false;
       isDragging = false;
     };
 
     const handlePointerDown = (e: PointerEvent) => {
-      if (e.target instanceof HTMLCanvasElement && (e.button === 1 || e.button === 2 || spacePressed)) {
+      if (e.target instanceof HTMLCanvasElement && (e.button === 1 || e.button === 2 || spacePressedRef.current)) {
         isDragging = true;
         lastX = e.clientX;
         lastY = e.clientY;
@@ -101,5 +101,7 @@ export function useIsoCamera() {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [setCameraPosition, setZoom]);
+  }, [setCameraPosition, setZoom, spacePressedRef]);
+
+  return { spacePressedRef };
 }
