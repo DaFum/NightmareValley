@@ -1,25 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
   <defs>
-    <radialGradient id="g" cx="32" cy="16" r="22" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1E2028"/>
-      <stop offset="100%" stop-color="#0A0A10"/>
+    <filter id="smoke-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" />
+    </filter>
+    <radialGradient id="bog-center" cx="50%" cy="66%" r="40%">
+      <stop offset="0%" stop-color="#4d4d4d" />
+      <stop offset="100%" stop-color="#2b2b2b" stop-opacity="0" />
     </radialGradient>
-    <clipPath id="d">
-      <polygon points="32,0 64,16 32,32 0,16"/>
-    </clipPath>
   </defs>
-  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
-  <g clip-path="url(#d)">
-    <ellipse cx="36" cy="20" rx="9" ry="5" fill="#080810" opacity="0.72"/>
-    <rect x="18" y="10" width="2" height="2" rx="1" fill="#3C3C4C"/>
-    <rect x="28" y="6" width="2" height="2" rx="1" fill="#3C3C4C"/>
-    <rect x="44" y="12" width="2" height="2" rx="1" fill="#3C3C4C"/>
-    <rect x="14" y="20" width="2" height="2" rx="1" fill="#3A3A48"/>
-    <rect x="50" y="18" width="2" height="2" rx="1" fill="#3A3A48"/>
-    <rect x="22" y="24" width="2" height="2" rx="1" fill="#3C3C4C"/>
-    <rect x="42" y="8" width="2" height="2" rx="1" fill="#3A3A48"/>
-    <rect x="56" y="14" width="2" height="2" rx="1" fill="#3A3A48"/>
-    <line x1="24" y1="18" x2="28" y2="13" stroke="#4A4A58" stroke-width="1.5" opacity="0.80"/>
-    <line x1="28" y1="13" x2="30" y2="16" stroke="#4A4A58" stroke-width="1.2" opacity="0.70"/>
-  </g>
+
+  <!-- Base 3D Geometry -->
+  <!-- Left Face -->
+  <polygon points="0,96 64,128 64,144 0,112" fill="#1c1c1c" stroke="#1c1c1c" stroke-width="1" />
+  <!-- Right Face -->
+  <polygon points="64,128 128,96 128,112 64,144" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" />
+  <!-- Top Face (Solid color border prevents gradient seams) -->
+  <polygon points="64,64 128,96 64,128 0,96" fill="#2b2b2b" stroke="#2b2b2b" stroke-width="1" stroke-linejoin="round" />
+  
+  <!-- Center Highlight -->
+  <polygon points="64,64 128,96 64,128 0,96" fill="url(#bog-center)" />
+
+  <!-- Bog Puddles -->
+  <path d="M 64,75 Q 80,80 85,90 Q 90,100 64,105 Q 40,100 45,90 Q 50,80 64,75" fill="#1a1a1a" />
+  <ellipse cx="35" cy="95" rx="12" ry="6" fill="#141414" />
+  <ellipse cx="95" cy="92" rx="14" ry="7" fill="#1f1f1f" />
+  
+  <!-- Bubbles -->
+  <circle cx="60" cy="85" r="2.5" fill="#404040" />
+  <circle cx="68" cy="98" r="1.5" fill="#404040" />
+  <circle cx="32" cy="94" r="2" fill="#333333" />
+
+  <!-- Ash / Smoke Wisps -->
+  <path d="M 64,95 Q 75,70 55,50 Q 45,40 50,25" fill="none" stroke="#a3a3a3" stroke-width="3" opacity="0.4" filter="url(#smoke-blur)" />
+  <path d="M 35,95 Q 25,80 40,65 Q 50,55 45,40" fill="none" stroke="#8a8a8a" stroke-width="2" opacity="0.3" filter="url(#smoke-blur)" />
+  <path d="M 95,92 Q 105,75 90,60 Q 80,50 85,35" fill="none" stroke="#999999" stroke-width="2.5" opacity="0.3" filter="url(#smoke-blur)" />
 </svg>
