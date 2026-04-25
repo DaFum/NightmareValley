@@ -10,8 +10,9 @@ export function useGameLoop() {
   const isRunning = useGameStore((state) => state.isRunning);
   const accumulatorRef = useRef(0);
 
-  useTick((_delta, ticker) => {
-    const deltaSec = Math.min(ticker.deltaMS / 1000, 0.25);
+  useTick((deltaFrames) => {
+    // @pixi/react v7 useTick callback receives frame delta (1 ~= 60fps frame).
+    const deltaSec = Math.min(deltaFrames / 60, 0.25);
     if (!Number.isFinite(deltaSec) || deltaSec <= 0) {
       return;
     }
