@@ -12,72 +12,21 @@ import IsoResourceLayer from './layers/IsoResourceLayer';
 import { useGameStore } from '../store/game.store';
 import { useUIStore } from '../store/ui.store';
 import { useCameraStore } from '../store/camera.store';
-import { useSelectionStore } from '../store/selection.store';
-import { getIsoHit } from '../game/iso/iso.hit-test';
 import { useRenderWorld } from './hooks/useRenderWorld';
 import { useIsoCamera } from './hooks/useIsoCamera';
+import { useGameLoop } from './hooks/useGameLoop';
+import { useSelectionInput } from './hooks/useSelectionInput';
 
 export function GameStage() {
-  const advanceTick = useGameStore((state) => state.advanceTick);
   const togglePlayPause = useGameStore((state) => state.togglePlayPause);
-  const placeBuildingAt = useGameStore((state) => state.placeBuildingAt);
-  const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
-  const selectBuildingToPlace = useUIStore((state) => state.selectBuildingToPlace);
   const cameraX = useCameraStore((state) => state.x);
   const cameraY = useCameraStore((state) => state.y);
   const zoom = useCameraStore((state) => state.zoom);
-  const isDebugSpawningWarehouse = useUIStore((state) => state.isDebugSpawningWarehouse);
-  const setDebugSpawningWarehouse = useUIStore((state) => state.setDebugSpawningWarehouse);
   const showFootfallHeatmap = useUIStore((state) => state.showFootfallHeatmap);
-  const selectBuilding = useSelectionStore((state) => state.selectBuilding);
-  const selectWorker = useSelectionStore((state) => state.selectWorker);
-  const selectTile = useSelectionStore((state) => state.selectTile);
 
   const { spacePressedRef } = useIsoCamera();
   const world = useRenderWorld();
-
-  useEffect(() => {
-    const SIMULATION_STEP_SEC = 0.1;
-    const MAX_STEPS_PER_FRAME = 5;
-    let lastTime: number | null = null;
-    let accumulatedSec = 0;
-    let animationFrameId: number;
-
-    const loop = (time: number) => {
-      if (lastTime === null) {
-        lastTime = time;
-        animationFrameId = requestAnimationFrame(loop);
-        return;
-      }
-      const deltaMs = time - lastTime;
-      lastTime = time;
-
-      const deltaSec = Math.min(deltaMs / 1000, 0.25);
-
-      if (useGameStore.getState().isRunning) {
-        accumulatedSec += deltaSec;
-        let steps = 0;
-        while (accumulatedSec >= SIMULATION_STEP_SEC && steps < MAX_STEPS_PER_FRAME) {
-          advanceTick(SIMULATION_STEP_SEC);
-          accumulatedSec -= SIMULATION_STEP_SEC;
-          steps += 1;
-        }
-        if (steps === MAX_STEPS_PER_FRAME) {
-          accumulatedSec = 0;
-        }
-      } else {
-        accumulatedSec = 0;
-      }
-
-      animationFrameId = requestAnimationFrame(loop);
-    };
-
-    animationFrameId = requestAnimationFrame(loop);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [advanceTick]);
+  useGameLoop();
 
   useEffect(() => {
     // Auto-start game on mount if it's not running
@@ -130,40 +79,15 @@ export function GameStage() {
     viewportHeight / zoom
   ), [cameraX, cameraY, centerX, centerY, viewportHeight, viewportWidth, zoom]);
 
-  const getActivePlayerId = () => {
-    const playerIds = Object.keys(useGameStore.getState().gameState.players);
-    return playerIds[0] ?? 'player_1';
-  };
-
-  const handlePointerDown = (e: PIXI.FederatedPointerEvent) => {
-    if (e.button !== 0) return;
-    if (spacePressedRef.current) return;
-
-    const cx = centerX + cameraX;
-    const cy = centerY + cameraY;
-
-    const hit = getIsoHit(e.global.x, e.global.y, world, cx, cy, zoom, 64, 32);
-
-    if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
-      placeBuildingAt(getActivePlayerId(), "vaultOfDigestiveStone", hit.tileId);
-      setDebugSpawningWarehouse(false);
-      return;
-    }
-
-    if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
-      placeBuildingAt(getActivePlayerId(), selectedBuildingToPlace, hit.tileId);
-      selectBuildingToPlace(null);
-      return;
-    }
-
-    if (hit.buildingId) {
-      selectBuilding(hit.buildingId);
-    } else if (hit.workerId) {
-      selectWorker(hit.workerId);
-    } else {
-      selectTile(hit.tileId ?? null);
-    }
-  };
+  const handlePointerDown = useSelectionInput({
+    world,
+    centerX,
+    centerY,
+    cameraX,
+    cameraY,
+    zoom,
+    spacePressedRef,
+  });
 
   return (
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown}>

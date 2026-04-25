@@ -146,3 +146,4 @@ vite.config.ts.timestamp-*
 src/assets/spritesheets/**/*.png
 src/assets/spritesheets/**/*.jpg
 public/build/
+screenshots/

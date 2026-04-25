@@ -17,6 +17,14 @@ Keep economy/transport logic deterministic, cheap per tick, and safe under large
 - Use `getWorkerDefinition(...)` accessors rather than direct data-map indexing when available.
 - When changing reservation, queued count, or job status transitions, ensure counters remain balanced (`queuedJobCount`, `reserved`, `delivered`).
 
+## Additional guardrails for transport/economy edits
+
+- Keep terminal-job handling explicit: if adding statuses, update any filters/pruning/metrics logic that currently assumes `queued|claimed|delivered|lost|spilled`.
+- When changing availability math (`amount`, `reserved`, pending demand), include at least one regression test for:
+  - exact-stock assignment behavior,
+  - multi-target generation capping.
+- Avoid hidden global assumptions (e.g., implicit player ordering) in assignment/placement logic; prefer explicit ids or guarded fallbacks.
+
 ## Testing expectations
 
 - At minimum run:
@@ -30,3 +38,4 @@ Keep economy/transport logic deterministic, cheap per tick, and safe under large
 - Movement still respects worker speed + encumbrance.
 - Footfall/tier updates still happen only on boundary crossings.
 - Added/updated regression tests for any changed behavior.
+- Queued/claimed counters remain non-negative and status transitions are balanced.
