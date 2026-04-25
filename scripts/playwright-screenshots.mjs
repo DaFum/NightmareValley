@@ -64,7 +64,7 @@ async function takeScreenshots() {
     // Abort external font requests so they don't delay font readiness.
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
 
-    await page.goto(`${BASE_URL}/game`, { waitUntil: 'load' });
+    await page.goto(`${BASE_URL}/game?preserve-canvas`, { waitUntil: 'load' });
     // Wait for PixiAppProvider to finish loading textures and mount the canvas.
     await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
     // Allow several animation frames for Pixi to render the initial scene.

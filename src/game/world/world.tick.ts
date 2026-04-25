@@ -7,7 +7,8 @@ export function tickWorld(
 	deltaSec = 1,
 	config: SimulationConfig = DEFAULT_SIMULATION_CONFIG
 ): WorldState {
-	const safeDelta = Number.isFinite(deltaSec) ? Math.max(0, deltaSec) : 0;
+	const safeDelta = Number.isFinite(deltaSec) && deltaSec > 0 ? deltaSec : 0;
+	if (safeDelta === 0) return world;
 	const scenarioMultiplier = world.scenarioProfile === 'hardcore' ? 0.9 : world.scenarioProfile === 'sandbox' ? 1.15 : 1;
 	const biomeModifier = Number.isFinite(world.biomeModifier) && (world.biomeModifier ?? 0) > 0 ? (world.biomeModifier as number) : 1;
 	const temporaryProductionBoost = world.temporaryModifiers?.productionBoost ?? 1;
