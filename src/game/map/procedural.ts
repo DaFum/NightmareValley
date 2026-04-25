@@ -231,29 +231,33 @@ export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData 
   }
 
   // ── Road network ──────────────────────────────────────────────────────────
+  // Roads start from the building cluster at (12,10); skip on maps too small
+  // to contain that origin tile so walkPath never adds out-of-bounds coords.
   const roadSet  = new Set<string>();
   const roadSeed = seed + 31337;
 
-  // Road 1: NW artery — toward the upper-left of the map
-  const nwX = Math.round(width  * (0.10 + hashNoise(10, 0, seed) * 0.12));
-  const nwY = Math.round(height * (0.07 + hashNoise(11, 0, seed) * 0.12));
-  const nwMidX = Math.round((12 + nwX) / 2 + (hashNoise(12, 0, seed) - 0.5) * 10);
-  const nwMidY = Math.round((10 + nwY) / 2 + (hashNoise(13, 0, seed) - 0.5) * 10);
-  walkPath(12, 10, nwMidX, nwMidY, width, height, roadSet, roadSeed);
-  walkPath(nwMidX, nwMidY, nwX, nwY, width, height, roadSet, roadSeed + 1);
+  if (width > 13 && height > 11) {
+    // Road 1: NW artery — toward the upper-left of the map
+    const nwX = Math.round(width  * (0.10 + hashNoise(10, 0, seed) * 0.12));
+    const nwY = Math.round(height * (0.07 + hashNoise(11, 0, seed) * 0.12));
+    const nwMidX = Math.round((12 + nwX) / 2 + (hashNoise(12, 0, seed) - 0.5) * 10);
+    const nwMidY = Math.round((10 + nwY) / 2 + (hashNoise(13, 0, seed) - 0.5) * 10);
+    walkPath(12, 10, nwMidX, nwMidY, width, height, roadSet, roadSeed);
+    walkPath(nwMidX, nwMidY, nwX, nwY, width, height, roadSet, roadSeed + 1);
 
-  // Road 2: SE artery — through the open lands toward resources
-  const seX = Math.round(width  * (0.68 + hashNoise(14, 0, seed) * 0.18));
-  const seY = Math.round(height * (0.58 + hashNoise(15, 0, seed) * 0.22));
-  const seMidX = Math.round((12 + seX) / 2 + (hashNoise(16, 0, seed) - 0.5) * 10);
-  const seMidY = Math.round((10 + seY) / 2 + (hashNoise(17, 0, seed) - 0.5) * 10);
-  walkPath(12, 10, seMidX, seMidY, width, height, roadSet, roadSeed + 2);
-  walkPath(seMidX, seMidY, seX, seY, width, height, roadSet, roadSeed + 3);
+    // Road 2: SE artery — through the open lands toward resources
+    const seX = Math.round(width  * (0.68 + hashNoise(14, 0, seed) * 0.18));
+    const seY = Math.round(height * (0.58 + hashNoise(15, 0, seed) * 0.22));
+    const seMidX = Math.round((12 + seX) / 2 + (hashNoise(16, 0, seed) - 0.5) * 10);
+    const seMidY = Math.round((10 + seY) / 2 + (hashNoise(17, 0, seed) - 0.5) * 10);
+    walkPath(12, 10, seMidX, seMidY, width, height, roadSet, roadSeed + 2);
+    walkPath(seMidX, seMidY, seX, seY, width, height, roadSet, roadSeed + 3);
 
-  // Road 3: Forest spur — short path toward the western forest zone
-  const fSpurX = Math.max(1, Math.min(width  - 2, Math.round(width  * zForX + (hashNoise(18, 0, seed) - 0.5) * 4)));
-  const fSpurY = Math.max(1, Math.min(height - 2, Math.round(height * zForY + (hashNoise(19, 0, seed) - 0.5) * 4)));
-  walkPath(12, 10, fSpurX, fSpurY, width, height, roadSet, roadSeed + 4);
+    // Road 3: Forest spur — short path toward the western forest zone
+    const fSpurX = Math.max(1, Math.min(width  - 2, Math.round(width  * zForX + (hashNoise(18, 0, seed) - 0.5) * 4)));
+    const fSpurY = Math.max(1, Math.min(height - 2, Math.round(height * zForY + (hashNoise(19, 0, seed) - 0.5) * 4)));
+    walkPath(12, 10, fSpurX, fSpurY, width, height, roadSet, roadSeed + 4);
+  }
 
   // Stamp roads — lakes and mountain rock block roads
   for (const key of roadSet) {
@@ -266,51 +270,60 @@ export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData 
   }
 
   // ── Hand-authored starting valley ─────────────────────────────────────────
-  // A dense forest edge to the west — immediate resource access
-  for (let vy = 6; vy <= 14; vy++) {
-    for (let vx = 2; vx <= 7; vx++) {
-      if (terrain[vy * width + vx] !== 'placentaLake') {
-        terrain[vy * width + vx] = 'weepingForest';
+  // Guard: the authored regions use coordinates up to col 20 / row 24.
+  // Skip entirely on small maps to avoid out-of-bounds array writes and to
+  // preserve the old behaviour for test / mini-map use-cases.
+  const MIN_AUTHORED_W = 21; // max column index used below is 20
+  const MIN_AUTHORED_H = 25; // max row index used below is 24
+  if (width >= MIN_AUTHORED_W && height >= MIN_AUTHORED_H) {
+    // Dense forest edge to the west — immediate resource access.
+    // Range ends at vx=6 (not 7) to avoid overwriting tile (7,7) which
+    // game.store.ts places the vaultOfDigestiveStone building on.
+    for (let vy = 6; vy <= 14; vy++) {
+      for (let vx = 2; vx <= 6; vx++) {
+        if (terrain[vy * width + vx] !== 'placentaLake') {
+          terrain[vy * width + vx] = 'weepingForest';
+        }
       }
     }
-  }
 
-  // Cathedral ruins north of start — visual landmark and narrative anchor
-  // Outer ring: cathedralRock; inner fill: ribMountain
-  for (let ry = 3; ry <= 7; ry++) {
-    for (let rx = 10; rx <= 16; rx++) {
-      const isEdge = rx === 10 || rx === 16 || ry === 3 || ry === 7;
-      terrain[ry * width + rx] = isEdge ? 'cathedralRock' : 'ribMountain';
-    }
-  }
-
-  // Dark pool SE of start — water source, strategic chokepoint
-  for (let wy = 13; wy <= 17; wy++) {
-    for (let wx = 15; wx <= 20; wx++) {
-      terrain[wy * width + wx] = 'placentaLake';
-    }
-  }
-
-  // Ash bog patch SW of start — atmospheric hazard zone
-  for (let by = 12; by <= 16; by++) {
-    for (let bx = 4; bx <= 9; bx++) {
-      if (terrain[by * width + bx] === 'scarredEarth') {
-        terrain[by * width + bx] = 'ashBog';
+    // Cathedral ruins north of start — visual landmark and narrative anchor
+    // Outer ring: cathedralRock; inner fill: ribMountain
+    for (let ry = 3; ry <= 7; ry++) {
+      for (let rx = 10; rx <= 16; rx++) {
+        const isEdge = rx === 10 || rx === 16 || ry === 3 || ry === 7;
+        terrain[ry * width + rx] = isEdge ? 'cathedralRock' : 'ribMountain';
       }
     }
-  }
 
-  // Corruption seeping in from the left edge (visible threat from start)
-  for (let cy = 18; cy <= 24; cy++) {
-    for (let cx = 0; cx <= 5; cx++) {
-      const fade = hashNoise(cx * 3, cy, seed + 9001);
-      if (fade > 0.30) terrain[cy * width + cx] = 'occupiedScar';
+    // Dark pool SE of start — water source, strategic chokepoint
+    for (let wy = 13; wy <= 17; wy++) {
+      for (let wx = 15; wx <= 20; wx++) {
+        terrain[wy * width + wx] = 'placentaLake';
+      }
     }
-  }
 
-  // Ensure building tiles are always walkable scarredEarth
-  terrain[10 * width + 10] = 'scarredEarth';
-  terrain[10 * width + 14] = 'scarredEarth';
+    // Ash bog patch SW of start — atmospheric hazard zone
+    for (let by = 12; by <= 16; by++) {
+      for (let bx = 4; bx <= 9; bx++) {
+        if (terrain[by * width + bx] === 'scarredEarth') {
+          terrain[by * width + bx] = 'ashBog';
+        }
+      }
+    }
+
+    // Corruption seeping in from the left edge (visible threat from start)
+    for (let cy = 18; cy <= 24; cy++) {
+      for (let cx = 0; cx <= 5; cx++) {
+        const fade = hashNoise(cx * 3, cy, seed + 9001);
+        if (fade > 0.30) terrain[cy * width + cx] = 'occupiedScar';
+      }
+    }
+
+    // Ensure building tiles are always walkable scarredEarth
+    terrain[10 * width + 10] = 'scarredEarth';
+    terrain[10 * width + 14] = 'scarredEarth';
+  }
 
   // ── Encode to GID array ──────────────────────────────────────────────────
   const data: number[] = terrain.map(t => {

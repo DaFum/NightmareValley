@@ -8,9 +8,10 @@ import { createId } from "../core/economy.simulation";
 export function generateInitialWorld(seed?: number, width = 48, height = 48): EconomySimulationState {
   const tiles: Record<TileId, MapTile> = {};
 
-  // Generate a procedurally coherent map using the generator
-  const mapWidth = width;
-  const mapHeight = height;
+  // Buildings are hardcoded at (10,10) and (14,10); clamp to ensure those
+  // tiles always exist regardless of what the caller passes in.
+  const mapWidth  = Math.max(width,  15);
+  const mapHeight = Math.max(height, 11);
   const tiled = generateProceduralTiledMap({ width: mapWidth, height: mapHeight, seed });
 
   // We expect the first tileset to enumerate terrain types via the 'type' property
