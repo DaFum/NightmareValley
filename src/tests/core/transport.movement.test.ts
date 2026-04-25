@@ -104,11 +104,12 @@ describe("transport.movement", () => {
     };
 
     const config = { ...DEFAULT_SIMULATION_CONFIG, carrierBaseSpeed: 1, tierSpeedMultipliers: { grass: 1, dirt: 1.2, cobble: 1.5, paved: 2 } };
-    advanceCarrierMovement(state, 0.5, config); // step = 1 * 1.2 * 0.5 = 0.6. Total = 1.4
+    // Destination tile (1,0) is grass (mult=1.0): step = 1 * 1.0 * 0.5 = 0.5. Total = 0.8 + 0.5 = 1.3.
+    advanceCarrierMovement(state, 0.5, config);
 
     const task = state.transport.activeCarrierTasks[carrierId];
     expect(task.pathIndex).toBe(1);
-    expect(task.stepProgress).toBeCloseTo(0.4);
+    expect(task.stepProgress).toBeCloseTo(0.3);
     expect(state.workers[carrierId].position).toEqual({ x: 1, y: 0 });
     expect(state.territory.tiles[t1.id].footfall).toBe(1);
   });

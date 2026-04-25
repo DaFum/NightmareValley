@@ -427,8 +427,12 @@ export function advanceCarrierMovement(
     const currentPos = task.path[task.pathIndex];
     if (!currentPos) continue;
 
-    const currentTile = getTileAtPosition(state.territory as TerritoryState, currentPos);
-    let speedMult = currentTile ? (config.tierSpeedMultipliers[currentTile.tier] || 1) : 1;
+    // Use the *destination* tile's speed to match A*'s cost model: cost(A→B) = 1/multiplier[B].
+    const destPos = task.pathIndex + 1 < task.path.length
+      ? task.path[task.pathIndex + 1]
+      : task.path[task.pathIndex];
+    const destTile = getTileAtPosition(state.territory as TerritoryState, destPos);
+    let speedMult = destTile ? (config.tierSpeedMultipliers[destTile.tier] || 1) : 1;
 
     if (task.phase === "toDropoff" && config.carrierEncumbrancePenalty) {
       const workerDef = WORKER_DEFINITIONS[carrier.type];
@@ -469,6 +473,13 @@ export function advanceCarrierMovement(
           recomputeTierFromFootfall(steppedTile, thresh);
         }
       }
+      // Update speedMult to the new destination tile so the remaining stepProgress
+      // this tick uses the correct speed for the next crossing.
+      const nextDestPos = task.pathIndex + 1 < task.path.length
+        ? task.path[task.pathIndex + 1]
+        : task.path[task.pathIndex];
+      const nextDestTile = getTileAtPosition(state.territory as TerritoryState, nextDestPos);
+      speedMult = nextDestTile ? (config.tierSpeedMultipliers[nextDestTile.tier] || 1) : 1;
     }
 
     // stepProgress accumulates fractional sub-tile distance each frame. 0.999 guards
