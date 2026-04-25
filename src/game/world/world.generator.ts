@@ -5,13 +5,13 @@ import { TerrainType } from "../core/economy.types";
 import { generateProceduralTiledMap } from "../map/procedural";
 import { createId } from "../core/economy.simulation";
 
-export function generateInitialWorld(): EconomySimulationState {
+export function generateInitialWorld(seed?: number, width = 48, height = 48): EconomySimulationState {
   const tiles: Record<TileId, MapTile> = {};
 
   // Generate a procedurally coherent map using the generator
-  const mapWidth = 48;
-  const mapHeight = 48;
-  const tiled = generateProceduralTiledMap({ width: mapWidth, height: mapHeight });
+  const mapWidth = width;
+  const mapHeight = height;
+  const tiled = generateProceduralTiledMap({ width: mapWidth, height: mapHeight, seed });
 
   // We expect the first tileset to enumerate terrain types via the 'type' property
   const ts = tiled.tilesets && tiled.tilesets[0];

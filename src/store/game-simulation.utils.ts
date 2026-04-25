@@ -40,7 +40,13 @@ function defaultProfileMultiplier(profile?: SimulationStepProfile[]): number {
 }
 
 function hashState(state: EconomySimulationState): number {
-  const seed = `${state.tick}|${state.ageOfTeeth}|${Object.keys(state.buildings).length}|${Object.keys(state.workers).length}|${Object.keys(state.transport.jobs).length}`;
+  const stockTotal = Object.values(state.players).reduce((sum, p) => {
+    return sum + Object.values(p.stock as Record<string, number>).reduce((s, v) => s + (v | 0), 0);
+  }, 0);
+  const outputTotal = Object.values(state.buildings).reduce((sum, b) => {
+    return sum + Object.values(b.outputBuffer as Record<string, number>).reduce((s, v) => s + (v | 0), 0);
+  }, 0);
+  const seed = `${state.tick}|${state.ageOfTeeth.toFixed(3)}|${Object.keys(state.buildings).length}|${Object.keys(state.workers).length}|${Object.keys(state.transport.jobs).length}|${stockTotal}|${outputTotal}|${state.transport.networkStress.toFixed(3)}`;
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     hash = Math.imul(hash, 31) + seed.charCodeAt(i) | 0;

@@ -49,7 +49,15 @@ export function ResourceBar() {
       return;
     }
     const elapsedSec = ageOfTeeth - previous.age;
-    if (!Number.isFinite(elapsedSec) || elapsedSec <= 0) return;
+    // Always keep the baseline current so stock changes while paused (e.g. building
+    // placement costs) don't produce a bogus spike when the simulation resumes.
+    if (!Number.isFinite(elapsedSec) || elapsedSec <= 0) {
+      trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
+      return;
+    }
+    // Only recompute the per-minute rate once per game-second to avoid a
+    // setTrendPerMin re-render on every simulation tick.
+    if (elapsedSec < 1.0) return;
     const nextTrend: TrendMap = {};
     const keys = new Set([...Object.keys(stock), ...Object.keys(previous.stock)]);
     for (const key of keys) {

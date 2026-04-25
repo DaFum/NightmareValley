@@ -65,18 +65,26 @@ export function GameStage() {
   const drawHeatmap = showFootfallHeatmap && lodLevel !== 'low';
   const drawWorkers = lodLevel !== 'low' || world.workers.length <= 120;
   const CHUNK_SCREEN_SIZE = 512;
-  const chunkKey = (x: number, y: number) => `${Math.floor(x / CHUNK_SCREEN_SIZE)},${Math.floor(y / CHUNK_SCREEN_SIZE)}`;
+  const tileCount = world.tiles.length;
 
+  // Tile screen positions are static after map load; only rebuild when tile count changes.
   const chunkIndex = useMemo(() => {
-    const grouped = new Map<string, typeof world.tiles>();
+    const grouped = new Map<string, string[]>();
     for (const tile of world.tiles) {
-      const key = chunkKey(tile.screenX, tile.screenY);
-      const bucket = grouped.get(key);
-      if (bucket) bucket.push(tile);
-      else grouped.set(key, [tile]);
+      const key = `${Math.floor(tile.screenX / CHUNK_SCREEN_SIZE)},${Math.floor(tile.screenY / CHUNK_SCREEN_SIZE)}`;
+      const ids = grouped.get(key);
+      if (ids) ids.push(tile.id);
+      else grouped.set(key, [tile.id]);
     }
     return grouped;
-  }, [world.tiles]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tileCount]);
+
+  // Per-tick lookup: always has current tile objects (footfall, tier, etc.)
+  const tileById = useMemo(
+    () => new Map(world.tiles.map((t) => [t.id, t])),
+    [world.tiles]
+  );
 
   const visibleTiles = useMemo(() => {
     const padding = lodLevel === 'full' ? 192 : 128;
@@ -88,13 +96,15 @@ export function GameStage() {
     const maxChunkX = Math.floor(maxX / CHUNK_SCREEN_SIZE);
     const minChunkY = Math.floor(minY / CHUNK_SCREEN_SIZE);
     const maxChunkY = Math.floor(maxY / CHUNK_SCREEN_SIZE);
-    const selected: typeof world.tiles = [];
+    const selected: (typeof world.tiles)[number][] = [];
 
     for (let cx = minChunkX; cx <= maxChunkX; cx++) {
       for (let cy = minChunkY; cy <= maxChunkY; cy++) {
-        const bucket = chunkIndex.get(`${cx},${cy}`);
-        if (!bucket) continue;
-        for (const tile of bucket) {
+        const ids = chunkIndex.get(`${cx},${cy}`);
+        if (!ids) continue;
+        for (const id of ids) {
+          const tile = tileById.get(id);
+          if (!tile) continue;
           if (
             tile.screenX >= minX &&
             tile.screenX <= maxX &&
@@ -107,7 +117,7 @@ export function GameStage() {
       }
     }
     return selected;
-  }, [cameraX, cameraY, centerX, centerY, chunkIndex, lodLevel, viewportHeight, viewportWidth, zoom]);
+  }, [cameraX, cameraY, centerX, centerY, chunkIndex, tileById, lodLevel, viewportHeight, viewportWidth, zoom]);
   const hitArea = useMemo(() => new PIXI.Rectangle(
     (-centerX - cameraX) / zoom,
     (-centerY - cameraY) / zoom,
