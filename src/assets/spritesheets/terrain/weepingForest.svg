@@ -1,22 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#264222"/>
-      <stop offset="100%" stop-color="#0E1A0C"/>
-    </linearGradient>
-    <clipPath id="d">
-      <polygon points="32,0 64,16 32,32 0,16"/>
-    </clipPath>
+    <filter id="blood-drop-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
-  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
-  <g clip-path="url(#d)">
-    <circle cx="24" cy="13" r="6" fill="#0E2010" opacity="0.85"/>
-    <circle cx="40" cy="10" r="5" fill="#0A1C0A" opacity="0.85"/>
-    <circle cx="32" cy="21" r="5" fill="#0E2010" opacity="0.75"/>
-    <circle cx="16" cy="18" r="4" fill="#0A1C0A" opacity="0.75"/>
-    <circle cx="49" cy="18" r="4" fill="#0E1E0C" opacity="0.65"/>
-    <circle cx="24" cy="11" r="2.5" fill="#3C5830" opacity="0.40"/>
-    <circle cx="40" cy="8" r="2" fill="#365230" opacity="0.35"/>
-    <circle cx="32" cy="19" r="2" fill="#3A5630" opacity="0.30"/>
+
+  <!-- Base 3D Geometry -->
+  <polygon points="0,96 64,128 64,144 0,112" fill="#1c0d0d" stroke="#1c0d0d" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#0a0505" stroke="#0a0505" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#2b1414" stroke="#2b1414" stroke-width="1" stroke-linejoin="round" />
+
+  <!-- Back Tree -->
+  <g>
+    <path d="M 64,75 Q 60,50 70,30 Q 75,50 68,75" fill="#3d0707" />
+    <!-- Fleshy Canopy -->
+    <path d="M 70,30 Q 85,25 80,45 Q 65,55 55,40 Q 55,20 70,30 Z" fill="#6e1313" />
+    <!-- Bleeding Stalks -->
+    <path d="M 60,40 L 60,60" stroke="#d61a1a" stroke-width="1.5" stroke-linecap="round" />
+    <path d="M 75,38 L 75,65" stroke="#b80f0f" stroke-width="1.5" stroke-linecap="round" />
+  </g>
+
+  <!-- Left Tree -->
+  <g>
+    <path d="M 35,90 Q 30,65 42,40 Q 48,65 40,90" fill="#4a0909" />
+    <path d="M 42,40 Q 55,30 52,55 Q 40,65 30,55 Q 25,35 42,40 Z" fill="#8a0303" />
+    <path d="M 35,48 L 35,70" stroke="#ff2a2a" stroke-width="2" stroke-linecap="round" filter="url(#blood-drop-glow)" />
+    <path d="M 48,45 L 48,60" stroke="#d61a1a" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Drop -->
+    <circle cx="35" cy="74" r="1.5" fill="#ff4545" filter="url(#blood-drop-glow)" />
+  </g>
+
+  <!-- Right Tree (Foreground) -->
+  <g>
+    <path d="M 95,100 Q 90,60 100,35 Q 108,60 102,100" fill="#5c0b0b" />
+    <path d="M 100,35 Q 120,25 115,55 Q 95,70 85,50 Q 80,25 100,35 Z" fill="#9c1c1c" />
+    <path d="M 92,48 L 92,80" stroke="#ff4545" stroke-width="2.5" stroke-linecap="round" filter="url(#blood-drop-glow)" />
+    <path d="M 108,45 L 108,75" stroke="#ff2a2a" stroke-width="2" stroke-linecap="round" />
+    <path d="M 100,55 L 100,90" stroke="#d61a1a" stroke-width="2" stroke-linecap="round" />
+    <!-- Drops -->
+    <circle cx="92" cy="85" r="2" fill="#ff7a7a" filter="url(#blood-drop-glow)" />
+    <circle cx="100" cy="94" r="1.5" fill="#ff4545" />
   </g>
 </svg>
