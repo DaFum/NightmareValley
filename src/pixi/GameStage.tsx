@@ -20,11 +20,11 @@ import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
 
 const CHUNK_SCREEN_SIZE = 512;
-// HQ is placed at tile (7,7); center the camera on it at startup.
+// Starting buildings are placed at tiles (10,10)-(14,10); center on (12,10).
 // Uses ISO_TILE_WIDTH/HEIGHT (64/32) matching render.adapter.ts screen coords.
-const HQ_TILE = { x: 7, y: 7 };
-const HQ_SCREEN_X = (HQ_TILE.x - HQ_TILE.y) * (ISO_TILE_WIDTH / 2);
-const HQ_SCREEN_Y = (HQ_TILE.x + HQ_TILE.y) * (ISO_TILE_HEIGHT / 2);
+const START_TILE = { x: 12, y: 10 };
+const START_SCREEN_X = (START_TILE.x - START_TILE.y) * (ISO_TILE_WIDTH / 2);
+const START_SCREEN_Y = (START_TILE.x + START_TILE.y) * (ISO_TILE_HEIGHT / 2);
 
 export function GameStage() {
   const setRunning = useGameStore((state) => state.setRunning);
@@ -44,20 +44,12 @@ export function GameStage() {
     // This avoids double-toggle issues under React StrictMode remounting.
     setRunning(true);
 
-    // Center the camera on the HQ tile so the starting area is in view.
+    // Center the camera on the starting tile so the starting area is in view.
     // viewportHeight * (0.5 - 0.42) corrects for centerY = height * 0.42.
     const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
-    const initialCameraY = Math.round(vh * 0.08 - HQ_SCREEN_Y);
-    setCameraPosition(HQ_SCREEN_X, initialCameraY);
-    // eslint-disable-next-line no-console
-    console.log('[GameStage] Camera init:', {
-      vh,
-      HQ_SCREEN_X,
-      HQ_SCREEN_Y,
-      initialCameraY,
-      centerY: vh * 0.42,
-      expectedHQScreenY: vh * 0.42 + initialCameraY + HQ_SCREEN_Y,
-    });
+    const initialCameraX = -START_SCREEN_X;
+    const initialCameraY = Math.round(vh * 0.08 - START_SCREEN_Y);
+    setCameraPosition(initialCameraX, initialCameraY);
 
     return () => {
       setRunning(false);
@@ -74,8 +66,9 @@ export function GameStage() {
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        setViewportWidth(Math.round(width));
-        setViewportHeight(Math.round(height));
+        // Ignore zero-dimension reports from headless/hidden environments.
+        if (width > 0) setViewportWidth(Math.round(width));
+        if (height > 0) setViewportHeight(Math.round(height));
       }
     });
     observer.observe(el);
@@ -110,10 +103,6 @@ export function GameStage() {
     const maxX = (viewportWidth - centerX - cameraX + padding) / zoom;
     const minY = (-centerY - cameraY - padding) / zoom;
     const maxY = (viewportHeight - centerY - cameraY + padding) / zoom;
-    if (world.tiles.length > 0 && Math.random() < 0.01) {
-      // eslint-disable-next-line no-console
-      console.log('[visibleTiles] culling:', { minX, maxX, minY, maxY, cameraX, cameraY, tileCount: world.tiles.length, sampleTile: world.tiles[0] });
-    }
     const minChunkX = Math.floor(minX / CHUNK_SCREEN_SIZE);
     const maxChunkX = Math.floor(maxX / CHUNK_SCREEN_SIZE);
     const minChunkY = Math.floor(minY / CHUNK_SCREEN_SIZE);
