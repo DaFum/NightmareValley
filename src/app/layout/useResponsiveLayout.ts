@@ -16,5 +16,3 @@ export function useResponsiveLayout(mobileBreakpoint = 760): boolean {
 
   return isMobile
 }
-
-export default useResponsiveLayout

@@ -10,13 +10,16 @@ const MAX_ADAPTIVE_STEPS = 8;
 const MIN_ADAPTIVE_STEPS = 2;
 const DEBT_STREAK_THROTTLE_FRAMES = 20;
 
+function economyStepMultiplier(carryoverSec: number): number {
+  return carryoverSec > SIMULATION_STEP_SEC * 1.5 ? 0.9 : 1;
+}
+
 export function useGameLoop() {
   const runSimulationSteps = useGameStore((state) => state.runSimulationSteps);
   const isRunning = useGameStore((state) => state.isRunning);
   const setLoopStats = useDebugStore((state) => state.setLoopStats);
   const accumulatorRef = useRef(0);
   const debtStreakRef = useRef(0);
-  const economyStepMultiplier = (carryoverSec: number) => (carryoverSec > SIMULATION_STEP_SEC * 1.5 ? 0.9 : 1);
 
   const getAdaptiveStepBudget = (deltaSec: number) => {
     const budgetScale = Math.min(1.6, Math.max(0.7, deltaSec / SIMULATION_STEP_SEC));

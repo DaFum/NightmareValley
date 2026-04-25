@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   EconomySimulationState,
+  simulateTick,
   placeBuilding,
   upgradeBuilding,
   connectBuildingToRoad,
@@ -264,9 +265,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!isRunning) return;
 
     try {
-      const {
-        nextState,
-      } = runBoundedSimulationSteps(gameState, deltaSec, tickRate, deltaSec, 1);
+      const nextState = simulateTick(gameState, deltaSec * tickRate, DEFAULT_SIMULATION_CONFIG);
       set({ gameState: nextState });
     } catch (error) {
       console.error("Simulation tick failed:", error);

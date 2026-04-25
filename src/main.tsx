@@ -35,7 +35,7 @@ const appNode = (
   </React.StrictMode>
 );
 
-if (container.hasChildNodes()) {
+if ((container as HTMLElement).dataset.ssr === 'true') {
   hydrateRoot(container, appNode);
 } else {
   const root = createRoot(container);
