@@ -44,6 +44,10 @@ export interface TransportState {
   queuedJobCount: number;
 }
 
+const TERMINAL_JOB_STATUSES: ReadonlySet<TransportJob["status"]> = new Set(["delivered", "lost", "spilled"]);
+const TRANSPORT_TERMINAL_PRUNE_INTERVAL_TICKS = 50;
+const TRANSPORT_TERMINAL_PRUNE_MIN_JOBS = 200;
+
 export function gridManhattanDistance(a: Position, b: Position): number {
   return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
 }
@@ -83,10 +87,14 @@ export function generateTransportJobs(
   state: EconomySimulationState,
   config: SimulationConfig
 ): EconomySimulationState {
+  if (state.tick % TRANSPORT_TERMINAL_PRUNE_INTERVAL_TICKS === 0) {
+    pruneTerminalTransportJobs(state);
+  }
+
   let created = 0;
   const existingJobSignatures = new Set(
     Object.values(state.transport.jobs)
-      .filter((j) => j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled")
+      .filter((j) => !TERMINAL_JOB_STATUSES.has(j.status))
       .map(makeTransportSignature)
   );
 
@@ -103,13 +111,14 @@ export function generateTransportJobs(
           totalReserved += j.status === "queued" ? j.amount : j.reserved;
         }
       }
-      const amountAvailable = getResourceAmount(source.outputBuffer, resourceType) - totalReserved;
+      let amountAvailable = getResourceAmount(source.outputBuffer, resourceType) - totalReserved;
       if (amountAvailable <= 0) continue;
 
       const targets = findTargetBuildingsForResource(state, source, resourceType, config);
 
       for (const target of targets) {
         if (created >= config.maxJobsPerTick) break;
+        if (amountAvailable <= 0) break;
 
         const neededAmount = getBuildingResourceNeed(target, resourceType, config);
         if (neededAmount <= 0) continue;
@@ -135,6 +144,7 @@ export function generateTransportJobs(
 
         existingJobSignatures.add(signature);
         created += 1;
+        amountAvailable -= amountToMove;
       }
     }
   }
@@ -335,6 +345,7 @@ export function findBestJobForCarrier(
 
     let totalReserved = 0;
     for (const otherJob of Object.values(state.transport.jobs)) {
+      if (otherJob === job) continue;
       if (otherJob.fromBuildingId === source.id && otherJob.resourceType === job.resourceType) {
         // Queued jobs use amount as pending demand; claimed jobs use reserved.
         totalReserved += otherJob.status === "queued" ? otherJob.amount : otherJob.reserved;
@@ -607,5 +618,17 @@ export function updateTransportMetrics(
     state.transport.averageLatencySec = (sumDistance / claimedOrQueued.length) / baselineTilesPerSec;
   }
 
+  return state;
+}
+
+export function pruneTerminalTransportJobs(state: EconomySimulationState): EconomySimulationState {
+  if (Object.keys(state.transport.jobs).length < TRANSPORT_TERMINAL_PRUNE_MIN_JOBS) {
+    return state;
+  }
+  for (const [jobId, job] of Object.entries(state.transport.jobs)) {
+    if (TERMINAL_JOB_STATUSES.has(job.status)) {
+      delete state.transport.jobs[jobId];
+    }
+  }
   return state;
 }
