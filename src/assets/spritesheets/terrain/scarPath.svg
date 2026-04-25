@@ -1,21 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 32" width="64" height="32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="64" y2="32" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3E2A14"/>
-      <stop offset="100%" stop-color="#1A1008"/>
-    </linearGradient>
-    <clipPath id="d">
-      <polygon points="32,0 64,16 32,32 0,16"/>
-    </clipPath>
+    <filter id="blood-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
   </defs>
-  <polygon points="32,0 64,16 32,32 0,16" fill="url(#g)"/>
-  <g clip-path="url(#d)">
-    <polygon points="32,0 14,10 22,14 40,6" fill="#5A3C1E" opacity="0.20"/>
-    <path d="M8 20 L56 12" stroke="#160C04" stroke-width="2.5" opacity="0.72"/>
-    <path d="M8 24 L56 16" stroke="#160C04" stroke-width="2.5" opacity="0.72"/>
-    <rect x="16" y="14" width="2" height="2" rx="1" fill="#120A02" opacity="0.60"/>
-    <rect x="36" y="10" width="2" height="2" rx="1" fill="#120A02" opacity="0.60"/>
-    <rect x="48" y="14" width="2" height="2" rx="1" fill="#120A02" opacity="0.60"/>
-    <rect x="24" y="20" width="2" height="2" rx="1" fill="#120A02" opacity="0.60"/>
-  </g>
+
+  <!-- Base 3D Geometry -->
+  <polygon points="0,96 64,128 64,144 0,112" fill="#2a1414" stroke="#2a1414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#170909" stroke="#170909" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#3d1c1c" stroke="#3d1c1c" stroke-width="1" stroke-linejoin="round" />
+
+  <!-- The Path (Diagonal South-West to North-East) -->
+  <polygon points="16,88 80,56 112,72 48,104" fill="#2b0f0f" />
+  
+  <!-- Path details / Bone Cobblestones -->
+  <path d="M 32,80 L 40,76 L 45,80 L 37,84 Z" fill="#a1998b" />
+  <path d="M 50,71 L 60,66 L 62,70 L 52,75 Z" fill="#b5ab9a" />
+  <path d="M 75,58 L 82,54 L 85,58 L 78,62 Z" fill="#8c8579" />
+  <path d="M 55,85 L 65,80 L 68,85 L 58,90 Z" fill="#c4bba7" />
+  <path d="M 80,72 L 90,67 L 95,70 L 85,75 Z" fill="#a1998b" />
+  
+  <!-- Bleeding track in the center of the path -->
+  <path d="M 24,84 Q 64,64 104,76" fill="none" stroke="#b80f0f" stroke-width="2.5" filter="url(#blood-glow)" opacity="0.8" />
+  <path d="M 40,84 Q 64,72 88,72" fill="none" stroke="#ff2a2a" stroke-width="1" filter="url(#blood-glow)" opacity="0.9" />
+
+  <!-- Border scars -->
+  <path d="M 16,88 L 48,104" fill="none" stroke="#5c1c1c" stroke-width="2" />
+  <path d="M 80,56 L 112,72" fill="none" stroke="#5c1c1c" stroke-width="2" />
 </svg>
