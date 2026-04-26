@@ -131,7 +131,12 @@ export function mapBuildingsToIsoBuildings(
       statusIcons,
       effectFlags,
       inputFill: Math.max(0, Math.min(1, Math.max(...Object.values(building.inputBuffer).map(val => (val ?? 0) / DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit), 0))),
-      outputFill: Math.max(0, Math.min(1, Math.max(...Object.values(building.outputBuffer).map(val => (val ?? 0) / DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit), 0))),
+      outputFill: Math.max(0, Math.min(1, Math.max(...Object.values(building.outputBuffer).map(val => {
+        const limit = building.type === 'vaultOfDigestiveStone'
+          ? DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit
+          : DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit;
+        return (val ?? 0) / limit;
+      }), 0))),
     });
   }
 

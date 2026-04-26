@@ -371,7 +371,6 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     buildCost: { resources: { toothPlanks: 5, sepulcherStone: 4 } },
     upgradeCosts: [{ resources: { toothPlanks: 3, sepulcherStone: 3 } }],
     workerSlots: { burdenThrall: 2 },
-    baseStorage: 500,
     allowedTerrain: ["scarredEarth"],
     requiresRoadConnection: true,
     description: "A warehouse pretending to be a stomach.",

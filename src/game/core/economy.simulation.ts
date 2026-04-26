@@ -11,7 +11,7 @@ import { BuildingType, WorkerType, ResourceType, ResourceInventory } from "./eco
 import { TransportState } from "../economy/transport.logic";
 import { BUILDING_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
-import { removeResource, hasEnoughResources } from "../economy/stockpile.logic";
+import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
 
 // Exported from original but using relative imports
@@ -166,8 +166,83 @@ export function createId(prefix: string): string {
 }
 
 // =========================
+// VAULT ↔ STOCK SYNC
+// =========================
+
+// Mutates state.players[*].stock in-place and returns the same reference (fluent).
+// Callers MUST pass an already-cloned state — this function does not clone internally.
+// All current call sites satisfy this: simulateTick and placeBuilding/upgradeBuilding
+// each call cloneState() before calling this function.
+export function syncStockFromVaults(state: EconomySimulationState): EconomySimulationState {
+  for (const player of Object.values(state.players)) {
+    const merged: Partial<Record<ResourceType, number>> = {};
+    let hasVault = false;
+    for (const buildingId of player.buildings) {
+      const building = state.buildings[buildingId];
+      if (building && building.type === "vaultOfDigestiveStone") {
+        hasVault = true;
+        mergeInventoryInto(merged, building.outputBuffer);
+      }
+    }
+    // Only update stock if vaults exist; preserve stock if player has no vaults
+    if (hasVault) {
+      player.stock = merged as ResourceInventory;
+    }
+  }
+  return state;
+}
+
+// =========================
 // BUILD / UPGRADE / SPAWN HELPERS
 // =========================
+
+export function getOwnerVaults(state: EconomySimulationState, ownerId: string): BuildingInstance[] {
+  const player = state.players[ownerId];
+  if (!player) return [];
+  const vaults: BuildingInstance[] = [];
+  for (const playerBuildingId of player.buildings) {
+    const b = state.buildings[playerBuildingId];
+    if (b && b.type === "vaultOfDigestiveStone") {
+      vaults.push(b);
+    }
+  }
+  return vaults;
+}
+
+// Checks affordability across vaults (or player.stock if none), then deducts in-place.
+// Caller must pass vault/player references from already-cloned state.
+function deductAcrossVaults(
+  vaults: BuildingInstance[],
+  player: PlayerState,
+  costs: Partial<Record<ResourceType, number>>
+): void {
+  let affordabilitySource: ResourceInventory = player.stock;
+  if (vaults.length > 0) {
+    affordabilitySource = {};
+    for (const v of vaults) {
+      mergeInventoryInto(affordabilitySource, v.outputBuffer);
+    }
+  }
+  if (!hasEnoughResources(affordabilitySource, costs)) {
+    throw new Error("Insufficient resources");
+  }
+  for (const [resource, amount] of Object.entries(costs)) {
+    let remaining = amount ?? 0;
+    if (vaults.length > 0) {
+      for (const vault of vaults) {
+        const available = getResourceAmount(vault.outputBuffer, resource as ResourceType);
+        const toRemove = Math.min(available, remaining);
+        if (toRemove > 0) {
+          vault.outputBuffer = removeResource(vault.outputBuffer, resource as ResourceType, toRemove);
+          remaining -= toRemove;
+        }
+        if (remaining <= 0) break;
+      }
+    } else {
+      player.stock = removeResource(player.stock, resource as ResourceType, remaining);
+    }
+  }
+}
 
 export function spawnWorker(
   state: EconomySimulationState,
@@ -178,8 +253,13 @@ export function spawnWorker(
 ): EconomySimulationState {
   const next = cloneState(state);
 
-  if (!next.players[ownerId]) {
+  const player = next.players[ownerId];
+  if (!player) {
     throw new Error(`Unknown player: ${ownerId}`);
+  }
+
+  if (player.workers.length >= (player.populationLimit ?? Infinity)) {
+    throw new Error(`Population limit reached for player ${ownerId}`);
   }
 
   if (homeBuildingId) {
@@ -246,12 +326,14 @@ export function placeBuilding(
     throw new Error(`Tile ${tileId} rejects ${buildingType}`);
   }
 
-  if (!hasEnoughResources(player.stock, def.buildCost.resources)) {
-    throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
-  }
-
-  for (const [resource, amount] of Object.entries(def.buildCost.resources)) {
-    player.stock = removeResource(player.stock, resource as ResourceType, amount ?? 0);
+  const vaults = getOwnerVaults(next, ownerId);
+  try {
+    deductAcrossVaults(vaults, player, def.buildCost.resources);
+  } catch (err) {
+    if (err instanceof Error && err.message === "Insufficient resources") {
+      throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
+    }
+    throw err;
   }
 
   const buildingId = createId("building");
@@ -265,18 +347,23 @@ export function placeBuilding(
   tile.buildingId = buildingId;
   player.buildings.push(buildingId);
 
-  return next;
+  return syncStockFromVaults(next);
 }
 
 export function connectBuildingToRoad(
   state: EconomySimulationState,
-  buildingId: BuildingId
+  buildingId: BuildingId,
+  ownerId?: string
 ): EconomySimulationState {
   const next = cloneState(state);
   const building = next.buildings[buildingId];
 
   if (!building) {
     throw new Error(`Unknown building: ${buildingId}`);
+  }
+
+  if (ownerId !== undefined && building.ownerId !== ownerId) {
+    throw new Error(`Building ${buildingId} belongs to another player`);
   }
 
   building.connectedToRoad = true;
@@ -306,18 +393,20 @@ export function upgradeBuilding(
     throw new Error(`Building ${buildingId} cannot ascend further`);
   }
 
-  if (!hasEnoughResources(player.stock, cost.resources)) {
-    throw new Error(`Upgrade denied by inventory`);
-  }
-
-  for (const [resource, amount] of Object.entries(cost.resources)) {
-    player.stock = removeResource(player.stock, resource as ResourceType, amount ?? 0);
+  const vaults = getOwnerVaults(next, ownerId);
+  try {
+    deductAcrossVaults(vaults, player, cost.resources);
+  } catch (err) {
+    if (err instanceof Error && err.message === "Insufficient resources") {
+      throw new Error(`Upgrade denied by inventory`);
+    }
+    throw err;
   }
 
   building.level += 1;
   building.integrity = Math.min(100, building.integrity + 10);
 
-  return next;
+  return syncStockFromVaults(next);
 }
 
 export function assignWorkerToBuilding(
@@ -457,6 +546,7 @@ export function simulateTick(
   next = decayFootfall(next, config);
   next = updateTransportMetrics(next, config);
   next = updateWorldPulse(next);
+  next = syncStockFromVaults(next);
 
   return next;
 }

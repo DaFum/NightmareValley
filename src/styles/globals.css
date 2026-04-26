@@ -1,5 +1,5 @@
 :root {
-  /* Macabre Color Palette */
+  /* Core Palette */
   --void-black: #050304;
   --void-shadow: #0a0506;
   --coagulated-blood: #5a0c13;
@@ -9,9 +9,27 @@
   --marrow: #b8a691;
   --bile: #7f8a44;
 
+  /* Derived / glow variants */
+  --blood-glow: rgba(158, 20, 35, 0.4);
+  --blood-glow-strong: rgba(158, 20, 35, 0.65);
+  --gold: #c4a052;
+  --gold-dim: rgba(196, 160, 82, 0.35);
+  --gold-glow: rgba(196, 160, 82, 0.5);
+
   /* Typography */
   --font-display: 'UnifrakturMaguntia', serif;
   --font-body: 'Cormorant Garamond', serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+
+  /* Panel primitives */
+  --panel-bg: rgba(7, 3, 4, 0.92);
+  --panel-border: rgba(90, 12, 19, 0.8);
+  --panel-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 14px 48px rgba(0, 0, 0, 0.8),
+    inset 0 0 28px rgba(90, 12, 19, 0.3),
+    inset 0 1px 0 rgba(227, 220, 211, 0.04);
+  --panel-glow: 0 0 24px rgba(158, 20, 35, 0.25);
 }
 
 body {
@@ -21,84 +39,132 @@ body {
   color: var(--bone);
   font-family: var(--font-body);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Global Noise Overlay for Atmosphere */
+/* ── Noise Overlay ─────────────────────────────────────────── */
 body::after {
   content: "";
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.04;
+  opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Brutalist UI Components */
+/* ── Scrollbars ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
+::-webkit-scrollbar-thumb {
+  background: var(--coagulated-blood);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--fresh-blood); }
+* { scrollbar-width: thin; scrollbar-color: var(--coagulated-blood) transparent; }
+
+/* ── Macabre Panel ─────────────────────────────────────────── */
 .macabre-panel {
-  background: rgba(10, 5, 6, 0.85);
-  border: 1px solid var(--coagulated-blood);
-  box-shadow: inset 0 0 20px rgba(90, 12, 19, 0.4), 0 5px 15px rgba(0,0,0,0.8);
-  backdrop-filter: blur(4px);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(8px) saturate(1.15);
+  -webkit-backdrop-filter: blur(8px) saturate(1.15);
   position: relative;
-  /* Brutalist cut corners */
-  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
 }
 
+/* Blood-ink accent line across top */
 .macabre-panel::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--fresh-blood), transparent);
-  opacity: 0.7;
+  left: 12px;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--coagulated-blood), var(--fresh-blood) 40%, var(--coagulated-blood));
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 1;
 }
 
+/* Corner accent mark (bottom-right) */
+.macabre-panel::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-bottom: 1px solid var(--coagulated-blood);
+  border-right: 1px solid var(--coagulated-blood);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Elevated variant — stronger presence */
+.macabre-panel--elevated {
+  border-color: rgba(158, 20, 35, 0.6);
+  box-shadow:
+    var(--panel-shadow),
+    var(--panel-glow);
+}
+
+/* ── Text Effects ──────────────────────────────────────────── */
 .macabre-text-glow {
-  text-shadow: 0 0 10px rgba(227, 220, 211, 0.3), 0 0 20px rgba(90, 12, 19, 0.5);
+  text-shadow: 0 0 12px rgba(227, 220, 211, 0.25), 0 0 24px rgba(90, 12, 19, 0.45);
 }
 
-/* Animations */
+/* ── Animations ────────────────────────────────────────────── */
 @keyframes heartbeat {
-  0% { transform: scale(1); filter: brightness(1); }
-  10% { transform: scale(1.05); filter: brightness(1.2); }
-  20% { transform: scale(1); filter: brightness(1); }
-  30% { transform: scale(1.02); filter: brightness(1.1); }
-  40% { transform: scale(1); filter: brightness(1); }
-  100% { transform: scale(1); filter: brightness(1); }
+  0%   { transform: scale(1);    filter: brightness(1); }
+  8%   { transform: scale(1.06); filter: brightness(1.25); }
+  16%  { transform: scale(0.98); filter: brightness(0.95); }
+  24%  { transform: scale(1.03); filter: brightness(1.12); }
+  32%  { transform: scale(1);    filter: brightness(1); }
+  100% { transform: scale(1);    filter: brightness(1); }
 }
 
 .animate-heartbeat {
-  animation: heartbeat 2s infinite ease-in-out;
+  animation: heartbeat 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 @keyframes bleed-in {
-  0% { transform: translateY(-20px); opacity: 0; filter: blur(5px); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
-  100% { transform: translateY(0); opacity: 1; filter: blur(0); clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+  from {
+    transform: translateY(-14px);
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
 }
 
 .animate-bleed-in {
-  animation: bleed-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: bleed-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
 }
 
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
-.delay-3 { animation-delay: 0.3s; }
-.delay-4 { animation-delay: 0.4s; }
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.12s; }
+.delay-3 { animation-delay: 0.2s; }
+.delay-4 { animation-delay: 0.3s; }
 
-/* Bleeding Text Effect */
 @keyframes text-flicker {
-  0%, 100% { opacity: 1; text-shadow: 0 0 5px var(--fresh-blood); }
-  50% { opacity: 0.8; text-shadow: 0 0 15px var(--coagulated-blood); }
-  25%, 75% { opacity: 0.9; }
+  0%, 100% { opacity: 1;   text-shadow: 0 0 6px var(--fresh-blood); }
+  40%       { opacity: 0.82; text-shadow: 0 0 18px var(--coagulated-blood); }
+  60%       { opacity: 0.92; }
 }
 
 .text-flicker {
-  animation: text-flicker 4s infinite alternate;
+  animation: text-flicker 5s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--coagulated-blood); }
+  50%       { border-color: var(--fresh-blood); }
 }

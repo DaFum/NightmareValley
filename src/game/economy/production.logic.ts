@@ -1,4 +1,4 @@
-import { PlayerState, BuildingInstance } from "../core/game.types";
+import { BuildingInstance } from "../core/game.types";
 import { BuildingType, BuildingCost, ResourceType, ResourceInventory, BuildingDefinition } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
 import { hasEnoughResources, removeResource, getResourceAmount, addResource } from "./stockpile.logic";
@@ -8,37 +8,11 @@ import { ProductionRecipe } from "./recipes.types";
 import { RECIPES } from "./recipes.data";
 
 export function canAffordBuilding(
-  player: PlayerState,
+  inventory: ResourceInventory,
   buildingType: BuildingType
 ): boolean {
   const def = BUILDING_DEFINITIONS[buildingType];
-  return hasEnoughResources(player.stock, def.buildCost.resources);
-}
-
-export function payBuildingCost(
-  player: PlayerState,
-  buildingType: BuildingType
-): PlayerState {
-  const def = BUILDING_DEFINITIONS[buildingType];
-
-  if (!hasEnoughResources(player.stock, def.buildCost.resources)) {
-    throw new Error(`Cannot erect ${buildingType}: the liturgy lacks matter.`);
-  }
-
-  let updatedStock = { ...player.stock };
-
-  for (const [resource, amount] of Object.entries(def.buildCost.resources)) {
-    updatedStock = removeResource(
-      updatedStock,
-      resource as ResourceType,
-      amount ?? 0
-    );
-  }
-
-  return {
-    ...player,
-    stock: updatedStock,
-  };
+  return hasEnoughResources(inventory, def.buildCost.resources);
 }
 
 export function canUpgradeBuilding(building: BuildingInstance): boolean {
@@ -63,12 +37,12 @@ export function getUpgradeCost(
 }
 
 export function canAffordUpgrade(
-  player: PlayerState,
+  inventory: ResourceInventory,
   building: BuildingInstance
 ): boolean {
   const cost = getUpgradeCost(building, building.level + 1);
   if (!cost) return false;
-  return hasEnoughResources(player.stock, cost.resources);
+  return hasEnoughResources(inventory, cost.resources);
 }
 
 export function processProduction(

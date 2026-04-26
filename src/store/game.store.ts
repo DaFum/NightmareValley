@@ -4,6 +4,8 @@ import {
   placeBuilding,
   upgradeBuilding,
   connectBuildingToRoad,
+  spawnWorker,
+  syncStockFromVaults,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
@@ -52,16 +54,25 @@ export interface GameStore {
   runDebugCommand: (command: DebugCommand) => void;
   dispatchDebugJobsFromHQ: (count: number, resourceType: import("../game/core/economy.types").ResourceType) => void;
   resetFootfall: () => void;
+  spawnAndAssignWorker: (ownerId: string, workerType: WorkerType, buildingId: string) => void;
+  setDeliveryPriority: (buildingId: string, priority: number) => void;
+  togglePausedInput: (buildingId: string, resourceType: import("../game/core/economy.types").ResourceType) => void;
 }
 
 
 import { createId } from '../game/core/economy.simulation';
 
-const player1Id = createId('player');
+export const player1Id = createId('player');
 const vaultId = createId('bld');
+const harvesterId = createId('bld');
+const millId = createId('bld');
 const carrier1Id = createId('wrk');
 const carrier2Id = createId('wrk');
 const carrier3Id = createId('wrk');
+const carrier4Id = createId('wrk');
+const carrier5Id = createId('wrk');
+const timberExecId = createId('wrk');
+const gnashSawyerId = createId('wrk');
 
 const initialTerritory = loadInitialMap();
 
@@ -109,6 +120,8 @@ function prepareInitialTerritory(ownerId: string) {
   };
 
   markBuilding(7, 7, vaultId);
+  markBuilding(5, 7, harvesterId);
+  markBuilding(9, 7, millId);
 
   return { territory, ownedTileIds };
 }
@@ -179,6 +192,10 @@ function scenarioStock(profile: GameScenarioProfile): ResourceInventory {
   }
 }
 
+function initialStartingStock(profile: GameScenarioProfile): ResourceInventory {
+  return { ...scenarioStock(profile), sinewTimber: 100 };
+}
+
 const initialGameState: WorldState = {
   tick: 0,
   ageOfTeeth: 0,
@@ -189,14 +206,20 @@ const initialGameState: WorldState = {
     [player1Id]: {
       id: player1Id,
       name: "The First Ascendant",
-      stock: scenarioStock('challenging'),
+      stock: initialStartingStock('challenging'),
       buildings: [
         vaultId,
+        harvesterId,
+        millId,
       ],
       workers: [
         carrier1Id,
         carrier2Id,
         carrier3Id,
+        carrier4Id,
+        carrier5Id,
+        timberExecId,
+        gnashSawyerId,
       ],
       territoryTileIds: preparedInitialTerritory.ownedTileIds,
       populationLimit: 20,
@@ -207,14 +230,26 @@ const initialGameState: WorldState = {
   },
   buildings: {
     [vaultId]: createStarterBuilding(vaultId, "vaultOfDigestiveStone", { x: 7, y: 7 }, [], {
-      internalStorage: { sinewTimber: 100 },
-      outputBuffer: { sinewTimber: 100 }
+      outputBuffer: initialStartingStock('challenging'),
+      internalStorage: {},
+    }),
+    [harvesterId]: createStarterBuilding(harvesterId, "organHarvester", { x: 5, y: 7 }, [timberExecId], {
+      outputBuffer: {},
+    }),
+    [millId]: createStarterBuilding(millId, "millOfGnashing", { x: 9, y: 7 }, [gnashSawyerId], {
+      inputBuffer: { sinewTimber: 2 },
+      outputBuffer: { toothPlanks: 1 },
+      currentRecipeId: "rendSinewTimber",
     }),
   },
   workers: {
     [carrier1Id]: createStarterWorker(carrier1Id, "burdenThrall", { x: 7, y: 8 }, undefined, true),
     [carrier2Id]: createStarterWorker(carrier2Id, "burdenThrall", { x: 8, y: 8 }, undefined, true),
     [carrier3Id]: createStarterWorker(carrier3Id, "burdenThrall", { x: 8, y: 7 }, undefined, true),
+    [carrier4Id]: createStarterWorker(carrier4Id, "burdenThrall", { x: 6, y: 8 }, undefined, true),
+    [carrier5Id]: createStarterWorker(carrier5Id, "burdenThrall", { x: 7, y: 6 }, undefined, true),
+    [timberExecId]: createStarterWorker(timberExecId, "timberExecutioner", { x: 5, y: 7 }, harvesterId, false),
+    [gnashSawyerId]: createStarterWorker(gnashSawyerId, "gnashSawyer", { x: 9, y: 7 }, millId, false),
   },
   territory: preparedInitialTerritory.territory,
   transport: {
@@ -230,17 +265,39 @@ const initialGameState: WorldState = {
 function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): WorldState {
   const player = state.players[player1Id];
   if (!player) return state;
-  return {
+
+  const newStock = initialStartingStock(profile);
+
+  // Reset all vaults: put newStock in the first, clear the rest.
+  // This ensures syncStockFromVaults produces exactly newStock on the next tick
+  // regardless of how many vaults the player owns.
+  const updatedBuildings = { ...state.buildings };
+  let firstVaultSeen = false;
+  for (const id of player.buildings) {
+    const b = state.buildings[id];
+    if (b?.type === "vaultOfDigestiveStone") {
+      if (!firstVaultSeen) {
+        firstVaultSeen = true;
+        updatedBuildings[id] = { ...b, outputBuffer: { ...newStock } };
+      } else {
+        updatedBuildings[id] = { ...b, outputBuffer: {} };
+      }
+    }
+  }
+
+  // Write stock directly as the no-vault fallback; syncStockFromVaults will
+  // override it from vault.outputBuffer when vaults exist, making it truly derived.
+  const interim = {
     ...state,
     scenarioProfile: profile,
     players: {
       ...state.players,
-      [player1Id]: {
-        ...player,
-        stock: scenarioStock(profile),
-      },
+      [player1Id]: { ...player, stock: newStock },
     },
+    buildings: updatedBuildings,
   };
+
+  return syncStockFromVaults(interim as EconomySimulationState) as WorldState;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -306,11 +363,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  // Store spread pattern: economy functions return EconomySimulationState (players/buildings/workers/etc).
+  // The spread { ...gameState, ...nextEconomy } merges result back into WorldState without nested mutations.
+  // placeBuilding/upgradeBuilding call syncStockFromVaults internally so player.stock is always current.
   placeBuildingAt: (ownerId, buildingType, tileId) => {
     try {
       const { gameState } = get();
-      const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
-      set({ gameState: { ...gameState, ...nextState } });
+      const nextEconomy = placeBuilding(gameState, ownerId, buildingType, tileId);
+      set({ gameState: { ...gameState, ...nextEconomy } });
     } catch (error) {
       console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
@@ -320,8 +380,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   upgradeBuildingAt: (ownerId, buildingId) => {
     try {
       const { gameState } = get();
-      const nextState = upgradeBuilding(gameState, ownerId, buildingId);
-      set({ gameState: { ...gameState, ...nextState } });
+      const nextEconomy = upgradeBuilding(gameState, ownerId, buildingId);
+      set({ gameState: { ...gameState, ...nextEconomy } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });
@@ -331,7 +391,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   connectBuildingAt: (buildingId) => {
     try {
       const { gameState } = get();
-      const nextState = connectBuildingToRoad(gameState, buildingId);
+      const building = gameState.buildings[buildingId];
+      const nextState = connectBuildingToRoad(gameState, buildingId, building?.ownerId);
       set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to connect building:", error);
@@ -379,9 +440,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const hq = Object.values(gs.buildings).find(b => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone");
       if (!hq) return state;
 
-      // Find nearest compatible target building (any building that accepts the resource)
+      // Find nearest compatible target building; exclude other vaults (vault→vault routing is forbidden)
       const candidates = Object.values(gs.buildings).filter(
-        b => b.id !== hq.id && buildingAcceptsResource(b, resourceType)
+        b => b.id !== hq.id && b.type !== "vaultOfDigestiveStone" && buildingAcceptsResource(b, resourceType)
       );
 
       let nearest: BuildingInstance | null = null;
@@ -445,5 +506,58 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       };
     });
-  }
+  },
+
+  spawnAndAssignWorker: (ownerId, workerType, buildingId) => {
+    try {
+      const { gameState } = get();
+      const player = gameState.players[ownerId];
+      if (!player) throw new Error(`Unknown player: ${ownerId}`);
+      if (player.workers.length >= player.populationLimit) {
+        throw new Error(`Population limit reached for player ${ownerId}`);
+      }
+      const building = gameState.buildings[buildingId];
+      if (!building) throw new Error(`Unknown building: ${buildingId}`);
+      const spawnPos = { x: building.position.x + 1, y: building.position.y };
+      const nextState = spawnWorker(gameState, ownerId, workerType, spawnPos, buildingId);
+      set({ gameState: { ...gameState, ...nextState } });
+    } catch (error) {
+      console.error("Failed to spawn worker:", error);
+      set({ lastError: toRuntimeIssue(error, 'WORKER_SPAWN_FAILURE', 'spawnAndAssignWorker', get().gameState.tick) });
+    }
+  },
+
+  setDeliveryPriority: (buildingId, priority) => {
+    const { gameState } = get();
+    const building = gameState.buildings[buildingId];
+    if (!building || !Number.isFinite(priority)) return;
+    set({
+      gameState: {
+        ...gameState,
+        buildings: {
+          ...gameState.buildings,
+          [buildingId]: { ...building, deliveryPriority: Math.max(1, Math.min(5, priority)) },
+        },
+      },
+    });
+  },
+
+  togglePausedInput: (buildingId, resourceType) => {
+    const { gameState } = get();
+    const building = gameState.buildings[buildingId];
+    if (!building) return;
+    const current = building.pausedInputs?.[resourceType] ?? false;
+    set({
+      gameState: {
+        ...gameState,
+        buildings: {
+          ...gameState.buildings,
+          [buildingId]: {
+            ...building,
+            pausedInputs: { ...building.pausedInputs, [resourceType]: !current },
+          },
+        },
+      },
+    });
+  },
 }));

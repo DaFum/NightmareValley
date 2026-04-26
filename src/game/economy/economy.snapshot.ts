@@ -22,9 +22,8 @@ export function createEconomySnapshot(
     mergeInventoryInto(totalStoredResources, building.internalStorage);
   }
 
-  for (const player of Object.values(state.players)) {
-    mergeInventoryInto(totalStoredResources, player.stock);
-  }
+  // player.stock is a derived mirror of vault outputBuffers (via syncStockFromVaults);
+  // including it here would double-count every vault resource.
 
   return {
     tick: state.tick,

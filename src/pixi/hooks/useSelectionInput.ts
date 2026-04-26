@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import type * as PIXI from 'pixi.js';
 import type { MutableRefObject } from 'react';
 import type { IsoRenderWorld } from '../../game/render/render.types';
-import Logger from '../../lib/logger';
-import { useGameStore } from '../../store/game.store';
+import { useGameStore, player1Id } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
 import { useUIStore } from '../../store/ui.store';
 import { useIsoPointer } from './useIsoPointer';
@@ -49,11 +48,6 @@ export function useSelectionInput({
     resolveIsoHitRef.current = resolveIsoHit;
   }, [resolveIsoHit]);
 
-  const getActivePlayerId = useCallback(() => {
-    const playerIds = Object.keys(useGameStore.getState().gameState.players);
-    return playerIds[0] ?? null;
-  }, []);
-
   return useCallback((event: PIXI.FederatedPointerEvent) => {
     if (event.button !== 0) return;
     if (spacePressedRef.current) return;
@@ -68,27 +62,13 @@ export function useSelectionInput({
     }
 
     if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const activePlayerId = getActivePlayerId();
-      if (!activePlayerId) {
-        Logger.warn('useSelectionInput: no active player for debug warehouse placement; clearing placement flags.');
-        setDebugSpawningWarehouse(false);
-        selectBuildingToPlace(null);
-        return;
-      }
-      placeBuildingAt(activePlayerId, 'vaultOfDigestiveStone', hit.tileId);
+      placeBuildingAt(player1Id, 'vaultOfDigestiveStone', hit.tileId);
       setDebugSpawningWarehouse(false);
       return;
     }
 
     if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const activePlayerId = getActivePlayerId();
-      if (!activePlayerId) {
-        Logger.warn('useSelectionInput: no active player for building placement; clearing placement flags.');
-        setDebugSpawningWarehouse(false);
-        selectBuildingToPlace(null);
-        return;
-      }
-      placeBuildingAt(activePlayerId, selectedBuildingToPlace, hit.tileId);
+      placeBuildingAt(player1Id, selectedBuildingToPlace, hit.tileId);
       selectBuildingToPlace(null);
       return;
     }
@@ -101,7 +81,6 @@ export function useSelectionInput({
       selectTile(hit.tileId ?? null);
     }
   }, [
-    getActivePlayerId,
     isDebugSpawningWarehouse,
     placeBuildingAt,
     selectBuilding,

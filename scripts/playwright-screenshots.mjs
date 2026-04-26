@@ -25,22 +25,30 @@ async function waitForServer(url, timeoutMs = 60_000) {
   throw new Error(`Dev server did not become ready within ${timeoutMs}ms: ${url}`);
 }
 
+async function waitForGameReady(page) {
+  // Wait for Pixi canvas to mount and have non-zero dimensions
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas');
+    return canvas != null && canvas.width > 0 && canvas.height > 0;
+  }, { timeout: 30_000 });
+  // Allow several frames for the full scene (terrain, buildings, UI) to render
+  await page.waitForTimeout(3000);
+}
+
 /**
- * Capture the game canvas via canvas.toDataURL() (bypasses compositor).
- * Requires preserveDrawingBuffer: true on the Pixi Application.
+ * Capture a full composite screenshot (canvas + UI overlays) via CDP.
+ * page.screenshot() hangs when a game's RAF loop keeps the main thread busy;
+ * sending Page.captureScreenshot directly over CDP bypasses that wait.
  */
-async function captureCanvasToFile(page, outputPath) {
-  const dataURL = await page.evaluate(() => new Promise((resolve) => {
-    // Wait one RAF so Pixi has rendered the current frame.
-    requestAnimationFrame(() => {
-      const canvas = document.querySelector('canvas');
-      if (!canvas) { resolve(null); return; }
-      resolve(canvas.toDataURL('image/png'));
-    });
-  }));
-  if (!dataURL) throw new Error('Canvas not found for capture');
-  const base64 = dataURL.replace(/^data:image\/png;base64,/, '');
-  await writeFile(outputPath, Buffer.from(base64, 'base64'));
+async function cdpScreenshot(page, outputPath) {
+  const client = await page.context().newCDPSession(page);
+  const { data } = await client.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  await writeFile(outputPath, Buffer.from(data, 'base64'));
+  await client.detach();
 }
 
 async function takeScreenshots() {
@@ -53,47 +61,60 @@ async function takeScreenshots() {
     browser = await chromium.launch({
       headless: true,
       args: [
-        '--ignore-certificate-errors',
-        '--disable-web-security',
         '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--ignore-certificate-errors',
       ],
     });
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await context.newPage();
 
+    // Log page errors to aid debugging
+    page.on('pageerror', (err) => console.error('[page error]', err.message));
+
     // Abort external font requests so they don't delay font readiness.
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
 
-    await page.goto(`${BASE_URL}/game?preserve-canvas`, { waitUntil: 'load' });
-    // Wait for PixiAppProvider to finish loading textures and mount the canvas.
-    await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
-    // Allow several animation frames for Pixi to render the initial scene.
-    await page.waitForTimeout(1500);
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'game-overview.png'));
+    await page.goto(`${BASE_URL}/game`, { waitUntil: 'load' });
+    await waitForGameReady(page);
 
+    // Full composite screenshot — captures canvas + all React UI overlays
+    await cdpScreenshot(page, path.join(OUTPUT_DIR, 'game-overview.png'));
+
+    // Heatmap screenshot — only available when server runs with __DEV__ = true
     const heatmapToggle = page.getByLabel('Show footfall heatmap');
-    if (await heatmapToggle.count() === 0) {
-      throw new Error(
-        `heatmapToggle not found. Aborting page.screenshot for game-footfall-heatmap.png. ` +
-        `Check DebugLogisticsPanel / NODE_ENV=development and ensure server is running at ${BASE_URL}. ` +
-        `OUTPUT_DIR=${OUTPUT_DIR}`
+    if (await heatmapToggle.count() > 0) {
+      await heatmapToggle.check({ force: true });
+      await page.waitForFunction(() => {
+        const checkbox = document.querySelector('input[aria-label="Show footfall heatmap"]');
+        return !!(checkbox && checkbox instanceof HTMLInputElement && checkbox.checked);
+      });
+      await page.waitForTimeout(500);
+      await cdpScreenshot(page, path.join(OUTPUT_DIR, 'game-footfall-heatmap.png'));
+    } else {
+      console.warn(
+        `[skip] heatmapToggle not found — DebugLogisticsPanel requires __DEV__=true. ` +
+        `Run against the dev server (port 5173) to capture game-footfall-heatmap.png.`
       );
     }
-    await heatmapToggle.check({ force: true });
-    await page.waitForFunction(() => {
-      const checkbox = document.querySelector('input[aria-label="Show footfall heatmap"]');
-      return !!(checkbox && checkbox instanceof HTMLInputElement && checkbox.checked);
-    });
-    await page.waitForTimeout(500);
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'game-footfall-heatmap.png'));
 
+    // Debug route — only available when server runs with __DEV__ = true
     await page.goto(`${BASE_URL}/debug`, { waitUntil: 'load' });
-    await page.waitForFunction(() => document.body.textContent !== null && document.body.textContent.length > 0);
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, 'debug-route.png'),
-      fullPage: true,
-      timeout: 60_000,
-    });
+    const isDebugPage = await page.evaluate(() =>
+      !document.querySelector('.not-found-route') &&
+      document.body.textContent != null &&
+      document.body.textContent.length > 20
+    );
+    if (isDebugPage) {
+      await cdpScreenshot(page, path.join(OUTPUT_DIR, 'debug-route.png'));
+    } else {
+      console.warn(
+        `[skip] /debug route not available — requires __DEV__=true. ` +
+        `Run against the dev server (port 5173) to capture debug-route.png.`
+      );
+    }
   } finally {
     if (browser) await browser.close();
   }

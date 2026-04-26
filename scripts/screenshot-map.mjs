@@ -25,18 +25,30 @@ async function waitForServer(url, timeoutMs = 60_000) {
   throw new Error(`Server did not become ready within ${timeoutMs}ms: ${url}`);
 }
 
-async function captureCanvasToFile(page, outputPath) {
-  const dataURL = await page.evaluate(() => new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      const canvas = document.querySelector('canvas');
-      if (!canvas) { resolve(null); return; }
-      resolve(canvas.toDataURL('image/png'));
-    });
-  }));
-  if (!dataURL) throw new Error('Canvas not found for capture');
-  const base64 = dataURL.replace(/^data:image\/png;base64,/, '');
-  await writeFile(outputPath, Buffer.from(base64, 'base64'));
-  console.log(`✓ Saved: ${path.basename(outputPath)}`);
+async function waitForGameReady(page) {
+  // Wait for Pixi canvas to mount and have non-zero dimensions
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas');
+    return canvas != null && canvas.width > 0 && canvas.height > 0;
+  }, { timeout: 30_000 });
+  // Allow several frames for the full scene (terrain, buildings, UI) to render
+  await page.waitForTimeout(3000);
+}
+
+/**
+ * Capture a full composite screenshot (canvas + UI overlays) via CDP.
+ * page.screenshot() hangs when a game's RAF loop keeps the main thread busy;
+ * sending Page.captureScreenshot directly over CDP bypasses that wait.
+ */
+async function cdpScreenshot(page, outputPath) {
+  const client = await page.context().newCDPSession(page);
+  const { data } = await client.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  await writeFile(outputPath, Buffer.from(data, 'base64'));
+  await client.detach();
 }
 
 async function takeScreenshots() {
@@ -50,42 +62,43 @@ async function takeScreenshots() {
     browser = await chromium.launch({
       headless: true,
       args: [
-        '--ignore-certificate-errors',
-        '--disable-web-security',
         '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--ignore-certificate-errors',
       ],
     });
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await context.newPage();
 
+    // Log page errors to aid debugging
+    page.on('pageerror', (err) => console.error('[page error]', err.message));
+
     // Abort external font requests
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
 
     console.log('Loading game page...');
-    await page.goto(`${BASE_URL}/game?preserve-canvas`, { waitUntil: 'load' });
+    await page.goto(`${BASE_URL}/game`, { waitUntil: 'load' });
+    await waitForGameReady(page);
+    console.log('✓ Game ready');
 
-    // Wait for canvas
-    await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
-    console.log('✓ Canvas loaded');
-
-    // Wait for initial render
-    await page.waitForTimeout(2000);
-
-    // Take map overview screenshot
+    // Full composite screenshot — captures canvas + all React UI overlays
     console.log('Capturing map overview...');
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'map-overview.png'));
+    await cdpScreenshot(page, path.join(OUTPUT_DIR, 'map-overview.png'));
+    console.log(`✓ Saved: map-overview.png`);
 
-    // Pan around a bit and take another screenshot to show tile variants
-    console.log('Panning map and capturing variants...');
+    // Zoom in and capture a second view
+    console.log('Zooming in and capturing...');
     await page.evaluate(() => {
-      // Simulate arrow key or similar to pan the map
       const canvas = document.querySelector('canvas');
       if (canvas) {
         canvas.dispatchEvent(new WheelEvent('wheel', { deltaY: -200, bubbles: true }));
       }
     });
     await page.waitForTimeout(1000);
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'map-zoomed.png'));
+    await cdpScreenshot(page, path.join(OUTPUT_DIR, 'map-zoomed.png'));
+    console.log(`✓ Saved: map-zoomed.png`);
 
     console.log(`\n✅ Screenshots saved to: ${OUTPUT_DIR}`);
   } finally {
