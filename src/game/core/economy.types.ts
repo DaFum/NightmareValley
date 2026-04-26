@@ -105,7 +105,6 @@ export interface BuildingDefinition {
   upgradeCosts: BuildingCost[];
   workerSlots: Partial<Record<WorkerType, number>>;
   recipeIds?: string[];
-  baseStorage?: number;
   allowedTerrain: TerrainType[];
   requiresRoadConnection: boolean;
   territoryInfluence?: number;
