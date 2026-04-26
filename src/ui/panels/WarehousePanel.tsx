@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useGameStore } from '../../store/game.store';
+import { useGameStore, player1Id } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
 
@@ -22,7 +22,7 @@ export default function WarehousePanel(): JSX.Element | null {
   const entries = useMemo((): VaultEntry[] => {
     const stored: Partial<Record<ResourceType, number>> = {};
     for (const b of Object.values(buildings)) {
-      if (b.type !== 'vaultOfDigestiveStone') continue;
+      if (b.type !== 'vaultOfDigestiveStone' || b.ownerId !== player1Id) continue;
       for (const [res, amt] of Object.entries(b.outputBuffer)) {
         const r = res as ResourceType;
         stored[r] = (stored[r] ?? 0) + (amt ?? 0);
@@ -36,9 +36,9 @@ export default function WarehousePanel(): JSX.Element | null {
       const targetBuilding = buildings[task.dropoffBuildingId];
       if (!targetBuilding) continue;
       const r = task.resourceType as ResourceType;
-      if (targetBuilding.type === 'vaultOfDigestiveStone') {
+      if (targetBuilding.type === 'vaultOfDigestiveStone' && targetBuilding.ownerId === player1Id) {
         inTransitIn[r] = (inTransitIn[r] ?? 0) + task.amount;
-      } else {
+      } else if (targetBuilding.type !== 'vaultOfDigestiveStone' && targetBuilding.ownerId === player1Id) {
         inTransitOut[r] = (inTransitOut[r] ?? 0) + task.amount;
       }
     }
@@ -46,6 +46,7 @@ export default function WarehousePanel(): JSX.Element | null {
     const allRes = new Set([
       ...Object.keys(stored),
       ...Object.keys(inTransitIn),
+      ...Object.keys(inTransitOut),
     ]) as Set<ResourceType>;
 
     return Array.from(allRes)
@@ -55,8 +56,8 @@ export default function WarehousePanel(): JSX.Element | null {
         inTransit: inTransitIn[resource] ?? 0,
         inTransitOut: inTransitOut[resource] ?? 0,
       }))
-      .filter((e) => e.stored > 0 || e.inTransit > 0)
-      .sort((a, b) => (b.stored + b.inTransit) - (a.stored + a.inTransit));
+      .filter((e) => e.stored > 0 || e.inTransit > 0 || e.inTransitOut > 0)
+      .sort((a, b) => (b.stored + b.inTransit + b.inTransitOut) - (a.stored + a.inTransit + a.inTransitOut));
   }, [buildings, transport.activeCarrierTasks]);
 
   if (entries.length === 0) return null;

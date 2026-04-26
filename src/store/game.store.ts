@@ -62,7 +62,7 @@ export interface GameStore {
 
 import { createId } from '../game/core/economy.simulation';
 
-const player1Id = createId('player');
+export const player1Id = createId('player');
 const vaultId = createId('bld');
 const harvesterId = createId('bld');
 const millId = createId('bld');
