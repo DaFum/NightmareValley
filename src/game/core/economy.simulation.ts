@@ -251,8 +251,13 @@ export function spawnWorker(
 ): EconomySimulationState {
   const next = cloneState(state);
 
-  if (!next.players[ownerId]) {
+  const player = next.players[ownerId];
+  if (!player) {
     throw new Error(`Unknown player: ${ownerId}`);
+  }
+
+  if (player.workers.length >= (player.populationLimit ?? Infinity)) {
+    throw new Error(`Population limit reached for player ${ownerId}`);
   }
 
   if (homeBuildingId) {
@@ -322,8 +327,11 @@ export function placeBuilding(
   const vaults = getOwnerVaults(next, ownerId);
   try {
     deductAcrossVaults(vaults, player, def.buildCost.resources);
-  } catch {
-    throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
+  } catch (err) {
+    if (err instanceof Error && err.message === "Insufficient resources") {
+      throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
+    }
+    throw err;
   }
 
   const buildingId = createId("building");
@@ -342,13 +350,18 @@ export function placeBuilding(
 
 export function connectBuildingToRoad(
   state: EconomySimulationState,
-  buildingId: BuildingId
+  buildingId: BuildingId,
+  ownerId?: string
 ): EconomySimulationState {
   const next = cloneState(state);
   const building = next.buildings[buildingId];
 
   if (!building) {
     throw new Error(`Unknown building: ${buildingId}`);
+  }
+
+  if (ownerId !== undefined && building.ownerId !== ownerId) {
+    throw new Error(`Building ${buildingId} belongs to another player`);
   }
 
   building.connectedToRoad = true;
@@ -381,8 +394,11 @@ export function upgradeBuilding(
   const vaults = getOwnerVaults(next, ownerId);
   try {
     deductAcrossVaults(vaults, player, cost.resources);
-  } catch {
-    throw new Error(`Upgrade denied by inventory`);
+  } catch (err) {
+    if (err instanceof Error && err.message === "Insufficient resources") {
+      throw new Error(`Upgrade denied by inventory`);
+    }
+    throw err;
   }
 
   building.level += 1;

@@ -162,6 +162,61 @@ describe("placeBuilding vault deduction", () => {
     expect(result.players.p1.stock.toothPlanks).toBe(18);
     expect(result.players.p1.stock.sepulcherStone).toBe(9);
   });
+
+  it("deducts across multiple vaults when first vault has partial stock", () => {
+    // organHarvester costs {toothPlanks:2, sepulcherStone:1}
+    // vaultA has only 1 toothPlanks, vaultB has the rest
+    const tile = {
+      id: "tile_2_0",
+      position: { x: 2, y: 0 },
+      terrain: "scarredEarth",
+      ownerId: "p1",
+      footfall: 0,
+      tier: "grass",
+    };
+    const makeVault = (id: string, pos: { x: number; y: number }, output: Record<string, number>) => ({
+      id,
+      ownerId: "p1",
+      type: "vaultOfDigestiveStone",
+      outputBuffer: output,
+      inputBuffer: {},
+      internalStorage: {},
+      level: 1,
+      integrity: 100,
+      position: pos,
+      connectedToRoad: true,
+      assignedWorkers: [],
+      progressSec: 0,
+      isActive: true,
+      corruption: 0,
+    });
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: {},
+          buildings: ["vA", "vB"],
+          workers: [],
+        } as any,
+      },
+      buildings: {
+        vA: makeVault("vA", { x: 5, y: 5 }, { toothPlanks: 1, sepulcherStone: 5 }) as any,
+        vB: makeVault("vB", { x: 6, y: 5 }, { toothPlanks: 5, sepulcherStone: 5 }) as any,
+      },
+      territory: {
+        tiles: { "tile_2_0": tile as any },
+        tileIndex: { "2,0": "tile_2_0" },
+      } as any,
+    });
+
+    const result = placeBuilding(state, "p1", "organHarvester", "tile_2_0");
+    // vaultA drained for 1 toothPlanks, vaultB provides remaining 1
+    expect(result.buildings["vA"].outputBuffer.toothPlanks).toBe(0);
+    expect(result.buildings["vB"].outputBuffer.toothPlanks).toBe(4);
+    // sepulcherStone deducted from vaultA (it had enough)
+    expect(result.buildings["vA"].outputBuffer.sepulcherStone).toBe(4);
+    expect(result.buildings["vB"].outputBuffer.sepulcherStone).toBe(5);
+  });
 });
 
 describe("upgradeBuilding vault deduction", () => {

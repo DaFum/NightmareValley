@@ -153,7 +153,6 @@ export default function EconomyPanel(): JSX.Element | null {
   );
   const totalCarriers = carriers.length;
   const idleCarriers = carriers.filter((w) => w.isIdle).length;
-  const totalWorkers = Object.values(workers).filter((w) => w.ownerId === player1Id).length;
   const queuedJobs = transport.queuedJobCount ?? 0;
   const stress = fmt1.format(transport.networkStress);
   const latency = fmt1.format(transport.averageLatencySec);
@@ -221,7 +220,7 @@ export default function EconomyPanel(): JSX.Element | null {
             <h3 className="economy-panel__section-title">Transport</h3>
             <dl className="econ-stat-grid">
               <div><dt>Carriers</dt><dd>{activeCarriers} active / {totalCarriers - idleCarriers} busy</dd></div>
-              <div><dt>Idle workers</dt><dd>{idleCarriers}/{totalCarriers}</dd></div>
+              <div><dt>Idle carriers</dt><dd>{idleCarriers}/{totalCarriers}</dd></div>
               <div><dt>Queued jobs</dt><dd>{queuedJobs}</dd></div>
               <div><dt>Avg latency</dt><dd>{latency}s</dd></div>
               <div><dt>Net stress</dt><dd>{stress}</dd></div>

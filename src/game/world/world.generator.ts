@@ -5,7 +5,7 @@ import { TerrainType } from "../core/economy.types";
 import { generateProceduralTiledMap } from "../map/procedural";
 import { createId } from "../core/economy.simulation";
 
-export function generateInitialWorld(seed?: number, width = 48, height = 48): EconomySimulationState {
+export function generateInitialWorld(seed?: number, width = 48, height = 48, playerId = "player_1"): EconomySimulationState {
   const tiles: Record<TileId, MapTile> = {};
 
   // Buildings are hardcoded at (10,10) and (14,10); clamp to ensure those
@@ -40,7 +40,7 @@ export function generateInitialWorld(seed?: number, width = 48, height = 48): Ec
     }
   }
 
-  const playerId = "player_1";
+  // playerId is passed by the caller so the game layer doesn't need to import the store
   const player: PlayerState = {
     id: playerId,
     name: "The Architect",

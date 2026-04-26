@@ -2,7 +2,7 @@ import { BuildingId, WorkerId } from "../core/entity.ids";
 import { Position, BuildingInstance, WorkerInstance } from "../core/game.types";
 import Logger from "../../lib/logger";
 import { ResourceType } from "../core/economy.types";
-import { EconomySimulationState, createId, clamp, getNonZeroResources } from "../core/economy.simulation";
+import { EconomySimulationState, createId, clamp, getNonZeroResources, requiresRoad } from "../core/economy.simulation";
 import { SimulationConfig } from "./balancing.constants";
 import { BUILDING_DEFINITIONS, getWorkerDefinition } from "../core/economy.data";
 import { RECIPES } from "./recipes.data";
@@ -102,6 +102,7 @@ export function generateTransportJobs(
 
   for (const source of buildings) {
     if (created >= config.maxJobsPerTick) break;
+    if (!source.connectedToRoad && requiresRoad(source.type)) continue;
 
     for (const resourceType of getNonZeroResources(source.outputBuffer)) {
       let totalReserved = 0;

@@ -5,7 +5,6 @@ import {
   upgradeBuilding,
   connectBuildingToRoad,
   spawnWorker,
-  assignWorkerToBuilding,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
@@ -387,7 +386,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   connectBuildingAt: (buildingId) => {
     try {
       const { gameState } = get();
-      const nextState = connectBuildingToRoad(gameState, buildingId);
+      const building = gameState.buildings[buildingId];
+      const nextState = connectBuildingToRoad(gameState, buildingId, building?.ownerId);
       set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to connect building:", error);
@@ -506,16 +506,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   spawnAndAssignWorker: (ownerId, workerType, buildingId) => {
     try {
       const { gameState } = get();
+      const player = gameState.players[ownerId];
+      if (!player) throw new Error(`Unknown player: ${ownerId}`);
+      if (player.workers.length >= player.populationLimit) {
+        throw new Error(`Population limit reached for player ${ownerId}`);
+      }
       const building = gameState.buildings[buildingId];
       if (!building) throw new Error(`Unknown building: ${buildingId}`);
       const spawnPos = { x: building.position.x + 1, y: building.position.y };
-      let nextState = spawnWorker(gameState, ownerId, workerType, spawnPos);
-      const newWorkerId = Object.keys(nextState.workers).find(
-        id => !gameState.workers[id]
-      );
-      if (newWorkerId) {
-        nextState = assignWorkerToBuilding(nextState, newWorkerId, buildingId);
-      }
+      const nextState = spawnWorker(gameState, ownerId, workerType, spawnPos, buildingId);
       set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to spawn worker:", error);

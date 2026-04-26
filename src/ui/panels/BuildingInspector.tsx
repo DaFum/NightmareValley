@@ -156,15 +156,21 @@ function WorkerSlotsSection({ building, player, workers, onHire }: WorkerSlotsSe
     if (w) assignedCounts[w.type] = (assignedCounts[w.type] ?? 0) + 1;
   }
 
+  const atPopCap = !!player && player.workers.length >= player.populationLimit;
+
   return (
     <section className="inventory-block">
       <h3>Hire Workers</h3>
+      {atPopCap && (
+        <p className="inspector-note">Population limit reached ({player.workers.length}/{player.populationLimit}).</p>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
         {slotEntries.map(([workerType, maxCount]) => {
           const current = assignedCounts[workerType] ?? 0;
           const workerDef = WORKER_DEFINITIONS[workerType];
           const portraitSrc = imageMap[`workers/${workerType}.png`];
           const vacant = maxCount - current;
+          const canHire = !!player && vacant > 0 && !atPopCap;
 
           return (
             <div key={workerType} className="worker-hire-row">
@@ -178,8 +184,8 @@ function WorkerSlotsSection({ building, player, workers, onHire }: WorkerSlotsSe
               <button
                 className="hud-button worker-hire-row__btn"
                 onClick={() => onHire(workerType)}
-                disabled={!player || vacant <= 0}
-                title={`Hire ${workerDef?.name ?? workerType}`}
+                disabled={!canHire}
+                title={atPopCap ? 'Population limit reached' : `Hire ${workerDef?.name ?? workerType}`}
               >
                 Hire
               </button>
