@@ -125,19 +125,16 @@ function WorkerSlotsSection({ building, player, workers, onHire }: WorkerSlotsSe
     if (w) assignedCounts[w.type] = (assignedCounts[w.type] ?? 0) + 1;
   }
 
-  const hasVacancy = slotEntries.some(([type, max]) => (assignedCounts[type] ?? 0) < max);
-  if (!hasVacancy) return null;
-
   return (
     <section className="inventory-block">
       <h3>Hire Workers</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
         {slotEntries.map(([workerType, maxCount]) => {
           const current = assignedCounts[workerType] ?? 0;
-          if (current >= maxCount) return null;
           const workerDef = WORKER_DEFINITIONS[workerType];
           const portraitSrc = imageMap[`workers/${workerType}.png`];
           const vacant = maxCount - current;
+
           return (
             <div key={workerType} className="worker-hire-row">
               {portraitSrc ? (
@@ -147,17 +144,14 @@ function WorkerSlotsSection({ building, player, workers, onHire }: WorkerSlotsSe
               )}
               <span className="worker-hire-row__name">{workerDef?.name ?? workerType}</span>
               <span className="worker-hire-row__slots">{current}/{maxCount}</span>
-              {Array.from({ length: vacant }).map((_, i) => (
-                <button
-                  key={i}
-                  className="hud-button worker-hire-row__btn"
-                  onClick={() => onHire(workerType)}
-                  disabled={!player}
-                  title={`Hire ${workerDef?.name ?? workerType}`}
-                >
-                  Hire
-                </button>
-              ))}
+              <button
+                className="hud-button worker-hire-row__btn"
+                onClick={() => onHire(workerType)}
+                disabled={!player || vacant <= 0}
+                title={`Hire ${workerDef?.name ?? workerType}`}
+              >
+                Hire
+              </button>
             </div>
           );
         })}
@@ -175,6 +169,11 @@ type DeliveryControlsSectionProps = {
 function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: DeliveryControlsSectionProps) {
   const def = BUILDING_DEFINITIONS[building.type];
   const priority = building.deliveryPriority ?? 3;
+
+  // Vaults don't use delivery priority in transport logic; hide UI
+  if (def.type === "vaultOfDigestiveStone") {
+    return null;
+  }
 
   const inputResources = new Set<ResourceType>();
   for (const recipeId of def.recipeIds ?? []) {
