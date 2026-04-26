@@ -305,7 +305,7 @@ describe("warehouse-first routing (vault-first)", () => {
           ownerId: "p1",
           type: "vaultOfDigestiveStone",
           position: { x: 1, y: 0 },
-          outputBuffer: {},
+          outputBuffer: { sinewTimber: 9998 }, // 9998/9999 full → need=1 (lower than mill's need=4)
           inputBuffer: {},
           internalStorage: {},
           isActive: true,
@@ -316,7 +316,7 @@ describe("warehouse-first routing (vault-first)", () => {
           type: "millOfGnashing",
           position: { x: 2, y: 0 },
           outputBuffer: {},
-          inputBuffer: { sinewTimber: 0 },
+          inputBuffer: { sinewTimber: 0 }, // 0/4 full → need=4 (higher than vault's need=1)
           internalStorage: {},
           isActive: true,
         } as any,
@@ -336,7 +336,7 @@ describe("warehouse-first routing (vault-first)", () => {
     const source = state.buildings.src as any;
     const sorted = findTargetBuildingsForResource(state, source, "sinewTimber", DEFAULT_SIMULATION_CONFIG);
 
-    // Vault should be first since warehouse-first routing prefers vaults for production source
+    // Despite mill having higher need (4 vs 1), vault must come first due to warehouse-first preference
     expect(sorted[0].id).toBe("vault");
     expect(sorted.map(b => b.id)).not.toContain("src");
   });

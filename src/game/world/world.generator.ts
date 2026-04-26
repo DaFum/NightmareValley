@@ -5,7 +5,7 @@ import { TerrainType } from "../core/economy.types";
 import { generateProceduralTiledMap } from "../map/procedural";
 import { createId } from "../core/economy.simulation";
 
-export function generateInitialWorld(seed?: number, width = 48, height = 48, playerId = "player_1"): EconomySimulationState {
+export function generateInitialWorld(playerId: string, seed?: number, width = 48, height = 48): EconomySimulationState {
   const tiles: Record<TileId, MapTile> = {};
 
   // Buildings are hardcoded at (10,10) and (14,10); clamp to ensure those
