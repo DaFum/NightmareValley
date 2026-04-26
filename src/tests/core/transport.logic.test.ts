@@ -279,3 +279,185 @@ describe("transport.logic", () => {
     expect(Object.keys(state.transport.jobs)).toEqual(["keptQueued"]);
   });
 });
+
+describe("warehouse-first routing (vault-first)", () => {
+  it("prefers vault over production building when source is production", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: {},
+      buildings: {
+        src: {
+          id: "src",
+          ownerId: "p1",
+          type: "organHarvester",
+          position: { x: 0, y: 0 },
+          outputBuffer: { sinewTimber: 2 },
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        vault: {
+          id: "vault",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 1, y: 0 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        mill: {
+          id: "mill",
+          ownerId: "p1",
+          type: "millOfGnashing",
+          position: { x: 2, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: 0 },
+          internalStorage: {},
+          isActive: true,
+        } as any,
+      },
+      workers: {},
+      territory: { tiles: {}, tileIndex: {} } as any,
+      transport: {
+        jobs: {},
+        activeCarrierTasks: {},
+        networkStress: 0,
+        averageLatencySec: 0,
+        queuedJobCount: 0,
+      },
+      worldPulse: 0,
+    };
+
+    const source = state.buildings.src as any;
+    const sorted = findTargetBuildingsForResource(state, source, "sinewTimber", DEFAULT_SIMULATION_CONFIG);
+
+    // Vault should be first since warehouse-first routing prefers vaults for production source
+    expect(sorted[0].id).toBe("vault");
+    expect(sorted.map(b => b.id)).not.toContain("src");
+  });
+
+  it("falls back to production buildings when all vaults are full", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: {},
+      buildings: {
+        src: {
+          id: "src",
+          ownerId: "p1",
+          type: "organHarvester",
+          position: { x: 0, y: 0 },
+          outputBuffer: { sinewTimber: 2 },
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        fullVault: {
+          id: "fullVault",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 1, y: 0 },
+          // Vault is at storage limit (9999)
+          outputBuffer: { sinewTimber: DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit },
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        mill: {
+          id: "mill",
+          ownerId: "p1",
+          type: "millOfGnashing",
+          position: { x: 2, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: 0 },
+          internalStorage: {},
+          isActive: true,
+        } as any,
+      },
+      workers: {},
+      territory: { tiles: {}, tileIndex: {} } as any,
+      transport: {
+        jobs: {},
+        activeCarrierTasks: {},
+        networkStress: 0,
+        averageLatencySec: 0,
+        queuedJobCount: 0,
+      },
+      worldPulse: 0,
+    };
+
+    const source = state.buildings.src as any;
+    const sorted = findTargetBuildingsForResource(state, source, "sinewTimber", DEFAULT_SIMULATION_CONFIG);
+
+    // Full vault should NOT be in preferred targets; production buildings must be reachable in fallback
+    // The mill should appear in targets, enabling non-stalling even when all vaults are saturated
+    const ids = sorted.map(b => b.id);
+    expect(ids).toContain("mill");
+    // Full vault has need=0, so it should appear after mill in sorting (or not preferred)
+    const millIndex = ids.indexOf("mill");
+    const vaultIndex = ids.indexOf("fullVault");
+    // mill should rank before fullVault (higher need), or vault should be absent from preferred
+    if (vaultIndex !== -1) {
+      expect(millIndex).toBeLessThan(vaultIndex);
+    }
+  });
+
+  it("does not route vault to vault (prevents circular transport)", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: {},
+      buildings: {
+        srcVault: {
+          id: "srcVault",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 0, y: 0 },
+          outputBuffer: { sinewTimber: 5 },
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        dstVault: {
+          id: "dstVault",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 1, y: 0 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        mill: {
+          id: "mill",
+          ownerId: "p1",
+          type: "millOfGnashing",
+          position: { x: 2, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: 0 },
+          internalStorage: {},
+          isActive: true,
+        } as any,
+      },
+      workers: {},
+      territory: { tiles: {}, tileIndex: {} } as any,
+      transport: {
+        jobs: {},
+        activeCarrierTasks: {},
+        networkStress: 0,
+        averageLatencySec: 0,
+        queuedJobCount: 0,
+      },
+      worldPulse: 0,
+    };
+
+    const srcVault = state.buildings.srcVault as any;
+    const sorted = findTargetBuildingsForResource(state, srcVault, "sinewTimber", DEFAULT_SIMULATION_CONFIG);
+
+    // Vault should not route to another vault
+    expect(sorted.map(b => b.id)).not.toContain("dstVault");
+    expect(sorted.map(b => b.id)).toContain("mill");
+  });
+});
