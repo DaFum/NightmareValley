@@ -6,6 +6,18 @@
   --hud-button-bg: rgba(255,255,255,0.04);
   --hud-button-border: rgba(255,255,255,0.06);
   --noise-opacity: 0.02;
+  /* Economy panel colors */
+  --econ-success: #7ee787;
+  --econ-success-bg: rgba(126,231,135,0.12);
+  --econ-success-border: rgba(126,231,135,0.25);
+  --econ-warn: #f0a500;
+  --econ-warn-bg: rgba(240,165,0,0.12);
+  --econ-warn-border: rgba(240,165,0,0.25);
+  --econ-idle: #8b949e;
+  --econ-idle-bg: rgba(139,148,158,0.12);
+  --econ-idle-border: rgba(139,148,158,0.2);
+  --econ-buffer-in: #4d9de0;
+  --econ-stone: #b7b1a5;
 }
 
 /* Tweak the global noise overlay opacity for clarity */
@@ -350,7 +362,7 @@ body.ui--minimal .build-dock {
 }
 
 .resource-chip--marrow strong { color: var(--marrow); }
-.resource-chip--stone strong { color: #b7b1a5; }
+.resource-chip--stone strong { color: var(--econ-stone); }
 .resource-chip--bile strong { color: var(--bile); }
 .resource-chip--flesh strong { color: var(--flesh); }
 
@@ -747,9 +759,9 @@ body.ui--minimal .build-dock {
   font-family: monospace;
 }
 
-.econ-chip--green  { background: rgba(126,231,135,0.12); color: #7ee787; border: 1px solid rgba(126,231,135,0.25); }
-.econ-chip--yellow { background: rgba(240,165,0,0.12);   color: #f0a500; border: 1px solid rgba(240,165,0,0.25); }
-.econ-chip--grey   { background: rgba(139,148,158,0.12); color: #8b949e; border: 1px solid rgba(139,148,158,0.2); }
+.econ-chip--green  { background: var(--econ-success-bg); color: var(--econ-success); border: 1px solid var(--econ-success-border); }
+.econ-chip--yellow { background: var(--econ-warn-bg);   color: var(--econ-warn); border: 1px solid var(--econ-warn-border); }
+.econ-chip--grey   { background: var(--econ-idle-bg); color: var(--econ-idle); border: 1px solid var(--econ-idle-border); }
 
 .economy-panel__cols {
   display: grid;
@@ -835,8 +847,8 @@ body.ui--minimal .build-dock {
   height: 100%;
 }
 
-.econ-buffer-bar__fill--in  { background: #4d9de0; left: 0; }
-.econ-buffer-bar__fill--out { background: #7ee787; }
+.econ-buffer-bar__fill--in  { background: var(--econ-buffer-in); left: 0; }
+.econ-buffer-bar__fill--out { background: var(--econ-success); }
 
 .econ-stat-grid {
   display: grid;
@@ -894,13 +906,13 @@ body.ui--minimal .build-dock {
 .econ-resource-row__out {
   font-family: monospace;
   font-size: 11px;
-  color: #7ee787;
+  color: var(--econ-success);
 }
 
 .econ-resource-row__transit {
   font-family: monospace;
   font-size: 10px;
-  color: #f0a500;
+  color: var(--econ-warn);
 }
 
 /* ─── Worker hire row ───────────────────────────────────────────────────────── */
@@ -1003,11 +1015,11 @@ body.ui--minimal .build-dock {
 .warehouse-entry__transit {
   font-family: monospace;
   font-size: 10px;
-  color: #7ee787;
+  color: var(--econ-success);
 }
 
 .warehouse-entry__transit--out {
-  color: #f0a500;
+  color: var(--econ-warn);
 }
 
 /* ============================================================
