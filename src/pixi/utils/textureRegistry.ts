@@ -43,14 +43,14 @@ class TextureRegistryService {
             // if terrain art isn't present in the spritesheet manifest.
             try {
               const terrainNames = [
-                'scarredEarth',
-                'weepingForest',
-                'ribMountain',
-                'placentaLake',
-                'scarPath',
-                'occupiedScar',
-                'ashBog',
-                'cathedralRock',
+                'scarredEarth_1', 'scarredEarth_2',
+                'weepingForest_1', 'weepingForest_2',
+                'ribMountain_1', 'ribMountain_2',
+                'placentaLake_1', 'placentaLake_2',
+                'scarPath_1', 'scarPath_2',
+                'occupiedScar_1', 'occupiedScar_2',
+                'ashBog_1', 'ashBog_2',
+                'cathedralRock_1', 'cathedralRock_2',
               ];
               const tileW = 64;
               const tileH = 32;
@@ -76,7 +76,8 @@ class TextureRegistryService {
                           ashBog:        ['#1E2028', '#0A0A10'],
                           cathedralRock: ['#1C1C2C', '#090912'],
                         };
-                        const [light, dark] = palette[name] ?? ['#444', '#222'];
+                        const baseName = name.replace(/_[12]$/, ''); // Extract base name from variants
+                        const [light, dark] = palette[baseName] ?? ['#444', '#222'];
                         const grad = ctx.createLinearGradient(0, 0, tileW, tileH);
                         grad.addColorStop(0, light);
                         grad.addColorStop(1, dark);
