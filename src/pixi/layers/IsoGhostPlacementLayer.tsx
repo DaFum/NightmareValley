@@ -1,12 +1,12 @@
 import { Container, Sprite } from '@pixi/react';
 import { useTextures } from '../utils/textureRegistry';
 import { tileToScreen } from '../../game/iso/iso.project';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, HALF_TILE_HEIGHT } from '../../game/iso/iso.constants';
 import { BuildingType } from '../../game/core/economy.types';
 
-const GHOST_TILE_WIDTH = 64;
-const GHOST_TILE_HEIGHT = 32;
 const BUILDING_SCALE = 0.28;
 const BUILDING_ANCHOR = { x: 0.5, y: 1 } as const;
+const GHOST_Z_INDEX_BIAS = 1000;
 
 interface IsoGhostPlacementLayerProps {
   buildingType: BuildingType;
@@ -25,12 +25,15 @@ export default function IsoGhostPlacementLayer({
 
   const spriteKey = `buildings_stage4_${buildingType}`;
   const texture = registry.getTexture(spriteKey);
-  if (!texture) return null;
+  if (!texture) {
+    console.warn(`Missing texture for ghost placement: ${spriteKey}`);
+    return null;
+  }
 
-  const { x: sx, y: sy } = tileToScreen(hoveredTileX, hoveredTileY, GHOST_TILE_WIDTH, GHOST_TILE_HEIGHT);
+  const { x: sx, y: sy } = tileToScreen(hoveredTileX, hoveredTileY, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
 
   // Depth-sort: place ghost above terrain but below other entities
-  const zIndex = (sx + sy) * 0.5 + 1000;
+  const zIndex = (sx + sy) * 0.5 + GHOST_Z_INDEX_BIAS;
 
   const tint = isValid ? 0x88ff88 : 0xff4444;
 
@@ -39,7 +42,7 @@ export default function IsoGhostPlacementLayer({
       <Sprite
         texture={texture}
         anchor={BUILDING_ANCHOR}
-        y={16}
+        y={HALF_TILE_HEIGHT}
         scale={BUILDING_SCALE}
         tint={tint}
         alpha={0.65}
