@@ -66,8 +66,8 @@ export default function EconomyPanel(): JSX.Element | null {
 
       const inputVals = Object.values(b.inputBuffer).map(v => v ?? 0);
       const outputVals = Object.values(b.outputBuffer).map(v => v ?? 0);
-      const inputFill = inputVals.length ? Math.max(...inputVals) / 20 : 0;
-      const outputFill = outputVals.length ? Math.max(...outputVals) / 20 : 0;
+      const inputFill = inputVals.length ? Math.max(...inputVals) / 4 : 0;
+      const outputFill = outputVals.length ? Math.max(...outputVals) / 6 : 0;
 
       return {
         id: b.id,

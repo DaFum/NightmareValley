@@ -264,9 +264,10 @@ export function placeBuilding(
     throw new Error(`Tile ${tileId} rejects ${buildingType}`);
   }
 
-  const vault = Object.values(next.buildings).find(
-    (b) => b.ownerId === ownerId && b.type === "vaultOfDigestiveStone"
+  const vaultId = player.buildings.find(
+    (id) => next.buildings[id]?.type === "vaultOfDigestiveStone"
   );
+  const vault = vaultId ? next.buildings[vaultId] : undefined;
   const costSource = vault ? vault.outputBuffer : player.stock;
   if (!hasEnoughResources(costSource, def.buildCost.resources)) {
     throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
@@ -332,9 +333,10 @@ export function upgradeBuilding(
     throw new Error(`Building ${buildingId} cannot ascend further`);
   }
 
-  const vault = Object.values(next.buildings).find(
-    (b) => b.ownerId === ownerId && b.type === "vaultOfDigestiveStone"
+  const vaultId = player.buildings.find(
+    (id) => next.buildings[id]?.type === "vaultOfDigestiveStone"
   );
+  const vault = vaultId ? next.buildings[vaultId] : undefined;
   const costSource = vault ? vault.outputBuffer : player.stock;
   if (!hasEnoughResources(costSource, cost.resources)) {
     throw new Error(`Upgrade denied by inventory`);

@@ -261,9 +261,10 @@ const initialGameState: WorldState = {
 function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): WorldState {
   const player = state.players[player1Id];
   if (!player) return state;
-  const vault = Object.values(state.buildings).find(
-    (b) => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone"
+  const vaultId = player.buildings.find(
+    (id) => state.buildings[id]?.type === "vaultOfDigestiveStone"
   );
+  const vault = vaultId ? state.buildings[vaultId] : undefined;
   const newStock = { ...scenarioStock(profile), sinewTimber: 100 };
   return {
     ...state,
