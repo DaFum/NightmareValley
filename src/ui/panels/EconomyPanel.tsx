@@ -32,6 +32,7 @@ type ResourceFlow = {
 function statusLabel(status: string): { label: string; color: string } {
   switch (status) {
     case 'working':         return { label: 'Working', color: 'var(--econ-success)' };
+    case 'blocked':         return { label: 'Blocked', color: 'var(--econ-warn)' };
     case 'idle':            return { label: 'Idle',    color: 'var(--econ-idle)' };
     case 'waitingForInput': return { label: 'Starved', color: 'var(--econ-warn)' };
     case 'disabled':        return { label: 'Paused',  color: 'var(--econ-disabled)' };
@@ -57,9 +58,17 @@ export default function EconomyPanel(): JSX.Element | null {
       const def = BUILDING_DEFINITIONS[b.type];
       const totalWorkerSlots = Object.values(def.workerSlots).reduce((s, n) => s + (n ?? 0), 0);
 
+      const isVault = b.type === 'vaultOfDigestiveStone';
+      const outputLimit = isVault
+        ? DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit
+        : DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit;
+      const outputFull = Object.values(b.outputBuffer).some((v) => (v ?? 0) >= outputLimit);
+
       let status = 'idle';
       if (!b.isActive) {
         status = 'disabled';
+      } else if (b.progressSec > 0 && outputFull) {
+        status = 'blocked';
       } else if (b.progressSec > 0) {
         status = 'working';
       } else if ((b.corruption ?? 0) > 50) {
@@ -80,8 +89,6 @@ export default function EconomyPanel(): JSX.Element | null {
 
       const inputVals = Object.values(b.inputBuffer).map(v => v ?? 0);
       const outputVals = Object.values(b.outputBuffer).map(v => v ?? 0);
-      const isVault = b.type === 'vaultOfDigestiveStone';
-      const outputLimit = isVault ? DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit : DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit;
       const inputFill = inputVals.length ? Math.max(...inputVals) / DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit : 0;
       const outputFill = outputVals.length ? Math.max(...outputVals) / outputLimit : 0;
 
@@ -143,15 +150,11 @@ export default function EconomyPanel(): JSX.Element | null {
       .slice(0, 8);
   }, [buildings, transport.activeCarrierTasks]);
 
-  const ownedCarrierTasks = Object.values(transport.activeCarrierTasks).filter((t) => {
-    const src = buildings[t.pickupBuildingId];
-    return src?.ownerId === player1Id;
-  });
-  const activeCarriers = ownedCarrierTasks.length;
   const carriers = Object.values(workers).filter(
     (w) => w.type === 'burdenThrall' && w.ownerId === player1Id
   );
   const totalCarriers = carriers.length;
+  const busyCarriers = totalCarriers - carriers.filter((w) => w.isIdle).length;
   const idleCarriers = carriers.filter((w) => w.isIdle).length;
   const queuedJobs = transport.queuedJobCount ?? 0;
   const stress = fmt1.format(transport.networkStress);
@@ -219,7 +222,7 @@ export default function EconomyPanel(): JSX.Element | null {
           <section className="economy-panel__section" aria-label="Transport">
             <h3 className="economy-panel__section-title">Transport</h3>
             <dl className="econ-stat-grid">
-              <div><dt>Carriers</dt><dd>{activeCarriers} active / {totalCarriers - idleCarriers} busy</dd></div>
+              <div><dt>Carriers</dt><dd>{busyCarriers}/{totalCarriers} busy</dd></div>
               <div><dt>Idle carriers</dt><dd>{idleCarriers}/{totalCarriers}</dd></div>
               <div><dt>Queued jobs</dt><dd>{queuedJobs}</dd></div>
               <div><dt>Avg latency</dt><dd>{latency}s</dd></div>

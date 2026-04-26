@@ -248,7 +248,7 @@ export function getBuildingResourceNeed(
 
   if (def.type === "pitOfWarBirth") {
     const current = getResourceAmount(building.inputBuffer, resourceType);
-    return Math.max(0, 4 - current);
+    return Math.max(0, config.buildingInputBufferLimit - current);
   }
 
   return Math.min(needed, config.buildingInputBufferLimit);

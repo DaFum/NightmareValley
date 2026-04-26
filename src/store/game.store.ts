@@ -5,6 +5,7 @@ import {
   upgradeBuilding,
   connectBuildingToRoad,
   spawnWorker,
+  syncStockFromVaults,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
@@ -284,7 +285,9 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
     }
   }
 
-  return {
+  // Write stock directly as the no-vault fallback; syncStockFromVaults will
+  // override it from vault.outputBuffer when vaults exist, making it truly derived.
+  const interim = {
     ...state,
     scenarioProfile: profile,
     players: {
@@ -293,6 +296,8 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
     },
     buildings: updatedBuildings,
   };
+
+  return syncStockFromVaults(interim as EconomySimulationState) as WorldState;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -435,9 +440,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const hq = Object.values(gs.buildings).find(b => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone");
       if (!hq) return state;
 
-      // Find nearest compatible target building (any building that accepts the resource)
+      // Find nearest compatible target building; exclude other vaults (vault→vault routing is forbidden)
       const candidates = Object.values(gs.buildings).filter(
-        b => b.id !== hq.id && buildingAcceptsResource(b, resourceType)
+        b => b.id !== hq.id && b.type !== "vaultOfDigestiveStone" && buildingAcceptsResource(b, resourceType)
       );
 
       let nearest: BuildingInstance | null = null;
