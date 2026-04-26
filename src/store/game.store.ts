@@ -238,8 +238,8 @@ const initialGameState: WorldState = {
       outputBuffer: {},
     }),
     [millId]: createStarterBuilding(millId, "millOfGnashing", { x: 9, y: 7 }, [gnashSawyerId], {
-      inputBuffer: { sinewTimber: 5 },
-      outputBuffer: { toothPlanks: 3 },
+      inputBuffer: { sinewTimber: 2 },
+      outputBuffer: { toothPlanks: 1 },
       currentRecipeId: "rendSinewTimber",
     }),
   },
@@ -279,7 +279,7 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
       [player1Id]: { ...player, stock: newStock },
     },
     buildings: vault
-      ? { ...state.buildings, [vault.id]: { ...vault, outputBuffer: newStock } }
+      ? { ...state.buildings, [vault.id]: { ...vault, outputBuffer: { ...newStock } } }
       : state.buildings,
   };
 }
@@ -347,11 +347,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  // Store spread pattern: economy functions return EconomySimulationState (players/buildings/workers/etc).
+  // The spread { ...gameState, ...nextEconomy } merges result back into WorldState without nested mutations.
   placeBuildingAt: (ownerId, buildingType, tileId) => {
     try {
       const { gameState } = get();
-      const nextState = syncStockFromVaults(placeBuilding(gameState, ownerId, buildingType, tileId));
-      set({ gameState: { ...gameState, ...nextState } });
+      const nextEconomy = syncStockFromVaults(placeBuilding(gameState, ownerId, buildingType, tileId));
+      set({ gameState: { ...gameState, ...nextEconomy } });
     } catch (error) {
       console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
@@ -361,8 +363,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   upgradeBuildingAt: (ownerId, buildingId) => {
     try {
       const { gameState } = get();
-      const nextState = syncStockFromVaults(upgradeBuilding(gameState, ownerId, buildingId));
-      set({ gameState: { ...gameState, ...nextState } });
+      const nextEconomy = syncStockFromVaults(upgradeBuilding(gameState, ownerId, buildingId));
+      set({ gameState: { ...gameState, ...nextEconomy } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });

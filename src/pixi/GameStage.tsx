@@ -162,8 +162,9 @@ export function GameStage() {
 
   const isGhostValid = useMemo(() => {
     if (!ghostTile || !selectedBuildingToPlace) return false;
-    const tileId = `tile_${ghostTile.x}_${ghostTile.y}`;
-    const tile = territory.tiles[tileId];
+    const tileKey = `${ghostTile.x},${ghostTile.y}`;
+    const tileId = territory.tileIndex?.[tileKey];
+    const tile = tileId ? territory.tiles[tileId] : undefined;
     if (!tile || tile.buildingId || tile.ownerId !== player1Id) return false;
     const def = BUILDING_DEFINITIONS[selectedBuildingToPlace];
     return def.allowedTerrain.includes(tile.terrain);

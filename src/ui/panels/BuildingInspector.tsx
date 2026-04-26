@@ -215,6 +215,11 @@ function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: Del
     }
   }
 
+  // Don't show delivery controls for extraction-only buildings (no inputs)
+  if (inputResources.size === 0) {
+    return null;
+  }
+
   return (
     <section className="inventory-block">
       <h3>Delivery Controls</h3>

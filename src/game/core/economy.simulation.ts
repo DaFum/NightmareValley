@@ -169,6 +169,8 @@ export function createId(prefix: string): string {
 // VAULT ↔ STOCK SYNC
 // =========================
 
+// Mutates state.players[*].stock in-place to reflect aggregated vault outputBuffers.
+// Safe because callers always pass a cloned state (from cloneState or deepClone).
 export function syncStockFromVaults(state: EconomySimulationState): EconomySimulationState {
   for (const player of Object.values(state.players)) {
     const merged: Partial<Record<ResourceType, number>> = {};
@@ -364,8 +366,8 @@ export function upgradeBuilding(
 
   // Collect all vaults for this player
   const vaults: BuildingInstance[] = [];
-  for (const buildingId of player.buildings) {
-    const b = next.buildings[buildingId];
+  for (const playerBuildingId of player.buildings) {
+    const b = next.buildings[playerBuildingId];
     if (b && b.type === "vaultOfDigestiveStone") {
       vaults.push(b);
     }
