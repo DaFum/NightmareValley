@@ -33,6 +33,13 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   overflow: hidden;
 }
 
+.game-layout__bottom-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
 .hud-layout {
   position: absolute;
   inset: 0;

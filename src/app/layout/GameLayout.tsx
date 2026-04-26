@@ -22,7 +22,7 @@ export type GameLayoutProps = {
 };
 
 const defaultBottomDock = (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+  <div className="game-layout__bottom-dock">
     <WarehousePanel />
     <EconomyPanel />
     <BuildingMenu />
