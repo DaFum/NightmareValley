@@ -169,8 +169,10 @@ export function createId(prefix: string): string {
 // VAULT ↔ STOCK SYNC
 // =========================
 
-// Mutates state.players[*].stock in-place to reflect aggregated vault outputBuffers.
-// Safe because callers always pass a cloned state (from cloneState or deepClone).
+// Mutates state.players[*].stock in-place and returns the same reference (fluent).
+// Callers MUST pass an already-cloned state — this function does not clone internally.
+// All current call sites satisfy this: simulateTick and placeBuilding/upgradeBuilding
+// each call cloneState() before calling this function.
 export function syncStockFromVaults(state: EconomySimulationState): EconomySimulationState {
   for (const player of Object.values(state.players)) {
     const merged: Partial<Record<ResourceType, number>> = {};
