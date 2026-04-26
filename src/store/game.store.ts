@@ -6,6 +6,7 @@ import {
   connectBuildingToRoad,
   spawnWorker,
   assignWorkerToBuilding,
+  syncStockFromVaults,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
@@ -349,7 +350,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   placeBuildingAt: (ownerId, buildingType, tileId) => {
     try {
       const { gameState } = get();
-      const nextState = placeBuilding(gameState, ownerId, buildingType, tileId);
+      const nextState = syncStockFromVaults(placeBuilding(gameState, ownerId, buildingType, tileId));
       set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to place building:", error);
@@ -360,7 +361,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   upgradeBuildingAt: (ownerId, buildingId) => {
     try {
       const { gameState } = get();
-      const nextState = upgradeBuilding(gameState, ownerId, buildingId);
+      const nextState = syncStockFromVaults(upgradeBuilding(gameState, ownerId, buildingId));
       set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);
