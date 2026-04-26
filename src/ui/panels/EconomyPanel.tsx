@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useGameStore } from '../../store/game.store';
+import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
 import { RECIPES } from '../../game/economy/recipes.data';
@@ -51,7 +51,9 @@ export default function EconomyPanel(): JSX.Element | null {
   );
 
   const buildingRows = useMemo((): BuildingRow[] => {
-    return Object.values(buildings).map((b) => {
+    return Object.values(buildings)
+      .filter((b) => b.ownerId === player1Id)
+      .map((b) => {
       const def = BUILDING_DEFINITIONS[b.type];
       const totalWorkerSlots = Object.values(def.workerSlots).reduce((s, n) => s + (n ?? 0), 0);
 
