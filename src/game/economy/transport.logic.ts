@@ -169,8 +169,8 @@ export function findTargetBuildingsForResource(
   // production buildings deliver to vault; vault distributes to production buildings.
   // When source is a vault, never fall back to other vaults — that causes circular transport.
   const preferred = sourceIsVault
-    ? all.filter((b) => b.type !== "vaultOfDigestiveStone")
-    : all.filter((b) => b.type === "vaultOfDigestiveStone");
+    ? all.filter((b) => b.type !== "vaultOfDigestiveStone" && b.isActive)
+    : all.filter((b) => b.type === "vaultOfDigestiveStone" && b.isActive);
 
   const targets = (preferred.length > 0 || sourceIsVault) ? preferred : all;
 
