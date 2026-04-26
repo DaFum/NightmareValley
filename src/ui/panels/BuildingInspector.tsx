@@ -1,7 +1,8 @@
-import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
+import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordUpgrade, getUpgradeCost } from '../../game/economy/production.logic';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
+import { WorkerType } from '../../game/core/economy.types';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 
 type BuildingInspectorProps = {
@@ -11,9 +12,11 @@ type BuildingInspectorProps = {
 export default function BuildingInspector({ buildingId }: BuildingInspectorProps): JSX.Element | null {
   const building = useGameStore((state) => state.gameState.buildings[buildingId]);
   const player = useGameStore((state) => building ? state.gameState.players[building.ownerId] : undefined);
+  const workers = useGameStore((state) => state.gameState.workers);
   const upgradeBuildingAt = useGameStore((state) => state.upgradeBuildingAt);
   const connectBuildingAt = useGameStore((state) => state.connectBuildingAt);
   const toggleBuildingActive = useGameStore((state) => state.toggleBuildingActive);
+  const spawnAndAssignWorker = useGameStore((state) => state.spawnAndAssignWorker);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!building || !player) return null;
@@ -83,7 +86,74 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       ) : (
         <p className="inspector-note">Maximum level reached.</p>
       )}
+
+      <WorkerSlotsSection
+        building={building}
+        player={player}
+        workers={workers}
+        onHire={(workerType) => spawnAndAssignWorker(building.ownerId, workerType, building.id)}
+      />
     </aside>
+  );
+}
+
+type WorkerSlotsSectionProps = {
+  building: import('../../game/core/game.types').BuildingInstance;
+  player: import('../../game/core/game.types').PlayerState | undefined;
+  workers: Record<string, import('../../game/core/game.types').WorkerInstance>;
+  onHire: (workerType: WorkerType) => void;
+};
+
+function WorkerSlotsSection({ building, player, workers, onHire }: WorkerSlotsSectionProps) {
+  const def = BUILDING_DEFINITIONS[building.type];
+  const slots = def.workerSlots;
+  const slotEntries = Object.entries(slots).filter(([, count]) => (count ?? 0) > 0) as [WorkerType, number][];
+  if (slotEntries.length === 0) return null;
+
+  const assignedCounts: Partial<Record<WorkerType, number>> = {};
+  for (const wid of building.assignedWorkers) {
+    const w = workers[wid];
+    if (w) assignedCounts[w.type] = (assignedCounts[w.type] ?? 0) + 1;
+  }
+
+  const hasVacancy = slotEntries.some(([type, max]) => (assignedCounts[type] ?? 0) < max);
+  if (!hasVacancy) return null;
+
+  return (
+    <section className="inventory-block">
+      <h3>Hire Workers</h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        {slotEntries.map(([workerType, maxCount]) => {
+          const current = assignedCounts[workerType] ?? 0;
+          if (current >= maxCount) return null;
+          const workerDef = WORKER_DEFINITIONS[workerType];
+          const portraitSrc = imageMap[`workers/${workerType}.png`];
+          const vacant = maxCount - current;
+          return (
+            <div key={workerType} className="worker-hire-row">
+              {portraitSrc ? (
+                <img src={portraitSrc} alt="" aria-hidden="true" className="worker-hire-row__portrait" />
+              ) : (
+                <div className="worker-hire-row__portrait" />
+              )}
+              <span className="worker-hire-row__name">{workerDef?.name ?? workerType}</span>
+              <span className="worker-hire-row__slots">{current}/{maxCount}</span>
+              {Array.from({ length: vacant }).map((_, i) => (
+                <button
+                  key={i}
+                  className="hud-button worker-hire-row__btn"
+                  onClick={() => onHire(workerType)}
+                  disabled={!player}
+                  title={`Hire ${workerDef?.name ?? workerType}`}
+                >
+                  Hire
+                </button>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

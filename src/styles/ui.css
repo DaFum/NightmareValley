@@ -699,3 +699,234 @@ body.ui--minimal .build-dock {
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── Economy Panel ─────────────────────────────────────────────────────────── */
+
+.economy-panel {
+  width: min(760px, calc(100vw - 48px));
+  max-height: 260px;
+  overflow: hidden;
+  padding: 10px 14px;
+  pointer-events: auto;
+}
+
+.economy-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(227,220,211,0.07);
+  padding-bottom: 6px;
+}
+
+.economy-panel__title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--fresh-blood);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex: 1;
+}
+
+.economy-panel__summary-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.econ-chip {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  font-family: monospace;
+}
+
+.econ-chip--green  { background: rgba(126,231,135,0.12); color: #7ee787; border: 1px solid rgba(126,231,135,0.25); }
+.econ-chip--yellow { background: rgba(240,165,0,0.12);   color: #f0a500; border: 1px solid rgba(240,165,0,0.25); }
+.econ-chip--grey   { background: rgba(139,148,158,0.12); color: #8b949e; border: 1px solid rgba(139,148,158,0.2); }
+
+.economy-panel__cols {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.economy-panel__right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.economy-panel__section-title {
+  margin: 0 0 5px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--fresh-blood);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.econ-building-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+  max-height: 170px;
+}
+
+.econ-building-row {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 2px;
+  padding: 4px 6px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(227,220,211,0.05);
+}
+
+.econ-building-row__name {
+  font-size: 12px;
+  color: var(--bone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.econ-building-row__lvl {
+  font-size: 10px;
+  color: var(--marrow);
+  font-family: monospace;
+}
+
+.econ-building-row__meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  align-items: center;
+}
+
+.econ-building-row__workers {
+  color: var(--marrow);
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.econ-buffer-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.econ-buffer-bar__fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.econ-buffer-bar__fill--in  { background: #4d9de0; left: 0; }
+.econ-buffer-bar__fill--out { background: #7ee787; }
+
+.econ-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+  margin: 0;
+}
+
+.econ-stat-grid div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 5px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(227,220,211,0.05);
+}
+
+.econ-stat-grid dt {
+  color: var(--marrow);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.econ-stat-grid dd {
+  margin: 0;
+  color: var(--bone);
+  font-family: monospace;
+  font-size: 10px;
+}
+
+.econ-resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.econ-resource-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  background: rgba(0,0,0,0.18);
+}
+
+.econ-resource-row__name {
+  flex: 1;
+  font-size: 11px;
+  color: var(--bone);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.econ-resource-row__out {
+  font-family: monospace;
+  font-size: 11px;
+  color: #7ee787;
+}
+
+.econ-resource-row__transit {
+  font-family: monospace;
+  font-size: 10px;
+  color: #f0a500;
+}
+
+/* ─── Worker hire row ───────────────────────────────────────────────────────── */
+
+.worker-hire-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(227,220,211,0.05);
+}
+
+.worker-hire-row__portrait {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  background: rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+.worker-hire-row__name {
+  flex: 1;
+  font-size: 12px;
+  color: var(--bone);
+}
+
+.worker-hire-row__slots {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--marrow);
+}
+
+.worker-hire-row__btn {
+  font-size: 11px;
+  padding: 3px 8px;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 
 import { Container } from '@pixi/react';
 import * as PIXI from 'pixi.js';
@@ -8,6 +8,7 @@ import { IsoWorkerLayer } from './layers/IsoWorkerLayer';
 import IsoFootfallLayer from './layers/IsoFootfallLayer';
 import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
+import IsoGhostPlacementLayer from './layers/IsoGhostPlacementLayer';
 
 import { useGameStore } from '../store/game.store';
 import { useUIStore } from '../store/ui.store';
@@ -18,6 +19,8 @@ import { useIsoCamera } from './hooks/useIsoCamera';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
+import { screenToIsoTile } from '../game/iso/iso.inverse';
+import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
 
 const CHUNK_SCREEN_SIZE = 512;
 // Starting buildings are placed at tile (7,7); center on (7,7).
@@ -34,10 +37,14 @@ export function GameStage() {
   const zoom = useCameraStore((state) => state.zoom);
   const showFootfallHeatmap = useUIStore((state) => state.showFootfallHeatmap);
   const setRenderStats = useRenderStore((state) => state.setRenderStats);
+  const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
+  const territory = useGameStore((state) => state.gameState.territory);
 
   const { spacePressedRef } = useIsoCamera();
   const world = useRenderWorld();
   useGameLoop();
+
+  const [ghostTile, setGhostTile] = React.useState<{ x: number; y: number } | null>(null);
 
   const initialZoomRef = React.useRef(zoom);
   useEffect(() => {
@@ -137,6 +144,31 @@ export function GameStage() {
     viewportHeight / zoom
   ), [cameraX, cameraY, centerX, centerY, viewportHeight, viewportWidth, zoom]);
 
+  const handlePointerMove = useCallback((event: PIXI.FederatedPointerEvent) => {
+    if (!selectedBuildingToPlace) {
+      if (ghostTile !== null) setGhostTile(null);
+      return;
+    }
+    const cx = centerX + cameraX;
+    const cy = centerY + cameraY;
+    const { tileX, tileY } = screenToIsoTile(
+      event.global.x, event.global.y, cx, cy, zoom, ISO_TILE_WIDTH, ISO_TILE_HEIGHT
+    );
+    setGhostTile((prev) => {
+      if (prev?.x === tileX && prev?.y === tileY) return prev;
+      return { x: tileX, y: tileY };
+    });
+  }, [selectedBuildingToPlace, centerX, cameraX, centerY, cameraY, zoom, ghostTile]);
+
+  const isGhostValid = useMemo(() => {
+    if (!ghostTile || !selectedBuildingToPlace) return false;
+    const tileId = `tile_${ghostTile.x}_${ghostTile.y}`;
+    const tile = territory.tiles[tileId];
+    if (!tile || tile.buildingId) return false;
+    const def = BUILDING_DEFINITIONS[selectedBuildingToPlace];
+    return def.allowedTerrain.includes(tile.terrain);
+  }, [ghostTile, selectedBuildingToPlace, territory]);
+
   const handlePointerDown = useSelectionInput({
     world,
     centerX,
@@ -157,13 +189,21 @@ export function GameStage() {
   }, [lodLevel, setRenderStats, visibleTiles.length, world.buildings.length, world.workers.length]);
 
   return (
-    <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown}>
+    <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown} pointermove={handlePointerMove}>
       <IsoTerrainLayer tiles={visibleTiles} />
       <IsoResourceLayer tiles={visibleTiles} />
       <IsoFootfallLayer tiles={visibleTiles} />
       {drawHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />
       {drawWorkers && <IsoWorkerLayer workers={world.workers} />}
+      {selectedBuildingToPlace && ghostTile && (
+        <IsoGhostPlacementLayer
+          buildingType={selectedBuildingToPlace}
+          hoveredTileX={ghostTile.x}
+          hoveredTileY={ghostTile.y}
+          isValid={isGhostValid}
+        />
+      )}
     </Container>
   );
 }

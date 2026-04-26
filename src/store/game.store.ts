@@ -4,6 +4,8 @@ import {
   placeBuilding,
   upgradeBuilding,
   connectBuildingToRoad,
+  spawnWorker,
+  assignWorkerToBuilding,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
@@ -52,6 +54,7 @@ export interface GameStore {
   runDebugCommand: (command: DebugCommand) => void;
   dispatchDebugJobsFromHQ: (count: number, resourceType: import("../game/core/economy.types").ResourceType) => void;
   resetFootfall: () => void;
+  spawnAndAssignWorker: (ownerId: string, workerType: WorkerType, buildingId: string) => void;
 }
 
 
@@ -59,9 +62,15 @@ import { createId } from '../game/core/economy.simulation';
 
 const player1Id = createId('player');
 const vaultId = createId('bld');
+const harvesterId = createId('bld');
+const millId = createId('bld');
 const carrier1Id = createId('wrk');
 const carrier2Id = createId('wrk');
 const carrier3Id = createId('wrk');
+const carrier4Id = createId('wrk');
+const carrier5Id = createId('wrk');
+const timberExecId = createId('wrk');
+const gnashSawyerId = createId('wrk');
 
 const initialTerritory = loadInitialMap();
 
@@ -109,6 +118,8 @@ function prepareInitialTerritory(ownerId: string) {
   };
 
   markBuilding(7, 7, vaultId);
+  markBuilding(5, 7, harvesterId);
+  markBuilding(9, 7, millId);
 
   return { territory, ownedTileIds };
 }
@@ -192,11 +203,17 @@ const initialGameState: WorldState = {
       stock: scenarioStock('challenging'),
       buildings: [
         vaultId,
+        harvesterId,
+        millId,
       ],
       workers: [
         carrier1Id,
         carrier2Id,
         carrier3Id,
+        carrier4Id,
+        carrier5Id,
+        timberExecId,
+        gnashSawyerId,
       ],
       territoryTileIds: preparedInitialTerritory.ownedTileIds,
       populationLimit: 20,
@@ -207,14 +224,26 @@ const initialGameState: WorldState = {
   },
   buildings: {
     [vaultId]: createStarterBuilding(vaultId, "vaultOfDigestiveStone", { x: 7, y: 7 }, [], {
-      internalStorage: { sinewTimber: 100 },
-      outputBuffer: { sinewTimber: 100 }
+      internalStorage: { sinewTimber: 60, toothPlanks: 20 },
+      outputBuffer: { sinewTimber: 40 },
+    }),
+    [harvesterId]: createStarterBuilding(harvesterId, "organHarvester", { x: 5, y: 7 }, [timberExecId], {
+      outputBuffer: {},
+    }),
+    [millId]: createStarterBuilding(millId, "millOfGnashing", { x: 9, y: 7 }, [gnashSawyerId], {
+      inputBuffer: { sinewTimber: 5 },
+      outputBuffer: { toothPlanks: 3 },
+      currentRecipeId: "rendSinewTimber",
     }),
   },
   workers: {
     [carrier1Id]: createStarterWorker(carrier1Id, "burdenThrall", { x: 7, y: 8 }, undefined, true),
     [carrier2Id]: createStarterWorker(carrier2Id, "burdenThrall", { x: 8, y: 8 }, undefined, true),
     [carrier3Id]: createStarterWorker(carrier3Id, "burdenThrall", { x: 8, y: 7 }, undefined, true),
+    [carrier4Id]: createStarterWorker(carrier4Id, "burdenThrall", { x: 6, y: 8 }, undefined, true),
+    [carrier5Id]: createStarterWorker(carrier5Id, "burdenThrall", { x: 7, y: 6 }, undefined, true),
+    [timberExecId]: createStarterWorker(timberExecId, "timberExecutioner", { x: 5, y: 7 }, harvesterId, false),
+    [gnashSawyerId]: createStarterWorker(gnashSawyerId, "gnashSawyer", { x: 9, y: 7 }, millId, false),
   },
   territory: preparedInitialTerritory.territory,
   transport: {
@@ -445,5 +474,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       };
     });
-  }
+  },
+
+  spawnAndAssignWorker: (ownerId, workerType, buildingId) => {
+    try {
+      const { gameState } = get();
+      const building = gameState.buildings[buildingId];
+      if (!building) throw new Error(`Unknown building: ${buildingId}`);
+      const spawnPos = { x: building.position.x + 1, y: building.position.y };
+      let nextState = spawnWorker(gameState, ownerId, workerType, spawnPos);
+      const newWorkerId = Object.keys(nextState.workers).find(
+        id => !gameState.workers[id]
+      );
+      if (newWorkerId) {
+        nextState = assignWorkerToBuilding(nextState, newWorkerId, buildingId);
+      }
+      set({ gameState: { ...gameState, ...nextState } });
+    } catch (error) {
+      console.error("Failed to spawn worker:", error);
+      set({ lastError: toRuntimeIssue(error, 'WORKER_SPAWN_FAILURE', 'spawnAndAssignWorker', get().gameState.tick) });
+    }
+  },
 }));

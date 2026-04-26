@@ -3,6 +3,8 @@ import { GameCanvas } from '../../pixi/GameCanvas';
 import { TopHud } from '../../ui/hud/TopHud';
 import InspectorPanel from '../../ui/panels/InspectorPanel';
 import DebugLogisticsPanel from '../../ui/panels/DebugLogisticsPanel';
+import EconomyPanel from '../../ui/panels/EconomyPanel';
+import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import { HudLayout } from './HudLayout';
 import { useResponsiveLayout } from './useResponsiveLayout';
 
@@ -18,11 +20,18 @@ export type GameLayoutProps = {
   className?: string;
 };
 
+const defaultBottomDock = (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+    <EconomyPanel />
+    <BuildingMenu />
+  </div>
+);
+
 export function GameLayout({
   canvas = <GameCanvas />,
   hud = <TopHud />,
   inspector = <InspectorPanel />,
-  panels = null,
+  panels = defaultBottomDock,
   mobileBreakpoint = 760,
   showDebugPanel = IS_DEV,
   className,
