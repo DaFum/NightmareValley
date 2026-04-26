@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -26,17 +26,29 @@ async function waitForServer(url, timeoutMs = 60_000) {
 }
 
 async function waitForGameReady(page) {
-  // Wait for Pixi canvas to mount
-  await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
-  // Wait for at least one animation frame to be painted on the canvas
+  // Wait for Pixi canvas to mount and have non-zero dimensions
   await page.waitForFunction(() => {
     const canvas = document.querySelector('canvas');
-    if (!canvas) return false;
-    const ctx = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    return !!ctx;
-  }, { timeout: 10_000 });
+    return canvas != null && canvas.width > 0 && canvas.height > 0;
+  }, { timeout: 30_000 });
   // Allow several frames for the full scene (terrain, buildings, UI) to render
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(3000);
+}
+
+/**
+ * Capture a full composite screenshot (canvas + UI overlays) via CDP.
+ * page.screenshot() hangs when a game's RAF loop keeps the main thread busy;
+ * sending Page.captureScreenshot directly over CDP bypasses that wait.
+ */
+async function cdpScreenshot(page, outputPath) {
+  const client = await page.context().newCDPSession(page);
+  const { data } = await client.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  await writeFile(outputPath, Buffer.from(data, 'base64'));
+  await client.detach();
 }
 
 async function takeScreenshots() {
@@ -49,13 +61,18 @@ async function takeScreenshots() {
     browser = await chromium.launch({
       headless: true,
       args: [
-        '--ignore-certificate-errors',
-        '--disable-web-security',
         '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--ignore-certificate-errors',
       ],
     });
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await context.newPage();
+
+    // Log page errors to aid debugging
+    page.on('pageerror', (err) => console.error('[page error]', err.message));
 
     // Abort external font requests so they don't delay font readiness.
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
@@ -64,37 +81,40 @@ async function takeScreenshots() {
     await waitForGameReady(page);
 
     // Full composite screenshot — captures canvas + all React UI overlays
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, 'game-overview.png'),
-      fullPage: false,
-    });
+    await cdpScreenshot(page, path.join(OUTPUT_DIR, 'game-overview.png'));
 
+    // Heatmap screenshot — only available when server runs with __DEV__ = true
     const heatmapToggle = page.getByLabel('Show footfall heatmap');
-    if (await heatmapToggle.count() === 0) {
-      throw new Error(
-        `heatmapToggle not found. Aborting game-footfall-heatmap.png. ` +
-        `Check DebugLogisticsPanel / NODE_ENV=development and ensure server is running at ${BASE_URL}. ` +
-        `OUTPUT_DIR=${OUTPUT_DIR}`
+    if (await heatmapToggle.count() > 0) {
+      await heatmapToggle.check({ force: true });
+      await page.waitForFunction(() => {
+        const checkbox = document.querySelector('input[aria-label="Show footfall heatmap"]');
+        return !!(checkbox && checkbox instanceof HTMLInputElement && checkbox.checked);
+      });
+      await page.waitForTimeout(500);
+      await cdpScreenshot(page, path.join(OUTPUT_DIR, 'game-footfall-heatmap.png'));
+    } else {
+      console.warn(
+        `[skip] heatmapToggle not found — DebugLogisticsPanel requires __DEV__=true. ` +
+        `Run against the dev server (port 5173) to capture game-footfall-heatmap.png.`
       );
     }
-    await heatmapToggle.check({ force: true });
-    await page.waitForFunction(() => {
-      const checkbox = document.querySelector('input[aria-label="Show footfall heatmap"]');
-      return !!(checkbox && checkbox instanceof HTMLInputElement && checkbox.checked);
-    });
-    await page.waitForTimeout(500);
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, 'game-footfall-heatmap.png'),
-      fullPage: false,
-    });
 
+    // Debug route — only available when server runs with __DEV__ = true
     await page.goto(`${BASE_URL}/debug`, { waitUntil: 'load' });
-    await page.waitForFunction(() => document.body.textContent !== null && document.body.textContent.length > 0);
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, 'debug-route.png'),
-      fullPage: true,
-      timeout: 60_000,
-    });
+    const isDebugPage = await page.evaluate(() =>
+      !document.querySelector('.not-found-route') &&
+      document.body.textContent != null &&
+      document.body.textContent.length > 20
+    );
+    if (isDebugPage) {
+      await cdpScreenshot(page, path.join(OUTPUT_DIR, 'debug-route.png'));
+    } else {
+      console.warn(
+        `[skip] /debug route not available — requires __DEV__=true. ` +
+        `Run against the dev server (port 5173) to capture debug-route.png.`
+      );
+    }
   } finally {
     if (browser) await browser.close();
   }

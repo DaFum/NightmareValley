@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -26,17 +26,29 @@ async function waitForServer(url, timeoutMs = 60_000) {
 }
 
 async function waitForGameReady(page) {
-  // Wait for Pixi canvas to mount
-  await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
-  // Wait for WebGL context to be active
+  // Wait for Pixi canvas to mount and have non-zero dimensions
   await page.waitForFunction(() => {
     const canvas = document.querySelector('canvas');
-    if (!canvas) return false;
-    const ctx = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    return !!ctx;
-  }, { timeout: 10_000 });
+    return canvas != null && canvas.width > 0 && canvas.height > 0;
+  }, { timeout: 30_000 });
   // Allow several frames for the full scene (terrain, buildings, UI) to render
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(3000);
+}
+
+/**
+ * Capture a full composite screenshot (canvas + UI overlays) via CDP.
+ * page.screenshot() hangs when a game's RAF loop keeps the main thread busy;
+ * sending Page.captureScreenshot directly over CDP bypasses that wait.
+ */
+async function cdpScreenshot(page, outputPath) {
+  const client = await page.context().newCDPSession(page);
+  const { data } = await client.send('Page.captureScreenshot', {
+    format: 'png',
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  await writeFile(outputPath, Buffer.from(data, 'base64'));
+  await client.detach();
 }
 
 async function takeScreenshots() {
@@ -50,13 +62,18 @@ async function takeScreenshots() {
     browser = await chromium.launch({
       headless: true,
       args: [
-        '--ignore-certificate-errors',
-        '--disable-web-security',
         '--no-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--ignore-certificate-errors',
       ],
     });
     const context = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
     const page = await context.newPage();
+
+    // Log page errors to aid debugging
+    page.on('pageerror', (err) => console.error('[page error]', err.message));
 
     // Abort external font requests
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
@@ -68,10 +85,7 @@ async function takeScreenshots() {
 
     // Full composite screenshot — captures canvas + all React UI overlays
     console.log('Capturing map overview...');
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, 'map-overview.png'),
-      fullPage: false,
-    });
+    await cdpScreenshot(page, path.join(OUTPUT_DIR, 'map-overview.png'));
     console.log(`✓ Saved: map-overview.png`);
 
     // Zoom in and capture a second view
@@ -83,10 +97,7 @@ async function takeScreenshots() {
       }
     });
     await page.waitForTimeout(1000);
-    await page.screenshot({
-      path: path.join(OUTPUT_DIR, 'map-zoomed.png'),
-      fullPage: false,
-    });
+    await cdpScreenshot(page, path.join(OUTPUT_DIR, 'map-zoomed.png'));
     console.log(`✓ Saved: map-zoomed.png`);
 
     console.log(`\n✅ Screenshots saved to: ${OUTPUT_DIR}`);
