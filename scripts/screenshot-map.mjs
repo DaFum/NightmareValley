@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -25,18 +25,18 @@ async function waitForServer(url, timeoutMs = 60_000) {
   throw new Error(`Server did not become ready within ${timeoutMs}ms: ${url}`);
 }
 
-async function captureCanvasToFile(page, outputPath) {
-  const dataURL = await page.evaluate(() => new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      const canvas = document.querySelector('canvas');
-      if (!canvas) { resolve(null); return; }
-      resolve(canvas.toDataURL('image/png'));
-    });
-  }));
-  if (!dataURL) throw new Error('Canvas not found for capture');
-  const base64 = dataURL.replace(/^data:image\/png;base64,/, '');
-  await writeFile(outputPath, Buffer.from(base64, 'base64'));
-  console.log(`✓ Saved: ${path.basename(outputPath)}`);
+async function waitForGameReady(page) {
+  // Wait for Pixi canvas to mount
+  await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
+  // Wait for WebGL context to be active
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return false;
+    const ctx = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    return !!ctx;
+  }, { timeout: 10_000 });
+  // Allow several frames for the full scene (terrain, buildings, UI) to render
+  await page.waitForTimeout(2000);
 }
 
 async function takeScreenshots() {
@@ -62,30 +62,32 @@ async function takeScreenshots() {
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
 
     console.log('Loading game page...');
-    await page.goto(`${BASE_URL}/game?preserve-canvas`, { waitUntil: 'load' });
+    await page.goto(`${BASE_URL}/game`, { waitUntil: 'load' });
+    await waitForGameReady(page);
+    console.log('✓ Game ready');
 
-    // Wait for canvas
-    await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
-    console.log('✓ Canvas loaded');
-
-    // Wait for initial render
-    await page.waitForTimeout(2000);
-
-    // Take map overview screenshot
+    // Full composite screenshot — captures canvas + all React UI overlays
     console.log('Capturing map overview...');
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'map-overview.png'));
+    await page.screenshot({
+      path: path.join(OUTPUT_DIR, 'map-overview.png'),
+      fullPage: false,
+    });
+    console.log(`✓ Saved: map-overview.png`);
 
-    // Pan around a bit and take another screenshot to show tile variants
-    console.log('Panning map and capturing variants...');
+    // Zoom in and capture a second view
+    console.log('Zooming in and capturing...');
     await page.evaluate(() => {
-      // Simulate arrow key or similar to pan the map
       const canvas = document.querySelector('canvas');
       if (canvas) {
         canvas.dispatchEvent(new WheelEvent('wheel', { deltaY: -200, bubbles: true }));
       }
     });
     await page.waitForTimeout(1000);
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'map-zoomed.png'));
+    await page.screenshot({
+      path: path.join(OUTPUT_DIR, 'map-zoomed.png'),
+      fullPage: false,
+    });
+    console.log(`✓ Saved: map-zoomed.png`);
 
     console.log(`\n✅ Screenshots saved to: ${OUTPUT_DIR}`);
   } finally {

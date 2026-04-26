@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -25,22 +25,18 @@ async function waitForServer(url, timeoutMs = 60_000) {
   throw new Error(`Dev server did not become ready within ${timeoutMs}ms: ${url}`);
 }
 
-/**
- * Capture the game canvas via canvas.toDataURL() (bypasses compositor).
- * Requires preserveDrawingBuffer: true on the Pixi Application.
- */
-async function captureCanvasToFile(page, outputPath) {
-  const dataURL = await page.evaluate(() => new Promise((resolve) => {
-    // Wait one RAF so Pixi has rendered the current frame.
-    requestAnimationFrame(() => {
-      const canvas = document.querySelector('canvas');
-      if (!canvas) { resolve(null); return; }
-      resolve(canvas.toDataURL('image/png'));
-    });
-  }));
-  if (!dataURL) throw new Error('Canvas not found for capture');
-  const base64 = dataURL.replace(/^data:image\/png;base64,/, '');
-  await writeFile(outputPath, Buffer.from(base64, 'base64'));
+async function waitForGameReady(page) {
+  // Wait for Pixi canvas to mount
+  await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
+  // Wait for at least one animation frame to be painted on the canvas
+  await page.waitForFunction(() => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) return false;
+    const ctx = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    return !!ctx;
+  }, { timeout: 10_000 });
+  // Allow several frames for the full scene (terrain, buildings, UI) to render
+  await page.waitForTimeout(2000);
 }
 
 async function takeScreenshots() {
@@ -64,17 +60,19 @@ async function takeScreenshots() {
     // Abort external font requests so they don't delay font readiness.
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
 
-    await page.goto(`${BASE_URL}/game?preserve-canvas`, { waitUntil: 'load' });
-    // Wait for PixiAppProvider to finish loading textures and mount the canvas.
-    await page.waitForFunction(() => !!document.querySelector('canvas'), { timeout: 30_000 });
-    // Allow several animation frames for Pixi to render the initial scene.
-    await page.waitForTimeout(1500);
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'game-overview.png'));
+    await page.goto(`${BASE_URL}/game`, { waitUntil: 'load' });
+    await waitForGameReady(page);
+
+    // Full composite screenshot — captures canvas + all React UI overlays
+    await page.screenshot({
+      path: path.join(OUTPUT_DIR, 'game-overview.png'),
+      fullPage: false,
+    });
 
     const heatmapToggle = page.getByLabel('Show footfall heatmap');
     if (await heatmapToggle.count() === 0) {
       throw new Error(
-        `heatmapToggle not found. Aborting page.screenshot for game-footfall-heatmap.png. ` +
+        `heatmapToggle not found. Aborting game-footfall-heatmap.png. ` +
         `Check DebugLogisticsPanel / NODE_ENV=development and ensure server is running at ${BASE_URL}. ` +
         `OUTPUT_DIR=${OUTPUT_DIR}`
       );
@@ -85,7 +83,10 @@ async function takeScreenshots() {
       return !!(checkbox && checkbox instanceof HTMLInputElement && checkbox.checked);
     });
     await page.waitForTimeout(500);
-    await captureCanvasToFile(page, path.join(OUTPUT_DIR, 'game-footfall-heatmap.png'));
+    await page.screenshot({
+      path: path.join(OUTPUT_DIR, 'game-footfall-heatmap.png'),
+      fullPage: false,
+    });
 
     await page.goto(`${BASE_URL}/debug`, { waitUntil: 'load' });
     await page.waitForFunction(() => document.body.textContent !== null && document.body.textContent.length > 0);
