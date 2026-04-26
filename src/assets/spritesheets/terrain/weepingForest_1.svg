@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <defs>
+    <filter id="blood-drop-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.5" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+  </defs>
+  <polygon points="0,96 64,128 64,144 0,112" fill="#1c0d0d" stroke="#1c0d0d" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#0a0505" stroke="#0a0505" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#2b1414" stroke="#2b1414" stroke-width="1" stroke-linejoin="round" />
+  <!-- V1: Drei kleinere Stümpfe -->
+  <ellipse cx="65" cy="75" rx="12" ry="4" fill="#8a0303" opacity="0.6" />
+  <ellipse cx="40" cy="88" rx="8" ry="3" fill="#8a0303" opacity="0.6" />
+  <ellipse cx="92" cy="92" rx="10" ry="3.5" fill="#8a0303" opacity="0.6" />
+  <path d="M 70,60 Q 80,65 85,62" fill="none" stroke="#3d0707" stroke-width="2" stroke-linecap="round" />
+  <g>
+    <path d="M 64,80 Q 60,70 70,60 Q 75,70 68,80" fill="#3d0707" />
+    <path d="M 70,60 Q 85,55 80,70 Q 65,75 55,65 Q 55,50 70,60 Z" fill="#6e1313" />
+    <path d="M 62,60 L 62,75" stroke="#d61a1a" stroke-width="1.5" stroke-linecap="round" />
+  </g>
+  <g>
+    <path d="M 40,95 Q 35,85 47,70 Q 53,85 45,95" fill="#4a0909" />
+    <path d="M 47,70 Q 60,65 57,80 Q 45,85 35,80 Q 30,65 47,70 Z" fill="#8a0303" />
+    <path d="M 40,73 L 40,85" stroke="#ff2a2a" stroke-width="2" stroke-linecap="round" filter="url(#blood-drop-glow)" />
+  </g>
+  <g>
+    <path d="M 90,105 Q 85,85 95,70 Q 103,85 97,105" fill="#5c0b0b" />
+    <path d="M 95,70 Q 115,65 110,85 Q 90,95 80,80 Q 75,60 95,70 Z" fill="#9c1c1c" />
+    <path d="M 87,77 L 87,90" stroke="#ff4545" stroke-width="2.5" stroke-linecap="round" filter="url(#blood-drop-glow)" />
+  </g>
+</svg>

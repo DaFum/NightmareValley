@@ -31,11 +31,12 @@ export function mapTerrainToIsoTiles(
       TILE_HEIGHT
     );
 
+    const variant = (hashStringToInt(tileId) % 2) + 1; // 2 variants (_1, _2)
     tiles.push({
       id: tileId,
       screenX: sx,
       screenY: sy,
-      textureKey: `terrain_${mapTile.terrain}`,
+      textureKey: `terrain_${mapTile.terrain}_${variant}`,
       chunkId: "0,0", // simplified
       resourceDeposit: mapTile.resourceDeposit,
       footfall: mapTile.footfall,
