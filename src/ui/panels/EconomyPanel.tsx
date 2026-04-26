@@ -4,6 +4,7 @@ import { useGameStore } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
 import { RECIPES } from '../../game/economy/recipes.data';
+import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
 
 const fmt1 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const fmtPct = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
@@ -77,8 +78,10 @@ export default function EconomyPanel(): JSX.Element | null {
 
       const inputVals = Object.values(b.inputBuffer).map(v => v ?? 0);
       const outputVals = Object.values(b.outputBuffer).map(v => v ?? 0);
+      const isVault = b.type === 'vaultOfDigestiveStone';
+      const outputLimit = isVault ? (DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit ?? 9999) : 6;
       const inputFill = inputVals.length ? Math.max(...inputVals) / 4 : 0;
-      const outputFill = outputVals.length ? Math.max(...outputVals) / 6 : 0;
+      const outputFill = outputVals.length ? Math.max(...outputVals) / outputLimit : 0;
 
       return {
         id: b.id,
