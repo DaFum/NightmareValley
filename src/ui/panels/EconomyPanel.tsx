@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
+import { RECIPES } from '../../game/economy/recipes.data';
 
 const fmt1 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const fmtPct = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
@@ -56,12 +57,22 @@ export default function EconomyPanel(): JSX.Element | null {
       let status = 'idle';
       if (!b.isActive) {
         status = 'disabled';
-      } else if ((b.corruption ?? 0) > 50) {
-        status = 'damaged';
       } else if (b.progressSec > 0) {
         status = 'working';
+      } else if ((b.corruption ?? 0) > 50) {
+        status = 'damaged';
       } else if (def.recipeIds && def.recipeIds.length > 0) {
-        status = 'waitingForInput';
+        // Check if the active recipe's inputs are satisfied
+        const activeRecipeId = b.currentRecipeId || def.recipeIds[0];
+        const recipe = activeRecipeId ? RECIPES[activeRecipeId] : undefined;
+        if (recipe) {
+          const hasAllInputs = Object.entries(recipe.inputs).every(
+            ([resource, required]) => (b.inputBuffer[resource as ResourceType] ?? 0) >= required
+          );
+          if (!hasAllInputs) {
+            status = 'waitingForInput';
+          }
+        }
       }
 
       const inputVals = Object.values(b.inputBuffer).map(v => v ?? 0);
@@ -126,8 +137,10 @@ export default function EconomyPanel(): JSX.Element | null {
   }, [buildings, transport.activeCarrierTasks]);
 
   const activeCarriers = Object.keys(transport.activeCarrierTasks).length;
+  const carriers = Object.values(workers).filter((w) => w.type === 'burdenThrall');
+  const totalCarriers = carriers.length;
+  const idleCarriers = carriers.filter((w) => w.isIdle).length;
   const totalWorkers = Object.keys(workers).length;
-  const idleWorkers = Object.values(workers).filter((w) => w.isIdle).length;
   const queuedJobs = transport.queuedJobCount ?? 0;
   const stress = fmt1.format(transport.networkStress);
   const latency = fmt1.format(transport.averageLatencySec);
@@ -194,8 +207,8 @@ export default function EconomyPanel(): JSX.Element | null {
           <section className="economy-panel__section" aria-label="Transport">
             <h3 className="economy-panel__section-title">Transport</h3>
             <dl className="econ-stat-grid">
-              <div><dt>Carriers</dt><dd>{activeCarriers} active / {totalWorkers - idleWorkers} busy</dd></div>
-              <div><dt>Idle workers</dt><dd>{idleWorkers}/{totalWorkers}</dd></div>
+              <div><dt>Carriers</dt><dd>{activeCarriers} active / {totalCarriers - idleCarriers} busy</dd></div>
+              <div><dt>Idle workers</dt><dd>{idleCarriers}/{totalCarriers}</dd></div>
               <div><dt>Queued jobs</dt><dd>{queuedJobs}</dd></div>
               <div><dt>Avg latency</dt><dd>{latency}s</dd></div>
               <div><dt>Net stress</dt><dd>{stress}</dd></div>
