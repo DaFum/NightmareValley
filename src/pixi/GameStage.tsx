@@ -10,7 +10,7 @@ import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 import IsoGhostPlacementLayer from './layers/IsoGhostPlacementLayer';
 
-import { useGameStore } from '../store/game.store';
+import { useGameStore, player1Id } from '../store/game.store';
 import { useUIStore } from '../store/ui.store';
 import { useCameraStore } from '../store/camera.store';
 import { useRenderStore } from '../store/render.store';
@@ -164,7 +164,7 @@ export function GameStage() {
     if (!ghostTile || !selectedBuildingToPlace) return false;
     const tileId = `tile_${ghostTile.x}_${ghostTile.y}`;
     const tile = territory.tiles[tileId];
-    if (!tile || tile.buildingId) return false;
+    if (!tile || tile.buildingId || tile.ownerId !== player1Id) return false;
     const def = BUILDING_DEFINITIONS[selectedBuildingToPlace];
     return def.allowedTerrain.includes(tile.terrain);
   }, [ghostTile, selectedBuildingToPlace, territory]);
