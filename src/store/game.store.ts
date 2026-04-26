@@ -192,6 +192,10 @@ function scenarioStock(profile: GameScenarioProfile): ResourceInventory {
   }
 }
 
+function initialStartingStock(profile: GameScenarioProfile): ResourceInventory {
+  return { ...scenarioStock(profile), sinewTimber: 100 };
+}
+
 const initialGameState: WorldState = {
   tick: 0,
   ageOfTeeth: 0,
@@ -202,7 +206,7 @@ const initialGameState: WorldState = {
     [player1Id]: {
       id: player1Id,
       name: "The First Ascendant",
-      stock: { ...scenarioStock('challenging'), sinewTimber: 100 },
+      stock: initialStartingStock('challenging'),
       buildings: [
         vaultId,
         harvesterId,
@@ -226,7 +230,7 @@ const initialGameState: WorldState = {
   },
   buildings: {
     [vaultId]: createStarterBuilding(vaultId, "vaultOfDigestiveStone", { x: 7, y: 7 }, [], {
-      outputBuffer: { ...scenarioStock('challenging'), sinewTimber: 100 },
+      outputBuffer: initialStartingStock('challenging'),
       internalStorage: {},
     }),
     [harvesterId]: createStarterBuilding(harvesterId, "organHarvester", { x: 5, y: 7 }, [timberExecId], {
@@ -265,7 +269,7 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
     (id) => state.buildings[id]?.type === "vaultOfDigestiveStone"
   );
   const vault = vaultId ? state.buildings[vaultId] : undefined;
-  const newStock = { ...scenarioStock(profile), sinewTimber: 100 };
+  const newStock = initialStartingStock(profile);
   return {
     ...state,
     scenarioProfile: profile,
@@ -506,7 +510,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setDeliveryPriority: (buildingId, priority) => {
     const { gameState } = get();
     const building = gameState.buildings[buildingId];
-    if (!building) return;
+    if (!building || !Number.isFinite(priority)) return;
     set({
       gameState: {
         ...gameState,
