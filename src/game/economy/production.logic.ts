@@ -8,11 +8,11 @@ import { ProductionRecipe } from "./recipes.types";
 import { RECIPES } from "./recipes.data";
 
 export function canAffordBuilding(
-  player: PlayerState,
+  inventory: ResourceInventory,
   buildingType: BuildingType
 ): boolean {
   const def = BUILDING_DEFINITIONS[buildingType];
-  return hasEnoughResources(player.stock, def.buildCost.resources);
+  return hasEnoughResources(inventory, def.buildCost.resources);
 }
 
 export function payBuildingCost(
@@ -63,12 +63,12 @@ export function getUpgradeCost(
 }
 
 export function canAffordUpgrade(
-  player: PlayerState,
+  inventory: ResourceInventory,
   building: BuildingInstance
 ): boolean {
   const cost = getUpgradeCost(building, building.level + 1);
   if (!cost) return false;
-  return hasEnoughResources(player.stock, cost.resources);
+  return hasEnoughResources(inventory, cost.resources);
 }
 
 export function processProduction(

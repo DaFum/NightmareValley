@@ -3,6 +3,7 @@ import { useGameStore } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordBuilding } from '../../game/economy/production.logic';
 import imageMap from '../../pixi/utils/vite-asset-loader';
+import { ResourceInventory } from '../../game/core/economy.types';
 
 export function BuildingMenu() {
   const { activePanel, togglePanel, selectedBuildingToPlace, selectBuildingToPlace } = useUIStore();
@@ -14,6 +15,21 @@ export function BuildingMenu() {
   const player = gameState.players[playerId];
 
   if (!player) return null;
+
+  // Aggregate vault outputBuffers directly — avoids relying on player.stock which can lag
+  // behind vault deductions until the next simulateTick syncs it.
+  const availableInventory: ResourceInventory = {} as ResourceInventory;
+  let hasVault = false;
+  for (const buildingId of player.buildings) {
+    const b = gameState.buildings[buildingId];
+    if (b?.type === 'vaultOfDigestiveStone') {
+      hasVault = true;
+      for (const [res, amt] of Object.entries(b.outputBuffer)) {
+        (availableInventory as Record<string, number>)[res] = ((availableInventory as Record<string, number>)[res] ?? 0) + (amt ?? 0);
+      }
+    }
+  }
+  const inventory = hasVault ? availableInventory : player.stock;
 
   const isOpen = activePanel === 'buildingMenu';
 
@@ -41,7 +57,7 @@ export function BuildingMenu() {
 
           <div className="building-list">
             {buildingsToRender.map(def => {
-              const canAfford = canAffordBuilding(player, def.type);
+              const canAfford = canAffordBuilding(inventory, def.type);
               const isSelected = selectedBuildingToPlace === def.type;
 
               return (

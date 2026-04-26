@@ -3,7 +3,7 @@ import { canAffordUpgrade, getUpgradeCost } from '../../game/economy/production.
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
 import { useShallow } from 'zustand/react/shallow';
-import { WorkerType, ResourceType } from '../../game/core/economy.types';
+import { WorkerType, ResourceType, ResourceInventory } from '../../game/core/economy.types';
 import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 
@@ -14,6 +14,25 @@ type BuildingInspectorProps = {
 export default function BuildingInspector({ buildingId }: BuildingInspectorProps): JSX.Element | null {
   const building = useGameStore((state) => state.gameState.buildings[buildingId]);
   const player = useGameStore((state) => building ? state.gameState.players[building.ownerId] : undefined);
+  const vaultInventory = useGameStore(
+    useShallow((state): ResourceInventory | null => {
+      if (!building) return null;
+      const p = state.gameState.players[building.ownerId];
+      if (!p) return null;
+      const merged: Record<string, number> = {};
+      let hasVault = false;
+      for (const bid of p.buildings) {
+        const b = state.gameState.buildings[bid];
+        if (b?.type === 'vaultOfDigestiveStone') {
+          hasVault = true;
+          for (const [res, amt] of Object.entries(b.outputBuffer)) {
+            merged[res] = (merged[res] ?? 0) + (amt ?? 0);
+          }
+        }
+      }
+      return hasVault ? (merged as ResourceInventory) : null;
+    })
+  );
   const workers = useGameStore(
     useShallow((state) => {
       if (!building) return {};
@@ -37,7 +56,8 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
   const upgradeCost = getUpgradeCost(building, building.level + 1);
-  const canUpgrade = canAffordUpgrade(player, building);
+  const inventory = vaultInventory ?? player.stock;
+  const canUpgrade = canAffordUpgrade(inventory, building);
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
