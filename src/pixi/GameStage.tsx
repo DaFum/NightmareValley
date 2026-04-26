@@ -146,7 +146,7 @@ export function GameStage() {
 
   const handlePointerMove = useCallback((event: PIXI.FederatedPointerEvent) => {
     if (!selectedBuildingToPlace) {
-      if (ghostTile !== null) setGhostTile(null);
+      setGhostTile(null);
       return;
     }
     const cx = centerX + cameraX;
@@ -158,7 +158,7 @@ export function GameStage() {
       if (prev?.x === tileX && prev?.y === tileY) return prev;
       return { x: tileX, y: tileY };
     });
-  }, [selectedBuildingToPlace, centerX, cameraX, centerY, cameraY, zoom, ghostTile]);
+  }, [selectedBuildingToPlace, centerX, cameraX, centerY, cameraY, zoom]);
 
   const isGhostValid = useMemo(() => {
     if (!ghostTile || !selectedBuildingToPlace) return false;
