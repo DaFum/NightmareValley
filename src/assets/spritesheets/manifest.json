@@ -1670,76 +1670,148 @@
   ],
   "terrain": {
     "assigned": {
-      "scarredEarth": {
-        "file": "terrain/scarredEarth.svg",
+      "ashBog_1": {
+        "file": "terrain/ashBog_1.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "weepingForest": {
-        "file": "terrain/weepingForest.svg",
+      "ashBog_2": {
+        "file": "terrain/ashBog_2.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "ribMountain": {
-        "file": "terrain/ribMountain.svg",
+      "cathedralRock_1": {
+        "file": "terrain/cathedralRock_1.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "placentaLake": {
-        "file": "terrain/placentaLake.svg",
+      "cathedralRock_2": {
+        "file": "terrain/cathedralRock_2.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "scarPath": {
-        "file": "terrain/scarPath.svg",
+      "occupiedScar_1": {
+        "file": "terrain/occupiedScar_1.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "occupiedScar": {
-        "file": "terrain/occupiedScar.svg",
+      "occupiedScar_2": {
+        "file": "terrain/occupiedScar_2.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "ashBog": {
-        "file": "terrain/ashBog.svg",
+      "placentaLake_1": {
+        "file": "terrain/placentaLake_1.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
         ]
       },
-      "cathedralRock": {
-        "file": "terrain/cathedralRock.svg",
+      "placentaLake_2": {
+        "file": "terrain/placentaLake_2.svg",
         "box": [
           0,
           0,
-          64,
-          32
+          128,
+          144
+        ]
+      },
+      "ribMountain_1": {
+        "file": "terrain/ribMountain_1.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "ribMountain_2": {
+        "file": "terrain/ribMountain_2.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "scarPath_1": {
+        "file": "terrain/scarPath_1.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "scarPath_2": {
+        "file": "terrain/scarPath_2.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "scarredEarth_1": {
+        "file": "terrain/scarredEarth_1.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "scarredEarth_2": {
+        "file": "terrain/scarredEarth_2.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "weepingForest_1": {
+        "file": "terrain/weepingForest_1.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
+        ]
+      },
+      "weepingForest_2": {
+        "file": "terrain/weepingForest_2.svg",
+        "box": [
+          0,
+          0,
+          128,
+          144
         ]
       }
     }

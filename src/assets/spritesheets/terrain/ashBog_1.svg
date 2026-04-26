@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <defs>
+    <filter id="smoke-blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" /></filter>
+    <radialGradient id="bog-center" cx="50%" cy="66%" r="40%">
+      <stop offset="0%" stop-color="#4d4d4d" /><stop offset="100%" stop-color="#2b2b2b" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <polygon points="0,96 64,128 64,144 0,112" fill="#1c1c1c" stroke="#1c1c1c" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#0a0a0a" stroke="#0a0a0a" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#2b2b2b" stroke="#2b2b2b" stroke-width="1" stroke-linejoin="round" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="url(#bog-center)" />
+  <path d="M 50,75 Q 70,72 80,85 Q 90,95 75,105 Q 45,110 40,95 Q 35,80 50,75" fill="#1a1a1a" />
+  <ellipse cx="45" cy="90" rx="14" ry="7" fill="#141414" /><ellipse cx="85" cy="95" rx="10" ry="5" fill="#1f1f1f" />
+  <circle cx="55" cy="85" r="2" fill="#404040" /><circle cx="45" cy="85" r="1" fill="#ff5500" filter="url(#smoke-blur)"/>
+  <circle cx="80" cy="100" r="0.8" fill="#ff7700"/>
+  <path d="M 50,90 Q 55,75 40,65 Q 35,60 40,55" fill="none" stroke="#a3a3a3" stroke-width="3" opacity="0.4" filter="url(#smoke-blur)" />
+</svg>

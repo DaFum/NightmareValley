@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <defs>
+    <radialGradient id="rock-center" cx="50%" cy="66%" r="40%">
+      <stop offset="0%" stop-color="#262626" /><stop offset="100%" stop-color="#141414" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="bone-light" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#b5a996" /><stop offset="100%" stop-color="#595246" /></linearGradient>
+    <linearGradient id="bone-dark" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#595246" /><stop offset="100%" stop-color="#1f1c18" /></linearGradient>
+  </defs>
+  <polygon points="0,96 64,128 64,144 0,112" fill="#141414" stroke="#141414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#050505" stroke="#050505" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#141414" stroke="#141414" stroke-width="1" stroke-linejoin="round" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="url(#rock-center)" />
+  <!-- V1: Großer zentraler Stein -->
+  <polygon points="64,105 85,90 64,55 45,90" fill="url(#bone-dark)" />
+  <polygon points="64,105 85,90 64,55" fill="url(#bone-light)" />
+  <path d="M 64,55 L 64,105" stroke="#141414" stroke-width="1.5" />
+  <polygon points="40,85 50,75 30,60 25,80" fill="url(#bone-dark)" />
+  <polygon points="40,85 50,75 30,60" fill="url(#bone-light)" />
+  <polygon points="55,95 58,92 60,94 56,97" fill="#b5a996" />
+</svg>

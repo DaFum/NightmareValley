@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <defs>
+    <filter id="magma-glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+  </defs>
+  <polygon points="0,96 64,128 64,144 0,112" fill="#2a1414" stroke="#2a1414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#170909" stroke="#170909" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#3d1c1c" stroke="#3d1c1c" stroke-width="1" stroke-linejoin="round" />
+
+  <!-- FIXIERTE ANSCHLÜSSE: NW(32,80) zu SE(96,112) UND SW(32,112) zu NE(96,80) -->
+  <!-- V1: Zwei kleine Vents -->
+  <ellipse cx="40" cy="85" rx="4" ry="2" fill="#140909" /><ellipse cx="40" cy="85" rx="2" ry="1" fill="#ff4545" filter="url(#magma-glow)" />
+  <ellipse cx="85" cy="90" rx="3" ry="1.5" fill="#140909" /><ellipse cx="85" cy="90" rx="1.5" ry="0.8" fill="#ff7a7a" filter="url(#magma-glow)" />
+  <circle cx="60" cy="80" r="0.8" fill="#170909" /><circle cx="75" cy="100" r="1" fill="#170909" />
+  <path d="M 32,80 L 45,88 L 52,85 L 64,96 L 75,108 L 85,105 L 96,112" fill="none" stroke="#8a0303" stroke-width="3" filter="url(#magma-glow)" />
+  <path d="M 32,80 L 45,88 L 52,85 L 64,96 L 75,108 L 85,105 L 96,112" fill="none" stroke="#ff4545" stroke-width="1" />
+  <path d="M 32,112 L 42,105 L 64,96 L 72,82 L 96,80" fill="none" stroke="#8a0303" stroke-width="2" filter="url(#magma-glow)" />
+  <path d="M 32,112 L 42,105 L 64,96 L 72,82 L 96,80" fill="none" stroke="#ff7a7a" stroke-width="0.5" />
+  <polygon points="40,90 55,95 45,105 30,100" fill="#331616" />
+</svg>

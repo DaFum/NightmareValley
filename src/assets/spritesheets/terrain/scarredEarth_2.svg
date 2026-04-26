@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <defs>
+    <filter id="magma-glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.5" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+  </defs>
+  <polygon points="0,96 64,128 64,144 0,112" fill="#2a1414" stroke="#2a1414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#170909" stroke="#170909" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#3d1c1c" stroke="#3d1c1c" stroke-width="1" stroke-linejoin="round" />
+
+  <!-- FIXIERTE ANSCHLÜSSE: NW(32,80) zu SE(96,112) UND SW(32,112) zu NE(96,80) -->
+  <!-- V2: Ein riesiger, brodelnder Zentralkrater -->
+  <ellipse cx="64" cy="96" rx="16" ry="8" fill="#140909" />
+  <ellipse cx="64" cy="96" rx="12" ry="6" fill="#ff2a2a" filter="url(#magma-glow)" />
+  <ellipse cx="64" cy="96" rx="6" ry="3" fill="#ffffff" opacity="0.8" />
+  <circle cx="55" cy="92" r="1.5" fill="#140909" /> <circle cx="70" cy="100" r="2" fill="#140909" />
+
+  <path d="M 32,80 Q 40,88 48,90" fill="none" stroke="#8a0303" stroke-width="3" filter="url(#magma-glow)" />
+  <path d="M 32,80 Q 40,88 48,90" fill="none" stroke="#ff4545" stroke-width="1" />
+
+  <path d="M 96,112 Q 88,104 80,102" fill="none" stroke="#8a0303" stroke-width="3" filter="url(#magma-glow)" />
+  <path d="M 96,112 Q 88,104 80,102" fill="none" stroke="#ff4545" stroke-width="1" />
+
+  <path d="M 32,112 Q 40,104 48,102" fill="none" stroke="#8a0303" stroke-width="2" filter="url(#magma-glow)" />
+  <path d="M 32,112 Q 40,104 48,102" fill="none" stroke="#ff7a7a" stroke-width="0.5" />
+
+  <path d="M 96,80 Q 88,88 80,90" fill="none" stroke="#8a0303" stroke-width="2" filter="url(#magma-glow)" />
+  <path d="M 96,80 Q 88,88 80,90" fill="none" stroke="#ff7a7a" stroke-width="0.5" />
+
+  <polygon points="20,95 30,100 25,105 15,100" fill="#331616" />
+  <polygon points="100,85 115,90 105,95 95,90" fill="#2e1414" />
+</svg>

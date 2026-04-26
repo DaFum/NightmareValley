@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 144">
+  <defs>
+    <radialGradient id="rock-center" cx="50%" cy="66%" r="40%">
+      <stop offset="0%" stop-color="#262626" /><stop offset="100%" stop-color="#141414" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="bone-light" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#b5a996" /><stop offset="100%" stop-color="#595246" /></linearGradient>
+    <linearGradient id="bone-dark" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#595246" /><stop offset="100%" stop-color="#1f1c18" /></linearGradient>
+  </defs>
+  <polygon points="0,96 64,128 64,144 0,112" fill="#141414" stroke="#141414" stroke-width="1" />
+  <polygon points="64,128 128,96 128,112 64,144" fill="#050505" stroke="#050505" stroke-width="1" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="#141414" stroke="#141414" stroke-width="1" stroke-linejoin="round" />
+  <polygon points="64,64 128,96 64,128 0,96" fill="url(#rock-center)" />
+  <!-- V2: Verstreute, flache Schiefer-Knochen -->
+  <polygon points="50,110 75,95 55,75 35,95" fill="url(#bone-dark)" />
+  <polygon points="50,110 75,95 55,75" fill="url(#bone-light)" />
+  <polygon points="95,95 110,85 95,70 80,85" fill="url(#bone-dark)" />
+  <polygon points="95,95 110,85 95,70" fill="url(#bone-light)" />
+  <!-- Massive Risse im flachen Stein -->
+  <path d="M 55,75 L 50,90 L 58,100" fill="none" stroke="#141414" stroke-width="1.5" />
+  <path d="M 95,70 L 92,85 L 100,90" fill="none" stroke="#141414" stroke-width="1" />
+  <polygon points="70,80 73,78 75,81" fill="#8c8579" />
+</svg>
