@@ -168,9 +168,10 @@ export function findTargetBuildingsForResource(
   // Settlers 2 warehouse-first routing:
   // production buildings deliver to vault; vault distributes to production buildings.
   // When source is a vault, never fall back to other vaults — that causes circular transport.
+  // Exclude full vaults from preferred so production falls back to direct delivery when all vaults are saturated.
   const preferred = sourceIsVault
     ? all.filter((b) => b.type !== "vaultOfDigestiveStone" && b.isActive)
-    : all.filter((b) => b.type === "vaultOfDigestiveStone" && b.isActive);
+    : all.filter((b) => b.type === "vaultOfDigestiveStone" && b.isActive && getBuildingResourceNeed(b, resourceType, config) > 0);
 
   const targets = (preferred.length > 0 || sourceIsVault) ? preferred : all;
 
