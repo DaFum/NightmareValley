@@ -232,6 +232,7 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
   if (!player) return state;
   return {
     ...state,
+    scenarioProfile: profile,
     players: {
       ...state.players,
       [player1Id]: {
