@@ -21,13 +21,87 @@ To run a single test file:
 npx jest --runInBand src/tests/core/transport.logic.test.ts
 ```
 
-## Playwright screenshots (quick usage)
+## Playwright screenshots
 
-- Install browser deps if needed: `npx playwright install chromium` (and on fresh Linux environments, `npx playwright install-deps chromium`).
-- Start the app locally on the expected host/port: `npm run dev -- --host 127.0.0.1 --port 4173 --strictPort`.
-- Use the dev server on **port 4173** (not `npm run preview`): the heatmap screenshot depends on development-only UI/flags.
-- Capture screenshots with: `npm run screenshot:playwright`.
-- Output files are written to `screenshots/`.
+Two scripts exist under `scripts/`:
+
+| Script | npm alias | What it captures |
+|--------|-----------|-----------------|
+| `scripts/playwright-screenshots.mjs` | `npm run screenshot:playwright` | `game-overview.png`, `game-footfall-heatmap.png` (dev only), `debug-route.png` (dev only) |
+| `scripts/screenshot-map.mjs` | _(run directly)_ | `map-overview.png`, `map-zoomed.png` |
+
+Output is written to `screenshots/` (gitignored — do **not** commit generated screenshots).
+
+### Step-by-step
+
+```bash
+# 1 — Install browser binaries (first time or after playwright version bump)
+npx playwright install chromium
+npx playwright install-deps chromium   # Linux only: system libs for Chromium
+
+# 2a — Basic screenshots (map + UI, no debug panels)
+npm run build:vite        # build production bundle
+npm run preview &         # serves on http://127.0.0.1:4173
+npm run screenshot:playwright
+
+# 2b — Full screenshots including heatmap and /debug route (requires __DEV__=true)
+npm run dev &             # serves on http://127.0.0.1:5173 — edit PORT in the script if needed
+node scripts/playwright-screenshots.mjs
+```
+
+### What the scripts capture
+
+The game renders in two layers that must both appear in the screenshot:
+
+1. **Pixi canvas** — the isometric map drawn via WebGL (`<canvas>` element)
+2. **React UI overlays** — HUD, resource bar, panels, buttons (regular HTML on top of the canvas)
+
+`canvas.toDataURL()` only reads the WebGL framebuffer — it misses all React UI. `page.screenshot()` captures both, but hangs in headless Chrome because the game's `requestAnimationFrame` loop keeps the main thread continuously busy. The scripts therefore use a direct CDP call:
+
+```js
+const client = await page.context().newCDPSession(page);
+const { data } = await client.send('Page.captureScreenshot', {
+  format: 'png', fromSurface: true, captureBeyondViewport: false,
+});
+```
+
+This bypasses Playwright's internal wait logic and returns immediately.
+
+### Required Chromium flags
+
+```
+--no-sandbox             # required in most CI / container environments
+--disable-dev-shm-usage  # prevents crashes when /dev/shm is small (Docker default)
+--disable-gpu            # avoids GPU compositor hangs in headless mode
+--disable-web-security   # allows cross-origin canvas reads if needed
+--ignore-certificate-errors
+```
+
+**Do not use `--use-gl=swiftshader`** — it causes the CDP screenshot pipeline to hang indefinitely.
+
+`preserveDrawingBuffer` on the Pixi Stage is only required for `canvas.toDataURL()`. The CDP approach does not need it, so the `?preserve-canvas` query param is no longer added to the URL.
+
+### DEV-gated features
+
+These features only render when the app is served with `__DEV__ = true` (the Vite dev server):
+
+| Feature | Guard | Required for |
+|---------|-------|--------------|
+| `DebugLogisticsPanel` (footfall heatmap toggle) | `IS_DEV = __DEV__` in `GameLayout.tsx` | `game-footfall-heatmap.png` |
+| `/debug` route | `DEBUG_ROUTE_ENABLED = __DEV__` in `App.tsx` | `debug-route.png` |
+
+When running against the production preview (`npm run preview`), the scripts skip these screenshots with a console warning rather than failing.
+
+### Common failure modes
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `page.screenshot: Timeout 30000ms exceeded` | Game RAF loop keeps CDP busy | Use `Page.captureScreenshot` via CDP session (already done) |
+| `page.waitForFunction Timeout` for canvas | Missing `--no-sandbox` / `--disable-dev-shm-usage`; Pixi WebGL init failed | Add flags; check `[page error]` lines in output |
+| Canvas present but shows only dark background | `--use-gl=swiftshader` caused GPU hang before first paint | Remove `--use-gl=swiftshader` |
+| Heatmap / debug screenshots skipped | Running against `npm run preview` (production, `__DEV__=false`) | Run against `npm run dev` on port 5173 |
+| Screenshots show only the canvas, no UI panels | Old `captureCanvasToFile` using `canvas.toDataURL()` | Use the CDP approach — `page.screenshot()` or direct CDP capture |
+| `net::ERR_CERT_AUTHORITY_INVALID` in console | Self-signed cert | Already handled by `--ignore-certificate-errors` and `--disable-web-security` |
 
 ## High-signal workflow for agents
 
@@ -131,7 +205,11 @@ Use `ISO_TILE_WIDTH` / `ISO_TILE_HEIGHT` / `HALF_TILE_HEIGHT` from `iso.constant
 
 ## Common pitfalls to avoid
 
-- Running screenshot capture against `npm run preview` instead of dev server port 4173.
+- Using `canvas.toDataURL()` for screenshots — misses React UI overlays; use the CDP session approach in `scripts/playwright-screenshots.mjs`.
+- Using `page.screenshot()` in screenshot scripts — the game RAF loop causes a 30 s timeout; use `Page.captureScreenshot` via CDP session.
+- Adding `--use-gl=swiftshader` to Chromium launch args — hangs the CDP screenshot pipeline; use `--disable-gpu` + `--disable-dev-shm-usage` instead.
+- Capturing heatmap/debug screenshots against `npm run preview` — those panels require `__DEV__=true`; run against `npm run dev` (port 5173).
+- Leaving generated screenshots tracked in git — `screenshots/` is gitignored.
 - Using `npm install` instead of `npm ci` — always use `ci` for reproducible installs.
 - Reading `player.stock` for affordability — it is a stale derived view; aggregate vault outputBuffers directly.
 - Adding vault-to-vault transport routes — creates circular transport loops.

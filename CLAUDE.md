@@ -174,5 +174,25 @@ npx jest --runInBand src/tests/core/economy.simulation.test.ts    # Economy simu
 - Do **not** skip the `Number.isFinite` guard in `setDeliveryPriority` — `Math.max(1, Math.min(5, NaN))` returns NaN.
 - Do **not** call full A* pathfinding inside `.sort()` comparators — use Manhattan distance heuristics.
 - Do **not** omit the ownership check (`tile.ownerId === player1Id`) from ghost placement validity.
-- Running screenshot capture against `npm run preview` instead of dev server port 4173.
-- Leaving generated screenshots tracked in git.
+- Do **not** use `canvas.toDataURL()` for screenshots — it only captures the WebGL canvas and misses all React UI overlays. Use the CDP `Page.captureScreenshot` call (see `scripts/playwright-screenshots.mjs`).
+- Do **not** use `page.screenshot()` directly in the screenshot scripts — the game's RAF loop keeps the main thread busy and causes a 30 s timeout. Use the CDP session approach instead.
+- Do **not** add `--use-gl=swiftshader` to Chromium launch args — it causes the CDP screenshot pipeline to hang. Use `--disable-gpu` + `--disable-dev-shm-usage`.
+- Leaving generated screenshots tracked in git — `screenshots/` is gitignored; never commit its contents.
+
+## Screenshots
+
+Two scripts capture the game in its running state:
+
+```bash
+npm run build:vite && npm run preview &   # port 4173 — production build
+npm run screenshot:playwright             # → screenshots/game-overview.png
+
+npm run dev &                             # port 5173 — dev server (__DEV__=true)
+node scripts/playwright-screenshots.mjs  # also captures heatmap + /debug route
+```
+
+**Why CDP instead of `page.screenshot()`:** The game runs a continuous `requestAnimationFrame` loop. This keeps the Chromium main thread permanently busy, causing Playwright's `page.screenshot()` to time out waiting for an idle moment. Sending `Page.captureScreenshot` directly over a CDP session bypasses that wait.
+
+**DEV-gated screenshots:** `DebugLogisticsPanel` (footfall heatmap toggle) and the `/debug` route are only rendered when `__DEV__ = true`. Running the script against `npm run preview` skips those two screenshots with a warning — this is expected.
+
+**`preserveDrawingBuffer`:** Only needed for `canvas.toDataURL()`. The CDP approach does not require it; do not add `?preserve-canvas` to the URL in screenshot scripts.
