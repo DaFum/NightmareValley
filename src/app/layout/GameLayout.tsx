@@ -4,6 +4,7 @@ import { TopHud } from '../../ui/hud/TopHud';
 import InspectorPanel from '../../ui/panels/InspectorPanel';
 import DebugLogisticsPanel from '../../ui/panels/DebugLogisticsPanel';
 import EconomyPanel from '../../ui/panels/EconomyPanel';
+import WarehousePanel from '../../ui/panels/WarehousePanel';
 import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import { HudLayout } from './HudLayout';
 import { useResponsiveLayout } from './useResponsiveLayout';
@@ -22,6 +23,7 @@ export type GameLayoutProps = {
 
 const defaultBottomDock = (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+    <WarehousePanel />
     <EconomyPanel />
     <BuildingMenu />
   </div>

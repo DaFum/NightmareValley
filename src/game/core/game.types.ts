@@ -30,6 +30,13 @@ export interface BuildingInstance {
   constructionProgress?: number;
   liturgy?: string;
   corruption?: number;
+  /**
+   * Siedler-2 style delivery controls.
+   * deliveryPriority: 1 (low) – 5 (high), default 3.
+   * pausedInputs: resources whose delivery to this building is suspended.
+   */
+  deliveryPriority?: number;
+  pausedInputs?: Partial<Record<ResourceType, boolean>>;
 }
 
 export interface WorkerInstance {

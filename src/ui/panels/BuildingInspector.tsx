@@ -2,7 +2,8 @@ import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/econom
 import { canAffordUpgrade, getUpgradeCost } from '../../game/economy/production.logic';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
-import { WorkerType } from '../../game/core/economy.types';
+import { WorkerType, ResourceType } from '../../game/core/economy.types';
+import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 
 type BuildingInspectorProps = {
@@ -17,6 +18,8 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
   const connectBuildingAt = useGameStore((state) => state.connectBuildingAt);
   const toggleBuildingActive = useGameStore((state) => state.toggleBuildingActive);
   const spawnAndAssignWorker = useGameStore((state) => state.spawnAndAssignWorker);
+  const setDeliveryPriority = useGameStore((state) => state.setDeliveryPriority);
+  const togglePausedInput = useGameStore((state) => state.togglePausedInput);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!building || !player) return null;
@@ -93,6 +96,12 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         workers={workers}
         onHire={(workerType) => spawnAndAssignWorker(building.ownerId, workerType, building.id)}
       />
+
+      <DeliveryControlsSection
+        building={building}
+        onSetPriority={(p) => setDeliveryPriority(building.id, p)}
+        onTogglePause={(r) => togglePausedInput(building.id, r)}
+      />
     </aside>
   );
 }
@@ -153,6 +162,71 @@ function WorkerSlotsSection({ building, player, workers, onHire }: WorkerSlotsSe
           );
         })}
       </div>
+    </section>
+  );
+}
+
+type DeliveryControlsSectionProps = {
+  building: import('../../game/core/game.types').BuildingInstance;
+  onSetPriority: (priority: number) => void;
+  onTogglePause: (resource: ResourceType) => void;
+};
+
+function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: DeliveryControlsSectionProps) {
+  const def = BUILDING_DEFINITIONS[building.type];
+  const priority = building.deliveryPriority ?? 3;
+
+  const inputResources = new Set<ResourceType>();
+  for (const recipeId of def.recipeIds ?? []) {
+    const recipe = RECIPES[recipeId];
+    if (!recipe) continue;
+    for (const r of Object.keys(recipe.inputs) as ResourceType[]) {
+      inputResources.add(r);
+    }
+  }
+
+  return (
+    <section className="inventory-block">
+      <h3>Delivery Controls</h3>
+      <div className="delivery-priority-row">
+        <span>Priority</span>
+        <div className="delivery-priority-btns">
+          {[1, 2, 3, 4, 5].map((p) => (
+            <button
+              key={p}
+              className={`hud-button delivery-priority-btn${priority === p ? ' delivery-priority-btn--active' : ''}`}
+              onClick={() => onSetPriority(p)}
+              title={`Set delivery priority ${p}`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+      {inputResources.size > 0 && (
+        <div className="delivery-pause-list">
+          <span className="delivery-pause-label">Pause delivery</span>
+          {Array.from(inputResources).map((r) => {
+            const paused = building.pausedInputs?.[r] ?? false;
+            const imgSrc = imageMap[`resources/${r}.png`];
+            return (
+              <button
+                key={r}
+                className={`hud-button resource-pill delivery-pause-btn${paused ? ' delivery-pause-btn--paused' : ''}`}
+                onClick={() => onTogglePause(r)}
+                title={`${paused ? 'Resume' : 'Pause'} delivery of ${r}`}
+              >
+                {imgSrc ? (
+                  <img src={imgSrc} alt="" aria-hidden="true" />
+                ) : (
+                  <span>{(r.charAt(0) || '?').toUpperCase()}</span>
+                )}
+                {paused ? '✕' : '✓'}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

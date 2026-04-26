@@ -158,12 +158,23 @@ export function findTargetBuildingsForResource(
   resourceType: ResourceType,
   config: SimulationConfig
 ): BuildingInstance[] {
-  const buildings = Object.values(state.buildings)
+  const sourceIsVault = source.type === "vaultOfDigestiveStone";
+
+  const all = Object.values(state.buildings)
     .filter((b) => b.ownerId === source.ownerId)
     .filter((b) => b.id !== source.id)
     .filter((b) => buildingAcceptsResource(b, resourceType));
 
-  return buildings.sort((a, b) => {
+  // Settlers 2 warehouse-first routing:
+  // production buildings deliver to vault; vault distributes to production buildings.
+  // When source is a vault, never fall back to other vaults — that causes circular transport.
+  const preferred = sourceIsVault
+    ? all.filter((b) => b.type !== "vaultOfDigestiveStone")
+    : all.filter((b) => b.type === "vaultOfDigestiveStone");
+
+  const targets = (preferred.length > 0 || sourceIsVault) ? preferred : all;
+
+  return targets.sort((a, b) => {
     const aNeed = getBuildingResourceNeed(a, resourceType, config);
     const bNeed = getBuildingResourceNeed(b, resourceType, config);
 
@@ -182,6 +193,8 @@ export function buildingAcceptsResource(
   building: BuildingInstance,
   resourceType: ResourceType
 ): boolean {
+  if (building.pausedInputs?.[resourceType]) return false;
+
   const def = BUILDING_DEFINITIONS[building.type];
 
   if (def.recipeIds?.length) {
@@ -211,10 +224,8 @@ export function getBuildingResourceNeed(
   const def = BUILDING_DEFINITIONS[building.type];
 
   if (def.type === "vaultOfDigestiveStone") {
-    const current =
-      getResourceAmount(building.internalStorage, resourceType) +
-      getResourceAmount(building.inputBuffer, resourceType);
-    return Math.max(0, 999 - current);
+    const current = getResourceAmount(building.outputBuffer ?? {}, resourceType);
+    return Math.max(0, (config.warehouseStorageLimit ?? 9999) - current);
   }
 
   let needed = 0;
@@ -245,20 +256,21 @@ export function getTransportPriority(
   config: SimulationConfig
 ): number {
   const def = BUILDING_DEFINITIONS[target.type];
+  const deliveryBonus = ((target.deliveryPriority ?? 3) - 3) * 5; // maps 1-5 to -10..+10
 
-  if (def.inputPriority?.includes(resourceType)) {
-    return config.defaultTransportPriority + 10;
+  if (target.type === "vaultOfDigestiveStone") {
+    return config.defaultTransportPriority + 15; // vault collects before production distributes
   }
 
   if (target.type === "pitOfWarBirth") {
-    return config.defaultTransportPriority + 20;
+    return config.defaultTransportPriority + deliveryBonus + 20;
   }
 
-  if (target.type === "vaultOfDigestiveStone") {
-    return config.defaultTransportPriority - 5;
+  if (def.inputPriority?.includes(resourceType)) {
+    return config.defaultTransportPriority + deliveryBonus + 10;
   }
 
-  return config.defaultTransportPriority;
+  return config.defaultTransportPriority + deliveryBonus;
 }
 
 export function makeTransportSignature(job: TransportJob): string {
@@ -550,7 +562,7 @@ export function advanceCarrierMovement(
         task.stepProgress = 0;
       } else if (task.phase === "toDropoff") {
         if (target.type === "vaultOfDigestiveStone") {
-          target.internalStorage = addResource(target.internalStorage, task.resourceType, task.amount);
+          target.outputBuffer = addResource(target.outputBuffer, task.resourceType, task.amount);
         } else {
           target.inputBuffer = addResource(target.inputBuffer, task.resourceType, task.amount);
         }

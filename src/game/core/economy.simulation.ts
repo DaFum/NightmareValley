@@ -166,6 +166,24 @@ export function createId(prefix: string): string {
 }
 
 // =========================
+// VAULT ↔ STOCK SYNC
+// =========================
+
+export function syncStockFromVaults(state: EconomySimulationState): EconomySimulationState {
+  for (const player of Object.values(state.players)) {
+    const merged: Partial<Record<ResourceType, number>> = {};
+    for (const buildingId of player.buildings) {
+      const building = state.buildings[buildingId];
+      if (building && building.type === "vaultOfDigestiveStone") {
+        mergeInventoryInto(merged, building.outputBuffer);
+      }
+    }
+    player.stock = merged as ResourceInventory;
+  }
+  return state;
+}
+
+// =========================
 // BUILD / UPGRADE / SPAWN HELPERS
 // =========================
 
@@ -246,12 +264,20 @@ export function placeBuilding(
     throw new Error(`Tile ${tileId} rejects ${buildingType}`);
   }
 
-  if (!hasEnoughResources(player.stock, def.buildCost.resources)) {
+  const vault = Object.values(next.buildings).find(
+    (b) => b.ownerId === ownerId && b.type === "vaultOfDigestiveStone"
+  );
+  const costSource = vault ? vault.outputBuffer : player.stock;
+  if (!hasEnoughResources(costSource, def.buildCost.resources)) {
     throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
   }
 
   for (const [resource, amount] of Object.entries(def.buildCost.resources)) {
-    player.stock = removeResource(player.stock, resource as ResourceType, amount ?? 0);
+    if (vault) {
+      vault.outputBuffer = removeResource(vault.outputBuffer, resource as ResourceType, amount ?? 0);
+    } else {
+      player.stock = removeResource(player.stock, resource as ResourceType, amount ?? 0);
+    }
   }
 
   const buildingId = createId("building");
@@ -306,12 +332,20 @@ export function upgradeBuilding(
     throw new Error(`Building ${buildingId} cannot ascend further`);
   }
 
-  if (!hasEnoughResources(player.stock, cost.resources)) {
+  const vault = Object.values(next.buildings).find(
+    (b) => b.ownerId === ownerId && b.type === "vaultOfDigestiveStone"
+  );
+  const costSource = vault ? vault.outputBuffer : player.stock;
+  if (!hasEnoughResources(costSource, cost.resources)) {
     throw new Error(`Upgrade denied by inventory`);
   }
 
   for (const [resource, amount] of Object.entries(cost.resources)) {
-    player.stock = removeResource(player.stock, resource as ResourceType, amount ?? 0);
+    if (vault) {
+      vault.outputBuffer = removeResource(vault.outputBuffer, resource as ResourceType, amount ?? 0);
+    } else {
+      player.stock = removeResource(player.stock, resource as ResourceType, amount ?? 0);
+    }
   }
 
   building.level += 1;
@@ -457,6 +491,7 @@ export function simulateTick(
   next = decayFootfall(next, config);
   next = updateTransportMetrics(next, config);
   next = updateWorldPulse(next);
+  next = syncStockFromVaults(next);
 
   return next;
 }

@@ -55,6 +55,8 @@ export interface GameStore {
   dispatchDebugJobsFromHQ: (count: number, resourceType: import("../game/core/economy.types").ResourceType) => void;
   resetFootfall: () => void;
   spawnAndAssignWorker: (ownerId: string, workerType: WorkerType, buildingId: string) => void;
+  setDeliveryPriority: (buildingId: string, priority: number) => void;
+  togglePausedInput: (buildingId: string, resourceType: import("../game/core/economy.types").ResourceType) => void;
 }
 
 
@@ -200,7 +202,7 @@ const initialGameState: WorldState = {
     [player1Id]: {
       id: player1Id,
       name: "The First Ascendant",
-      stock: scenarioStock('challenging'),
+      stock: { ...scenarioStock('challenging'), sinewTimber: 100 },
       buildings: [
         vaultId,
         harvesterId,
@@ -224,8 +226,8 @@ const initialGameState: WorldState = {
   },
   buildings: {
     [vaultId]: createStarterBuilding(vaultId, "vaultOfDigestiveStone", { x: 7, y: 7 }, [], {
-      internalStorage: { sinewTimber: 60, toothPlanks: 20 },
-      outputBuffer: { sinewTimber: 40 },
+      outputBuffer: { ...scenarioStock('challenging'), sinewTimber: 100 },
+      internalStorage: {},
     }),
     [harvesterId]: createStarterBuilding(harvesterId, "organHarvester", { x: 5, y: 7 }, [timberExecId], {
       outputBuffer: {},
@@ -259,16 +261,20 @@ const initialGameState: WorldState = {
 function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): WorldState {
   const player = state.players[player1Id];
   if (!player) return state;
+  const vault = Object.values(state.buildings).find(
+    (b) => b.ownerId === player1Id && b.type === "vaultOfDigestiveStone"
+  );
+  const newStock = { ...scenarioStock(profile), sinewTimber: 100 };
   return {
     ...state,
     scenarioProfile: profile,
     players: {
       ...state.players,
-      [player1Id]: {
-        ...player,
-        stock: scenarioStock(profile),
-      },
+      [player1Id]: { ...player, stock: newStock },
     },
+    buildings: vault
+      ? { ...state.buildings, [vault.id]: { ...vault, outputBuffer: newStock } }
+      : state.buildings,
   };
 }
 
@@ -494,5 +500,39 @@ export const useGameStore = create<GameStore>((set, get) => ({
       console.error("Failed to spawn worker:", error);
       set({ lastError: toRuntimeIssue(error, 'WORKER_SPAWN_FAILURE', 'spawnAndAssignWorker', get().gameState.tick) });
     }
+  },
+
+  setDeliveryPriority: (buildingId, priority) => {
+    const { gameState } = get();
+    const building = gameState.buildings[buildingId];
+    if (!building) return;
+    set({
+      gameState: {
+        ...gameState,
+        buildings: {
+          ...gameState.buildings,
+          [buildingId]: { ...building, deliveryPriority: Math.max(1, Math.min(5, priority)) },
+        },
+      },
+    });
+  },
+
+  togglePausedInput: (buildingId, resourceType) => {
+    const { gameState } = get();
+    const building = gameState.buildings[buildingId];
+    if (!building) return;
+    const current = building.pausedInputs?.[resourceType] ?? false;
+    set({
+      gameState: {
+        ...gameState,
+        buildings: {
+          ...gameState.buildings,
+          [buildingId]: {
+            ...building,
+            pausedInputs: { ...building.pausedInputs, [resourceType]: !current },
+          },
+        },
+      },
+    });
   },
 }));
