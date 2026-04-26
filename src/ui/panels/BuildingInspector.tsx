@@ -2,6 +2,7 @@ import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/econom
 import { canAffordUpgrade, getUpgradeCost } from '../../game/economy/production.logic';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
+import { useShallow } from 'zustand/react/shallow';
 import { WorkerType, ResourceType } from '../../game/core/economy.types';
 import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
@@ -13,7 +14,17 @@ type BuildingInspectorProps = {
 export default function BuildingInspector({ buildingId }: BuildingInspectorProps): JSX.Element | null {
   const building = useGameStore((state) => state.gameState.buildings[buildingId]);
   const player = useGameStore((state) => building ? state.gameState.players[building.ownerId] : undefined);
-  const workers = useGameStore((state) => state.gameState.workers);
+  const workers = useGameStore(
+    useShallow((state) => {
+      if (!building) return {};
+      const result: Record<string, typeof state.gameState.workers[string]> = {};
+      for (const workerId of building.assignedWorkers) {
+        const worker = state.gameState.workers[workerId];
+        if (worker) result[workerId] = worker;
+      }
+      return result;
+    })
+  );
   const upgradeBuildingAt = useGameStore((state) => state.upgradeBuildingAt);
   const connectBuildingAt = useGameStore((state) => state.connectBuildingAt);
   const toggleBuildingActive = useGameStore((state) => state.toggleBuildingActive);
