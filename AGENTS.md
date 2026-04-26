@@ -16,6 +16,7 @@ npm run preview      # Preview the Vite build locally
 Requires Node 18+. There is no configured linter.
 
 To run a single test file:
+
 ```bash
 npx jest --runInBand src/tests/core/transport.logic.test.ts
 ```
@@ -53,27 +54,32 @@ npx jest --runInBand src/tests/core/transport.logic.test.ts
 The economy uses a warehouse-first logistics model. Read this before touching any economy, transport, UI affordability, or ghost-placement code.
 
 ### Vault as authoritative storage
+
 - `vaultOfDigestiveStone` buildings hold the player's resources in their `outputBuffer`.
 - `player.stock` is a **derived read-only view** synced by `syncStockFromVaults()`, which runs at the end of every `simulateTick` and immediately after `placeBuilding`/`upgradeBuilding` in `game.store.ts`.
 - **Never read `player.stock` for affordability decisions.** Aggregate vault `outputBuffer`s directly (see `BuildingMenu.tsx`, `BuildingInspector.tsx`).
 
 ### Affordability API
+
 - `canAffordBuilding(inventory: ResourceInventory, buildingType)` — accepts a `ResourceInventory`, not a `PlayerState`.
 - `canAffordUpgrade(inventory: ResourceInventory, building)` — same; accepts `ResourceInventory` directly.
 - Callers must compute `inventory` by aggregating vault outputBuffers before calling these functions.
 
 ### Transport routing invariants
+
 - Production output → nearest vault (preferred). Vault → production buildings needing the resource.
 - Full vaults (`getBuildingResourceNeed == 0`) are excluded from preferred targets; falls back to direct production-to-production delivery.
 - **Vault → vault routing is forbidden.** `findTargetBuildingsForResource` enforces this.
 - Delivery priority (1–5, default 3) and per-resource `pausedInputs` are respected; hidden in UI for vaults.
 
 ### player1Id
+
 - `player1Id` is exported from `src/store/game.store.ts`.
 - Used in ghost placement validity (`tile.ownerId === player1Id`) and WarehousePanel ownership filtering.
 - Import it from `game.store.ts`, never hardcode a player ID string.
 
 ### Buffer limits
+
 | Buffer | Limit |
 |--------|-------|
 | Production building inputBuffer | 4 units |

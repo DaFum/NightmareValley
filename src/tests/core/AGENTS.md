@@ -47,6 +47,7 @@ These scenarios must have explicit test coverage. Add a test if any of the follo
 - Verify that the functions return `true`/`false` based on the provided inventory, not on `player.stock`.
 
 Example fixture pattern:
+
 ```typescript
 const inventory: ResourceInventory = { toothPlanks: 10, sepulcherStone: 5 } as ResourceInventory;
 expect(canAffordBuilding(inventory, 'organHarvester')).toBe(true);

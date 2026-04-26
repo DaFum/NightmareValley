@@ -194,6 +194,54 @@ export function syncStockFromVaults(state: EconomySimulationState): EconomySimul
 // BUILD / UPGRADE / SPAWN HELPERS
 // =========================
 
+export function getOwnerVaults(state: EconomySimulationState, ownerId: string): BuildingInstance[] {
+  const player = state.players[ownerId];
+  if (!player) return [];
+  const vaults: BuildingInstance[] = [];
+  for (const playerBuildingId of player.buildings) {
+    const b = state.buildings[playerBuildingId];
+    if (b && b.type === "vaultOfDigestiveStone") {
+      vaults.push(b);
+    }
+  }
+  return vaults;
+}
+
+// Checks affordability across vaults (or player.stock if none), then deducts in-place.
+// Caller must pass vault/player references from already-cloned state.
+function deductAcrossVaults(
+  vaults: BuildingInstance[],
+  player: PlayerState,
+  costs: Partial<Record<ResourceType, number>>
+): void {
+  let affordabilitySource: ResourceInventory = player.stock;
+  if (vaults.length > 0) {
+    affordabilitySource = {};
+    for (const v of vaults) {
+      mergeInventoryInto(affordabilitySource, v.outputBuffer);
+    }
+  }
+  if (!hasEnoughResources(affordabilitySource, costs)) {
+    throw new Error("Insufficient resources");
+  }
+  for (const [resource, amount] of Object.entries(costs)) {
+    let remaining = amount ?? 0;
+    if (vaults.length > 0) {
+      for (const vault of vaults) {
+        const available = getResourceAmount(vault.outputBuffer, resource as ResourceType);
+        const toRemove = Math.min(available, remaining);
+        if (toRemove > 0) {
+          vault.outputBuffer = removeResource(vault.outputBuffer, resource as ResourceType, toRemove);
+          remaining -= toRemove;
+        }
+        if (remaining <= 0) break;
+      }
+    } else {
+      player.stock = removeResource(player.stock, resource as ResourceType, remaining);
+    }
+  }
+}
+
 export function spawnWorker(
   state: EconomySimulationState,
   ownerId: string,
@@ -271,45 +319,11 @@ export function placeBuilding(
     throw new Error(`Tile ${tileId} rejects ${buildingType}`);
   }
 
-  // Collect all vaults for this player
-  const vaults: BuildingInstance[] = [];
-  for (const buildingId of player.buildings) {
-    const b = next.buildings[buildingId];
-    if (b && b.type === "vaultOfDigestiveStone") {
-      vaults.push(b);
-    }
-  }
-
-  // Check affordability across all vaults
-  let affordabilitySource: ResourceInventory = player.stock;
-  if (vaults.length > 0) {
-    affordabilitySource = {};
-    for (const v of vaults) {
-      mergeInventoryInto(affordabilitySource, v.outputBuffer);
-    }
-  }
-
-  if (!hasEnoughResources(affordabilitySource, def.buildCost.resources)) {
+  const vaults = getOwnerVaults(next, ownerId);
+  try {
+    deductAcrossVaults(vaults, player, def.buildCost.resources);
+  } catch {
     throw new Error(`Player ${ownerId} cannot afford ${buildingType}`);
-  }
-
-  // Deduct from vaults (or player.stock if no vaults)
-  for (const [resource, amount] of Object.entries(def.buildCost.resources)) {
-    let remaining = amount ?? 0;
-    if (vaults.length > 0) {
-      // Deduct from vaults in order until satisfied
-      for (const vault of vaults) {
-        const available = getResourceAmount(vault.outputBuffer, resource as ResourceType);
-        const toRemove = Math.min(available, remaining);
-        if (toRemove > 0) {
-          vault.outputBuffer = removeResource(vault.outputBuffer, resource as ResourceType, toRemove);
-          remaining -= toRemove;
-        }
-        if (remaining <= 0) break;
-      }
-    } else {
-      player.stock = removeResource(player.stock, resource as ResourceType, remaining);
-    }
   }
 
   const buildingId = createId("building");
@@ -323,7 +337,7 @@ export function placeBuilding(
   tile.buildingId = buildingId;
   player.buildings.push(buildingId);
 
-  return next;
+  return syncStockFromVaults(next);
 }
 
 export function connectBuildingToRoad(
@@ -364,51 +378,17 @@ export function upgradeBuilding(
     throw new Error(`Building ${buildingId} cannot ascend further`);
   }
 
-  // Collect all vaults for this player
-  const vaults: BuildingInstance[] = [];
-  for (const playerBuildingId of player.buildings) {
-    const b = next.buildings[playerBuildingId];
-    if (b && b.type === "vaultOfDigestiveStone") {
-      vaults.push(b);
-    }
-  }
-
-  // Check affordability across all vaults
-  let affordabilitySource: ResourceInventory = player.stock;
-  if (vaults.length > 0) {
-    affordabilitySource = {};
-    for (const v of vaults) {
-      mergeInventoryInto(affordabilitySource, v.outputBuffer);
-    }
-  }
-
-  if (!hasEnoughResources(affordabilitySource, cost.resources)) {
+  const vaults = getOwnerVaults(next, ownerId);
+  try {
+    deductAcrossVaults(vaults, player, cost.resources);
+  } catch {
     throw new Error(`Upgrade denied by inventory`);
-  }
-
-  // Deduct from vaults (or player.stock if no vaults)
-  for (const [resource, amount] of Object.entries(cost.resources)) {
-    let remaining = amount ?? 0;
-    if (vaults.length > 0) {
-      // Deduct from vaults in order until satisfied
-      for (const vault of vaults) {
-        const available = getResourceAmount(vault.outputBuffer, resource as ResourceType);
-        const toRemove = Math.min(available, remaining);
-        if (toRemove > 0) {
-          vault.outputBuffer = removeResource(vault.outputBuffer, resource as ResourceType, toRemove);
-          remaining -= toRemove;
-        }
-        if (remaining <= 0) break;
-      }
-    } else {
-      player.stock = removeResource(player.stock, resource as ResourceType, remaining);
-    }
   }
 
   building.level += 1;
   building.integrity = Math.min(100, building.integrity + 10);
 
-  return next;
+  return syncStockFromVaults(next);
 }
 
 export function assignWorkerToBuilding(

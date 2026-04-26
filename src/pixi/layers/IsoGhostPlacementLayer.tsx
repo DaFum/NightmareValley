@@ -5,6 +5,7 @@ import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, HALF_TILE_HEIGHT } from '../../game/is
 import { BuildingType } from '../../game/core/economy.types';
 
 const BUILDING_SCALE = 0.28;
+const warnedMissingGhostTextures = new Set<string>();
 const BUILDING_ANCHOR = { x: 0.5, y: 1 } as const;
 const GHOST_Z_INDEX_BIAS = 1000;
 
@@ -26,7 +27,10 @@ export default function IsoGhostPlacementLayer({
   const spriteKey = `buildings_stage4_${buildingType}`;
   const texture = registry.getTexture(spriteKey);
   if (!texture) {
-    console.warn(`Missing texture for ghost placement: ${spriteKey}`);
+    if (!warnedMissingGhostTextures.has(spriteKey)) {
+      warnedMissingGhostTextures.add(spriteKey);
+      console.warn(`Missing texture for ghost placement: ${spriteKey}`);
+    }
     return null;
   }
 

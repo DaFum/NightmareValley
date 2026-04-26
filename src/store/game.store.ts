@@ -6,7 +6,6 @@ import {
   connectBuildingToRoad,
   spawnWorker,
   assignWorkerToBuilding,
-  syncStockFromVaults,
 } from '../game/core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
@@ -266,11 +265,26 @@ const initialGameState: WorldState = {
 function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): WorldState {
   const player = state.players[player1Id];
   if (!player) return state;
-  const vaultId = player.buildings.find(
-    (id) => state.buildings[id]?.type === "vaultOfDigestiveStone"
-  );
-  const vault = vaultId ? state.buildings[vaultId] : undefined;
+
   const newStock = initialStartingStock(profile);
+
+  // Reset all vaults: put newStock in the first, clear the rest.
+  // This ensures syncStockFromVaults produces exactly newStock on the next tick
+  // regardless of how many vaults the player owns.
+  const updatedBuildings = { ...state.buildings };
+  let firstVaultSeen = false;
+  for (const id of player.buildings) {
+    const b = state.buildings[id];
+    if (b?.type === "vaultOfDigestiveStone") {
+      if (!firstVaultSeen) {
+        firstVaultSeen = true;
+        updatedBuildings[id] = { ...b, outputBuffer: { ...newStock } };
+      } else {
+        updatedBuildings[id] = { ...b, outputBuffer: {} };
+      }
+    }
+  }
+
   return {
     ...state,
     scenarioProfile: profile,
@@ -278,9 +292,7 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
       ...state.players,
       [player1Id]: { ...player, stock: newStock },
     },
-    buildings: vault
-      ? { ...state.buildings, [vault.id]: { ...vault, outputBuffer: { ...newStock } } }
-      : state.buildings,
+    buildings: updatedBuildings,
   };
 }
 
@@ -349,10 +361,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // Store spread pattern: economy functions return EconomySimulationState (players/buildings/workers/etc).
   // The spread { ...gameState, ...nextEconomy } merges result back into WorldState without nested mutations.
+  // placeBuilding/upgradeBuilding call syncStockFromVaults internally so player.stock is always current.
   placeBuildingAt: (ownerId, buildingType, tileId) => {
     try {
       const { gameState } = get();
-      const nextEconomy = syncStockFromVaults(placeBuilding(gameState, ownerId, buildingType, tileId));
+      const nextEconomy = placeBuilding(gameState, ownerId, buildingType, tileId);
       set({ gameState: { ...gameState, ...nextEconomy } });
     } catch (error) {
       console.error("Failed to place building:", error);
@@ -363,7 +376,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   upgradeBuildingAt: (ownerId, buildingId) => {
     try {
       const { gameState } = get();
-      const nextEconomy = syncStockFromVaults(upgradeBuilding(gameState, ownerId, buildingId));
+      const nextEconomy = upgradeBuilding(gameState, ownerId, buildingId);
       set({ gameState: { ...gameState, ...nextEconomy } });
     } catch (error) {
       console.error("Failed to upgrade building:", error);

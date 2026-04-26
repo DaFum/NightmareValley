@@ -171,8 +171,8 @@ export function findTargetBuildingsForResource(
   // When source is a vault, never fall back to other vaults — that causes circular transport.
   // Exclude full vaults from preferred so production falls back to direct delivery when all vaults are saturated.
   const preferred = sourceIsVault
-    ? all.filter((b) => b.type !== "vaultOfDigestiveStone" && b.isActive)
-    : all.filter((b) => b.type === "vaultOfDigestiveStone" && b.isActive && getBuildingResourceNeed(b, resourceType, config) > 0);
+    ? all.filter((b) => b.type !== "vaultOfDigestiveStone")
+    : all.filter((b) => b.type === "vaultOfDigestiveStone" && getBuildingResourceNeed(b, resourceType, config) > 0);
 
   const targets = (preferred.length > 0 || sourceIsVault) ? preferred : all;
 
@@ -240,7 +240,8 @@ export function getBuildingResourceNeed(
     if (inputAmount <= 0) continue;
 
     const current = getResourceAmount(building.inputBuffer, resourceType);
-    const desired = Math.max(inputAmount * 3, 1);
+    // Cap desired at the buffer limit so we never request more than the buffer can hold.
+    const desired = Math.min(Math.max(inputAmount * 3, 1), config.buildingInputBufferLimit);
     needed = Math.max(needed, desired - current);
   }
 

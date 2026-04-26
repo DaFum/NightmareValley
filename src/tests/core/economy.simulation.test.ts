@@ -2,7 +2,6 @@ import {
   placeBuilding,
   upgradeBuilding,
   syncStockFromVaults,
-  createBuildingInstance,
   EconomySimulationState,
 } from "../../game/core/economy.simulation";
 import { TerritoryState } from "../../game/core/game.types";
@@ -167,7 +166,7 @@ describe("placeBuilding vault deduction", () => {
 
 describe("upgradeBuilding vault deduction", () => {
   it("deducts upgrade cost from vault outputBuffer", () => {
-    // organHarvester upgrade from L1→L2 costs {toothPlanks:2, sepulcherStone:1}
+    // organHarvester upgrade from L1→L2 costs {toothPlanks: 1, sepulcherStone: 1}
     const state = makeState({
       players: {
         p1: {

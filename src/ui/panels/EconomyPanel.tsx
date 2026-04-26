@@ -105,6 +105,7 @@ export default function EconomyPanel(): JSX.Element | null {
     const outBuffer: Partial<Record<ResourceType, number>> = {};
 
     for (const b of Object.values(buildings)) {
+      if (b.ownerId !== player1Id) continue;
       for (const [res, amt] of Object.entries(b.inputBuffer)) {
         const r = res as ResourceType;
         inBuffer[r] = (inBuffer[r] ?? 0) + (amt ?? 0);
@@ -117,7 +118,8 @@ export default function EconomyPanel(): JSX.Element | null {
 
     const inTransitMap: Partial<Record<ResourceType, number>> = {};
     for (const task of Object.values(transport.activeCarrierTasks)) {
-      if (task.phase === 'toDropoff') {
+      const dropoffBuilding = buildings[task.dropoffBuildingId];
+      if (task.phase === 'toDropoff' && dropoffBuilding?.ownerId === player1Id) {
         inTransitMap[task.resourceType as ResourceType] =
           (inTransitMap[task.resourceType as ResourceType] ?? 0) + task.amount;
       }
@@ -141,11 +143,17 @@ export default function EconomyPanel(): JSX.Element | null {
       .slice(0, 8);
   }, [buildings, transport.activeCarrierTasks]);
 
-  const activeCarriers = Object.keys(transport.activeCarrierTasks).length;
-  const carriers = Object.values(workers).filter((w) => w.type === 'burdenThrall');
+  const ownedCarrierTasks = Object.values(transport.activeCarrierTasks).filter((t) => {
+    const src = buildings[t.pickupBuildingId];
+    return src?.ownerId === player1Id;
+  });
+  const activeCarriers = ownedCarrierTasks.length;
+  const carriers = Object.values(workers).filter(
+    (w) => w.type === 'burdenThrall' && w.ownerId === player1Id
+  );
   const totalCarriers = carriers.length;
   const idleCarriers = carriers.filter((w) => w.isIdle).length;
-  const totalWorkers = Object.keys(workers).length;
+  const totalWorkers = Object.values(workers).filter((w) => w.ownerId === player1Id).length;
   const queuedJobs = transport.queuedJobCount ?? 0;
   const stress = fmt1.format(transport.networkStress);
   const latency = fmt1.format(transport.averageLatencySec);
