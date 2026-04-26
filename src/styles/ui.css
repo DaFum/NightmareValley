@@ -18,6 +18,9 @@
   --econ-idle-border: rgba(139,148,158,0.2);
   --econ-buffer-in: #4d9de0;
   --econ-stone: #b7b1a5;
+  --econ-disabled: #6e7681;
+  --econ-damaged: #ff7b72;
+  --econ-default: #cdd9e5;
 }
 
 /* Tweak the global noise overlay opacity for clarity */

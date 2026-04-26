@@ -24,7 +24,8 @@ describe("transport.logic", () => {
           type: "vaultOfDigestiveStone",
           position: { x: 1, y: 0 },
           inputBuffer: {},
-          internalStorage: {}
+          internalStorage: {},
+          isActive: true,
         } as any,
         far: {
           id: "far",
@@ -32,7 +33,8 @@ describe("transport.logic", () => {
           type: "vaultOfDigestiveStone",
           position: { x: 6, y: 0 },
           inputBuffer: {},
-          internalStorage: {}
+          internalStorage: {},
+          isActive: true,
         } as any,
       },
       workers: {},

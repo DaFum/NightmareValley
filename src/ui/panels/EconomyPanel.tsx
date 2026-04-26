@@ -31,12 +31,12 @@ type ResourceFlow = {
 
 function statusLabel(status: string): { label: string; color: string } {
   switch (status) {
-    case 'working':     return { label: 'Working',     color: '#7ee787' };
-    case 'idle':        return { label: 'Idle',        color: '#8b949e' };
-    case 'waitingForInput': return { label: 'Starved', color: '#f0a500' };
-    case 'disabled':    return { label: 'Paused',      color: '#6e7681' };
-    case 'damaged':     return { label: 'Damaged',     color: '#ff7b72' };
-    default:            return { label: status,        color: '#cdd9e5' };
+    case 'working':         return { label: 'Working', color: 'var(--econ-success)' };
+    case 'idle':            return { label: 'Idle',    color: 'var(--econ-idle)' };
+    case 'waitingForInput': return { label: 'Starved', color: 'var(--econ-warn)' };
+    case 'disabled':        return { label: 'Paused',  color: 'var(--econ-disabled)' };
+    case 'damaged':         return { label: 'Damaged', color: 'var(--econ-damaged)' };
+    default:                return { label: status,    color: 'var(--econ-default)' };
   }
 }
 
@@ -79,8 +79,8 @@ export default function EconomyPanel(): JSX.Element | null {
       const inputVals = Object.values(b.inputBuffer).map(v => v ?? 0);
       const outputVals = Object.values(b.outputBuffer).map(v => v ?? 0);
       const isVault = b.type === 'vaultOfDigestiveStone';
-      const outputLimit = isVault ? (DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit ?? 9999) : 6;
-      const inputFill = inputVals.length ? Math.max(...inputVals) / 4 : 0;
+      const outputLimit = isVault ? DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit : DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit;
+      const inputFill = inputVals.length ? Math.max(...inputVals) / DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit : 0;
       const outputFill = outputVals.length ? Math.max(...outputVals) / outputLimit : 0;
 
       return {

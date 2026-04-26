@@ -163,6 +163,7 @@ export function findTargetBuildingsForResource(
   const all = Object.values(state.buildings)
     .filter((b) => b.ownerId === source.ownerId)
     .filter((b) => b.id !== source.id)
+    .filter((b) => b.isActive)
     .filter((b) => buildingAcceptsResource(b, resourceType));
 
   // Settlers 2 warehouse-first routing:

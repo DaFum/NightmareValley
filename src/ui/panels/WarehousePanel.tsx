@@ -39,7 +39,10 @@ export default function WarehousePanel(): JSX.Element | null {
       if (targetBuilding.type === 'vaultOfDigestiveStone' && targetBuilding.ownerId === player1Id) {
         inTransitIn[r] = (inTransitIn[r] ?? 0) + task.amount;
       } else if (targetBuilding.type !== 'vaultOfDigestiveStone' && targetBuilding.ownerId === player1Id) {
-        inTransitOut[r] = (inTransitOut[r] ?? 0) + task.amount;
+        const sourceBuilding = buildings[task.pickupBuildingId];
+        if (sourceBuilding?.type === 'vaultOfDigestiveStone') {
+          inTransitOut[r] = (inTransitOut[r] ?? 0) + task.amount;
+        }
       }
     }
 

@@ -1,5 +1,5 @@
 import { useUIStore } from '../../store/ui.store';
-import { useGameStore } from '../../store/game.store';
+import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordBuilding } from '../../game/economy/production.logic';
 import imageMap from '../../pixi/utils/vite-asset-loader';
@@ -9,10 +9,7 @@ export function BuildingMenu() {
   const { activePanel, togglePanel, selectedBuildingToPlace, selectBuildingToPlace } = useUIStore();
   const gameState = useGameStore(state => state.gameState);
 
-  // Get the actual first player ID instead of a hardcoded one
-  const playerIds = Object.keys(gameState.players);
-  const playerId = playerIds.length > 0 ? playerIds[0] : "player_1";
-  const player = gameState.players[playerId];
+  const player = gameState.players[player1Id];
 
   if (!player) return null;
 
