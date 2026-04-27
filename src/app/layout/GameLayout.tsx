@@ -7,6 +7,8 @@ import EconomyPanel from '../../ui/panels/EconomyPanel';
 import WarehousePanel from '../../ui/panels/WarehousePanel';
 import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import { HudLayout } from './HudLayout';
+import Particles from '../../components/Particles';
+import SvgAnimationIntegrator from '../../pixi/SvgAnimationIntegrator';
 import { useResponsiveLayout } from './useResponsiveLayout';
 
 const IS_DEV = __DEV__;
@@ -50,6 +52,8 @@ export function GameLayout({
       <section className="game-layout__canvas" aria-label="NightmareValley world">
         {canvas}
       </section>
+      <SvgAnimationIntegrator />
+      <Particles />
       <HudLayout top={hud} right={inspector} bottom={panels} isMobile={isMobile} />
       {showDebugPanel && (
         <div style={{ position: 'fixed', bottom: '1rem', left: '1rem', zIndex: 1000 }}>

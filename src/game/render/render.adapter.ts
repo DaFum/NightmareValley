@@ -31,7 +31,7 @@ export function mapTerrainToIsoTiles(
       TILE_HEIGHT
     );
 
-    const variant = (hashStringToInt(tileId) % 2) + 1; // 2 variants (_1, _2)
+    const variant = (hashStringToInt(tileId) % 4) + 1; // 4 variants (_1 .. _4)
     tiles.push({
       id: tileId,
       screenX: sx,
