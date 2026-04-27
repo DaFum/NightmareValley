@@ -2,6 +2,7 @@ import { EconomySimulationState, spawnWorker, assignWorkerToBuilding } from '../
 import { advanceBuildingConstruction } from '../entities/buildings/building.logic';
 import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { WorkerType } from '../core/economy.types';
+import { isWorkerAtBuilding } from '../entities/workers/worker.logic';
 
 export function processConstruction(
   state: EconomySimulationState,

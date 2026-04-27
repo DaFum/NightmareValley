@@ -2,7 +2,24 @@ import { processConstruction, autoSpawnConstructionWorkers } from "../../game/ec
 import { EconomySimulationState } from "../../game/core/economy.simulation";
 import { BUILDING_DEFINITIONS } from "../../game/core/economy.data";
 
-function makeState(overrides: Record<string, any> = {}): EconomySimulationState {
+function makeState(overrides: Record<string, any> = {}, workerOverrides: Record<string, any> = {}): EconomySimulationState {
+  const assignedWorkers: string[] = overrides.assignedWorkers ?? [];
+  // Default workers: placed at building position (x:0, y:0) so arrival guard passes
+  const defaultWorkers: Record<string, any> = {};
+  for (const wId of assignedWorkers) {
+    defaultWorkers[wId] = {
+      id: wId,
+      type: "timberExecutioner",
+      ownerId: "p1",
+      position: { x: 0, y: 0 },
+      currentBuildingId: "b1",
+      isIdle: false,
+      morale: 100,
+      infection: 0,
+      scars: 0,
+      ...workerOverrides[wId],
+    };
+  }
   return {
     tick: 0,
     ageOfTeeth: 0,
@@ -27,7 +44,7 @@ function makeState(overrides: Record<string, any> = {}): EconomySimulationState 
       } as any,
     },
     territory: { tiles: {} } as any,
-    workers: {},
+    workers: defaultWorkers,
     transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
     worldPulse: 0,
   } as any;
@@ -179,5 +196,98 @@ describe("autoSpawnConstructionWorkers", () => {
     } as any;
     const next = autoSpawnConstructionWorkers(noVaultState);
     expect(Object.values(next.workers).length).toBe(0);
+  });
+});
+
+describe("processConstruction - arrival guard", () => {
+  it("does not advance construction for a worker still walking to the building", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"], workers: ["w1"], populationLimit: 20 } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "organHarvester",
+          ownerId: "p1",
+          level: 0,
+          constructionProgress: 0,
+          position: { x: 5, y: 5 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: false,
+          integrity: 100,
+        } as any,
+      },
+      territory: { tiles: {} } as any,
+      workers: {
+        w1: {
+          id: "w1",
+          type: "timberExecutioner",
+          ownerId: "p1",
+          position: { x: 0, y: 0 },
+          currentBuildingId: "b1",
+          isIdle: false,
+          morale: 100,
+          infection: 0,
+          scars: 0,
+        } as any,
+      },
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    } as any;
+
+    const next = processConstruction(state, 30);
+    expect(next.buildings["b1"].constructionProgress).toBe(0);
+  });
+
+  it("advances construction once worker has arrived at the building", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"], workers: ["w1"], populationLimit: 20 } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "organHarvester",
+          ownerId: "p1",
+          level: 0,
+          constructionProgress: 0,
+          position: { x: 5, y: 5 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: false,
+          integrity: 100,
+        } as any,
+      },
+      territory: { tiles: {} } as any,
+      workers: {
+        w1: {
+          id: "w1",
+          type: "timberExecutioner",
+          ownerId: "p1",
+          position: { x: 5, y: 5 },
+          currentBuildingId: "b1",
+          isIdle: false,
+          morale: 100,
+          infection: 0,
+          scars: 0,
+        } as any,
+      },
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    } as any;
+
+    const next = processConstruction(state, 30);
+    // organHarvester constructionTime = 60s, 1 arrived worker, 30s → 0.5
+    expect(next.buildings["b1"].constructionProgress).toBeCloseTo(0.5);
   });
 });
