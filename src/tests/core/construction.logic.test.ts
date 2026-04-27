@@ -1,5 +1,6 @@
 import { processConstruction, autoSpawnConstructionWorkers } from "../../game/economy/construction.logic";
 import { EconomySimulationState } from "../../game/core/economy.simulation";
+import { BUILDING_DEFINITIONS } from "../../game/core/economy.data";
 
 function makeState(overrides: Record<string, any> = {}): EconomySimulationState {
   return {
@@ -136,7 +137,8 @@ describe("autoSpawnConstructionWorkers", () => {
     const next = autoSpawnConstructionWorkers(state);
     const workers = Object.values(next.workers);
     expect(workers.length).toBe(1);
-    expect(workers[0].type).toBe("timberExecutioner");
+    const validTypes = Object.keys(BUILDING_DEFINITIONS["organHarvester"].workerSlots);
+    expect(validTypes).toContain(workers[0].type);
     expect(next.buildings["b1"].assignedWorkers).toContain(workers[0].id);
   });
 

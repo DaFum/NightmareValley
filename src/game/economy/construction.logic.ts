@@ -53,6 +53,8 @@ export function autoSpawnConstructionWorkers(
     try {
       next = spawnWorker(next, building.ownerId, workerType, vault.position);
       const newWorkerId = next.players[building.ownerId].workers[next.players[building.ownerId].workers.length - 1];
+      // Worker's homeBuildingId will be set to the construction building — intentional,
+      // they transition to production worker here after construction completes.
       next = assignWorkerToBuilding(next, newWorkerId, building.id);
     } catch {
       // Population limit reached or other spawn failure — retry next tick
