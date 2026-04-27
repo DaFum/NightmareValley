@@ -308,6 +308,26 @@ describe("construction guards", () => {
 });
 
 describe("upgradeBuilding vault deduction", () => {
+  it("throws error when trying to upgrade a building still under construction", () => {
+    const state = makeState({
+      players: { p1: { id: "p1", stock: { toothPlanks: 20 }, buildings: ["b1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "organHarvester",
+          level: 0,
+          constructionProgress: 0, // under construction
+          position: { x: 0, y: 0 },
+          outputBuffer: {}, inputBuffer: {}, internalStorage: {},
+          assignedWorkers: [], progressSec: 0, isActive: true,
+        } as any,
+      },
+    });
+
+    expect(() => upgradeBuilding(state, "p1", "b1")).toThrow("Building is still under construction");
+  });
+
   it("deducts upgrade cost from vault outputBuffer", () => {
     // organHarvester upgrade from L1→L2 costs {toothPlanks: 1, sepulcherStone: 1}
     const state = makeState({

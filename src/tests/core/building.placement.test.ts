@@ -2,11 +2,10 @@ import { placeBuilding, EconomySimulationState } from "../../game/core/economy.s
 import { BuildingInstance } from "../../game/core/game.types";
 import { isConstructed } from "../../game/entities/buildings/building.types";
 
-test("dummy", () => { expect(1).toBe(1); });
-
-it("newly placed building starts with level 0 and constructionProgress 0", () => {
-  const tileId = "tile_0_0";
-  const state: EconomySimulationState = {
+describe("placeBuilding", () => {
+  it("newly placed building starts with level 0 and constructionProgress 0", () => {
+    const tileId = "tile_0_0";
+    const state: EconomySimulationState = {
     tick: 0,
     ageOfTeeth: 0,
     players: {
@@ -56,14 +55,15 @@ it("newly placed building starts with level 0 and constructionProgress 0", () =>
     worldPulse: 0,
   } as any;
 
-  const next = placeBuilding(state, "p1", "organHarvester", tileId);
-  const placed = Object.values(next.buildings).find(b => b.type === "organHarvester")!;
+    const next = placeBuilding(state, "p1", "organHarvester", tileId);
+    const placed = Object.values(next.buildings).find(b => b.type === "organHarvester")!;
 
-  expect(placed.level).toBe(0);
-  expect(placed.constructionProgress).toBe(0);
-});
+    expect(placed.level).toBe(0);
+    expect(placed.constructionProgress).toBe(0);
+  });
 
-it("newly placed building is not operational (isConstructed returns false)", () => {
-  const building: Partial<BuildingInstance> = { level: 0, constructionProgress: 0 };
-  expect(isConstructed(building as BuildingInstance)).toBe(false);
+  it("newly placed building is not operational (isConstructed returns false)", () => {
+    const building: Partial<BuildingInstance> = { level: 0, constructionProgress: 0 };
+    expect(isConstructed(building as BuildingInstance)).toBe(false);
+  });
 });

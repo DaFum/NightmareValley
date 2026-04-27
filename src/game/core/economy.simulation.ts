@@ -13,6 +13,8 @@ import { BUILDING_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
+import { createGridFromTerritory } from "../pathing/path.grid";
+import { isConstructed } from "../entities/buildings/building.types";
 
 // Exported from original but using relative imports
 import { processConstruction, autoSpawnConstructionWorkers } from "../economy/construction.logic";
@@ -389,6 +391,10 @@ export function upgradeBuilding(
 
   if (building.ownerId !== ownerId) {
     throw new Error(`Building ${buildingId} belongs to another regime`);
+  }
+
+  if (!isConstructed(building)) {
+    throw new Error(`Building is still under construction`);
   }
 
   const cost = getUpgradeCost(building, building.level + 1);

@@ -15,3 +15,5 @@ export const DEFAULT_ISO_SETTINGS = {
 // render.adapter.ts and do NOT use these constants.
 export const ISO_TILE_WIDTH = 64;
 export const ISO_TILE_HEIGHT = 32;
+
+export const TERRAIN_Z_INDEX_BIAS = -1000;
