@@ -7,7 +7,7 @@ export default function Particles(): JSX.Element {
     const pc = ref.current;
     if (!pc) return;
 
-    const timeouts: number[] = [];
+    const timeouts = new Set<number>();
 
     function spawnParticle() {
       const container = ref.current;
@@ -36,8 +36,11 @@ export default function Particles(): JSX.Element {
       p.style.animationDelay = `${Math.random() * 2}s`;
 
       container.appendChild(p);
-      const t = window.setTimeout(() => p.remove(), (dur + 2) * 1000);
-      timeouts.push(t);
+      const t = window.setTimeout(() => {
+        p.remove();
+        timeouts.delete(t);
+      }, (dur + 2) * 1000);
+      timeouts.add(t);
     }
 
     // start spawning regularly
@@ -45,8 +48,11 @@ export default function Particles(): JSX.Element {
 
     // seed a few particles immediately for visual rhythm
     for (let i = 0; i < 3; i++) {
-      const t = window.setTimeout(spawnParticle, i * 180);
-      timeouts.push(t as unknown as number);
+      const t = window.setTimeout(() => {
+        spawnParticle();
+        timeouts.delete(t);
+      }, i * 180);
+      timeouts.add(t as unknown as number);
     }
 
     return () => {

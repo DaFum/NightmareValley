@@ -20,7 +20,7 @@ export default function SvgAnimationIntegrator(): null {
     if (!ready) return;
 
     let mounted = true;
-    const rafIds: number[] = [];
+    const cancelFns: (() => void)[] = [];
     const replacedKeys = new Set<string>();
 
     try {
@@ -32,7 +32,7 @@ export default function SvgAnimationIntegrator(): null {
         if (!mounted) return;
 
         // derive relative asset path used by vite-asset-loader
-        const rel = `terrain/${key.replace(/^${TERRAIN_PREFIX}/, '')}.svg`;
+        const rel = `terrain/${key.replace(TERRAIN_PREFIX, '')}.svg`;
         const url = (imageMap as Record<string, string>)[rel];
         if (!url) return; // not an svg we can resolve
 
@@ -61,6 +61,23 @@ export default function SvgAnimationIntegrator(): null {
               const ctx = canvas.getContext('2d');
               if (!ctx) return;
 
+              let rafId: number | null = null;
+
+              cancelFns.push(() => {
+                if (rafId !== null) window.cancelAnimationFrame(rafId);
+              });
+
+              // Create texture once outside the loop
+              let baseTex: PIXI.BaseTexture | null = null;
+              try {
+                baseTex = new PIXI.BaseTexture(canvas);
+                const tex = new PIXI.Texture(baseTex);
+                try { delete (PIXI.utils as any).TextureCache[key]; } catch (e) { /* ignore */ }
+                PIXI.Texture.addToCache(tex, key);
+              } catch (e) {
+                // Ignore initial texture swap errors
+              }
+
               // Drawing loop: copy the live <img> (which runs SVG animations) into canvas
               const draw = () => {
                 if (!mounted) return;
@@ -68,26 +85,14 @@ export default function SvgAnimationIntegrator(): null {
                   ctx.clearRect(0, 0, w, h);
                   ctx.drawImage(img, 0, 0, w, h);
 
-                  // Replace the cached PIXI texture for this key with a texture from the canvas.
-                  // Delete old cache entry then add new one so existing Sprite references pick it up.
-                  try {
-                    // Create a new PIXI.Texture from the canvas (this references the canvas source)
-                    const newTex = PIXI.Texture.from(canvas);
-                    // Remove old entry if present
-                    try { delete (PIXI.utils as any).TextureCache[key]; } catch (e) { /* ignore */ }
-                    // Register new texture under same key
-                    PIXI.Texture.addToCache(newTex, key);
-                  } catch (e) {
-                    // Swallow errors to avoid breaking renderer
-                    // eslint-disable-next-line no-console
-                    console.error('SvgAnimationIntegrator: failed to replace texture', key, e);
+                  if (baseTex) {
+                    baseTex.update();
                   }
                 } catch (err) {
                   // ignore draw errors
                 }
 
-                const id = window.requestAnimationFrame(draw);
-                rafIds.push(id);
+                rafId = window.requestAnimationFrame(draw);
               };
 
               // Start loop
@@ -110,7 +115,7 @@ export default function SvgAnimationIntegrator(): null {
 
     return () => {
       mounted = false;
-      for (const id of rafIds) window.cancelAnimationFrame(id);
+      cancelFns.forEach((fn) => fn());
     };
   }, [ready]);
 
