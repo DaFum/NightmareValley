@@ -1,4 +1,5 @@
 import { BuildingInstance } from "../core/game.types";
+import { isConstructed } from '../entities/buildings/building.types';
 import { BuildingType, BuildingCost, ResourceType, ResourceInventory, BuildingDefinition } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
 import { hasEnoughResources, removeResource, getResourceAmount, addResource } from "./stockpile.logic";
@@ -52,6 +53,7 @@ export function processProduction(
 ): EconomySimulationState {
   for (const building of Object.values(state.buildings)) {
     if (!building.isActive) continue;
+    if (!isConstructed(building)) continue;
     if (!building.connectedToRoad && requiresRoad(building.type)) continue;
 
     const def = BUILDING_DEFINITIONS[building.type];

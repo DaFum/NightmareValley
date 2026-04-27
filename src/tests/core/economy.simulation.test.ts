@@ -2,6 +2,7 @@ import {
   placeBuilding,
   upgradeBuilding,
   syncStockFromVaults,
+  simulateTick,
   EconomySimulationState,
 } from "../../game/core/economy.simulation";
 import { TerritoryState } from "../../game/core/game.types";
@@ -216,6 +217,93 @@ describe("placeBuilding vault deduction", () => {
     // sepulcherStone deducted from vaultA (it had enough)
     expect(result.buildings["vA"].outputBuffer.sepulcherStone).toBe(4);
     expect(result.buildings["vB"].outputBuffer.sepulcherStone).toBe(5);
+  });
+});
+
+describe("construction guards", () => {
+  it("building under construction does not extract resources", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "organHarvester",
+          ownerId: "p1",
+          level: 0,
+          constructionProgress: 0.5,
+          position: { x: 0, y: 0 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: true,
+          integrity: 100,
+        } as any,
+      },
+      territory: {
+        tiles: {
+          "tile_0_0": {
+            id: "tile_0_0",
+            position: { x: 0, y: 0 },
+            terrain: "scarredEarth",
+            ownerId: "p1",
+            footfall: 0,
+            tier: "grass",
+            resourceDeposit: { sinewTimber: 999 },
+          } as any,
+        },
+        tileIndex: { "0,0": "tile_0_0" },
+      } as any,
+      workers: {
+        w1: { id: "w1", type: "timberExecutioner", ownerId: "p1", assignedBuildingId: "b1" } as any,
+      },
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    } as any;
+
+    const next = simulateTick(state, 30);
+    const building = next.buildings["b1"];
+    expect(building.outputBuffer["sinewTimber"] ?? 0).toBe(0);
+  });
+
+  it("building under construction does not process recipes", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "millOfGnashing",
+          ownerId: "p1",
+          level: 0,
+          constructionProgress: 0.3,
+          position: { x: 0, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: 10 },
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: true,
+          integrity: 100,
+        } as any,
+      },
+      territory: { tiles: {}, tileIndex: {} } as any,
+      workers: {
+        w1: { id: "w1", type: "gnashSawyer", ownerId: "p1", assignedBuildingId: "b1" } as any,
+      },
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    } as any;
+
+    const next = simulateTick(state, 30);
+    const building = next.buildings["b1"];
+    expect(building.outputBuffer["toothPlanks"] ?? 0).toBe(0);
   });
 });
 
