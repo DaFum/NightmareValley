@@ -15,7 +15,7 @@ import { removeResource, hasEnoughResources, getResourceAmount } from "../econom
 import { getUpgradeCost } from "../economy/production.logic";
 
 // Exported from original but using relative imports
-import { processConstruction } from "../economy/construction.logic";
+import { processConstruction, autoSpawnConstructionWorkers } from "../economy/construction.logic";
 import { processExtraction } from "../economy/extraction.logic";
 import { processProduction } from "../economy/production.logic";
 import {
@@ -540,6 +540,7 @@ export function simulateTick(
   next.ageOfTeeth += deltaSec;
 
   next = processConstruction(next, deltaSec);
+  next = autoSpawnConstructionWorkers(next);
   next = updateWorkersPassiveState(next, deltaSec, config);
   next = processExtraction(next, deltaSec, config);
   next = processProduction(next, deltaSec, config);
