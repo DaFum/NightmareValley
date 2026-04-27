@@ -39,10 +39,11 @@ export function autoSpawnConstructionWorkers(
   let next = state;
 
   for (const building of Object.values(next.buildings)) {
-    if (building.constructionProgress === undefined) continue;
-    if (building.assignedWorkers.length > 0) continue;
+    const currentBuilding = next.buildings[building.id];
+    if (currentBuilding.constructionProgress === undefined) continue;
+    if (currentBuilding.assignedWorkers.length > 0) continue;
 
-    const player = next.players[building.ownerId];
+    const player = next.players[currentBuilding.ownerId];
     if (!player) continue;
 
     const vault = player.buildings
@@ -50,16 +51,16 @@ export function autoSpawnConstructionWorkers(
       .find(b => b && b.type === "vaultOfDigestiveStone");
     if (!vault) continue;
 
-    const def = BUILDING_DEFINITIONS[building.type];
+    const def = BUILDING_DEFINITIONS[currentBuilding.type];
     const workerType = Object.entries(def.workerSlots).find(([, slots]) => slots > 0)?.[0] as WorkerType | undefined;
     if (!workerType) continue;
 
     try {
-      next = spawnWorker(next, building.ownerId, workerType, vault.position);
-      const newWorkerId = next.players[building.ownerId].workers[next.players[building.ownerId].workers.length - 1];
+      next = spawnWorker(next, currentBuilding.ownerId, workerType, vault.position);
+      const newWorkerId = next.players[currentBuilding.ownerId].workers[next.players[currentBuilding.ownerId].workers.length - 1];
       // Worker's homeBuildingId will be set to the construction building — intentional,
       // they transition to production worker here after construction completes.
-      next = assignWorkerToBuilding(next, newWorkerId, building.id);
+      next = assignWorkerToBuilding(next, newWorkerId, currentBuilding.id);
     } catch {
       // Population limit reached or other spawn failure — retry next tick
     }

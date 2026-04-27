@@ -2,15 +2,13 @@ import React from 'react';
 import { Container, Sprite } from '@pixi/react';
 import { useTextures } from '../utils/textureRegistry';
 import { IsoRenderWorld } from '../../game/render/render.types';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../../game/iso/iso.constants';
 
 interface IsoTerrainLayerProps {
   tiles: IsoRenderWorld['tiles'];
 }
 
 const TILE_ANCHOR = { x: 0.5, y: 0.5 } as const;
-const SVG_TILE_ANCHOR = { x: 0.5, y: 96 / 144 } as const;
-const TILE_WIDTH = 64;
-const TILE_HEIGHT = 32;
 const warnedMissingTerrainTextures = new Set<string>();
 
 export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
@@ -48,8 +46,8 @@ export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: Is
         // anchoring the sprite at its bottom-center so it sits on the
         // tile correctly.
         if (textureKey.startsWith('terrain_')) {
-          const texW = texture.width || TILE_WIDTH;
-          const scale = texW > 0 ? TILE_WIDTH / texW : 1;
+          const texW = texture.width || ISO_TILE_WIDTH;
+          const scale = texW > 0 ? ISO_TILE_WIDTH / texW : 1;
           return (
             <Sprite
               key={tile.id}

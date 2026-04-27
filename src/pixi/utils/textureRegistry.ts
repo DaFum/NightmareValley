@@ -76,7 +76,7 @@ class TextureRegistryService {
                           ashBog:        ['#1E2028', '#0A0A10'],
                           cathedralRock: ['#1C1C2C', '#090912'],
                         };
-                        const baseName = name.replace(/_[12]$/, ''); // Extract base name from variants
+                        const baseName = name.replace(/_[1234]$/, ''); // Extract base name from variants
                         const [light, dark] = palette[baseName] ?? ['#444', '#222'];
                         const grad = ctx.createLinearGradient(0, 0, tileW, tileH);
                         grad.addColorStop(0, light);
