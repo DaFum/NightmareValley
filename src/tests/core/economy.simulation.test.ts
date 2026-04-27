@@ -232,7 +232,7 @@ describe("construction guards", () => {
           type: "organHarvester",
           ownerId: "p1",
           level: 0,
-          constructionProgress: 0.5,
+          constructionProgress: 0,
           position: { x: 0, y: 0 },
           outputBuffer: {},
           inputBuffer: {},
