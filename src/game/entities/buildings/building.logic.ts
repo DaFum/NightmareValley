@@ -2,14 +2,6 @@ import { BuildingInstance } from '../../core/game.types';
 
 import { getBuildingDefinition } from './building.data';
 
-/**
- * Advances the construction progress of a building.
- * Returns the original instance (no-op) when the building is already constructed.
- */
-export function isConstructed(b: BuildingInstance): boolean {
-  return b.constructionProgress === undefined || b.constructionProgress >= 1;
-}
-
 export function advanceBuildingConstruction(b: BuildingInstance, deltaSec: number) {
 	if (b.constructionProgress === undefined) return b;
 	const next = { ...b };

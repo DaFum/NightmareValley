@@ -1,6 +1,6 @@
 import { placeBuilding, EconomySimulationState } from "../../game/core/economy.simulation";
 import { BuildingInstance } from "../../game/core/game.types";
-import { isConstructed } from "../../game/entities/buildings/building.logic";
+import { isConstructed } from "../../game/entities/buildings/building.types";
 
 test("dummy", () => { expect(1).toBe(1); });
 
@@ -46,8 +46,13 @@ it("newly placed building starts with level 0 and constructionProgress 0", () =>
       },
     } as any,
     workers: {},
-    transportJobs: [],
-    carriers: {},
+    transport: {
+      jobs: {},
+      activeCarrierTasks: {},
+      networkStress: 0,
+      averageLatencySec: 0,
+      queuedJobCount: 0,
+    } as any,
     worldPulse: 0,
   } as any;
 
