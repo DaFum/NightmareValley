@@ -72,8 +72,9 @@ describe("updateWorkersAI", () => {
     expect(worker.isIdle).toBe(false);
   });
 
-  it("does not move burdenThrall workers", () => {
+  it("does not move burdenThrall workers assigned to constructed buildings", () => {
     const state = makeState({ type: "burdenThrall" });
+    state.buildings["b1"].constructionProgress = undefined; // Fully constructed
     const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
     expect(next.workers["w1"].position).toEqual({ x: 0, y: 0 });
   });

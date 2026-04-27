@@ -35,8 +35,8 @@ export function findPathAStar(
   }
 
   const isWalkable = (x: number, y: number) => {
-    x = Math.round(x);
-    y = Math.round(y);
+    x = Math.floor(x);
+    y = Math.floor(y);
     if (x < 0 || x >= width || y < 0 || y >= height) return false;
     return nodes[y * width + x] === 1;
   };

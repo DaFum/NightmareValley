@@ -22,11 +22,11 @@ export function updateWorkersAI(
   const workers = { ...state.workers };
 
   for (const [id, worker] of Object.entries(workers)) {
-    if (worker.type === "burdenThrall") continue;
-
     const building = worker.currentBuildingId
       ? state.buildings[worker.currentBuildingId]
       : undefined;
+
+    if (worker.type === "burdenThrall" && (!building || building.constructionProgress === undefined)) continue;
 
     if (!building) {
       workers[id] = { ...worker, isIdle: true };
