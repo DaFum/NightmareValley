@@ -14,10 +14,13 @@ export function processConstruction(
     if (!building.isActive) continue;
     if (building.constructionProgress === undefined) continue;
 
-    const workerCount = building.assignedWorkers.length;
-    if (workerCount === 0) continue;
+    const arrivedCount = building.assignedWorkers.filter(wId => {
+      const w = state.workers[wId];
+      return w && w.position && isWorkerAtBuilding(w.position, building.position);
+    }).length;
+    if (arrivedCount === 0) continue;
 
-    const effectiveDelta = deltaSec * workerCount;
+    const effectiveDelta = deltaSec * arrivedCount;
     const updated = advanceBuildingConstruction(building, effectiveDelta);
 
     if (updated.constructionProgress === undefined) {
