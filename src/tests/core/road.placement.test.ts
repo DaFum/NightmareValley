@@ -1,6 +1,7 @@
 import { EconomySimulationState } from '../../game/core/economy.simulation';
 import { MapTile } from '../../game/core/game.types';
 import { areBuildingsRoadConnected, placeRoadTile, removeRoadTile } from '../../game/entities/roads/road.logic';
+import { isRemovableRoadTile } from '../../game/entities/roads/road.validation';
 
 function makeTile(id: string, x: number, y: number, overrides: Partial<MapTile> = {}): MapTile {
   return {
@@ -97,6 +98,21 @@ describe('removeRoadTile', () => {
     expect(() => removeRoadTile(makeState({ t1: makeTile('t1', 0, 0) }), 'p1', 't1')).toThrow(
       /not a removable road/
     );
+  });
+
+  it('rejects tiles that only partially match the removable road marker', () => {
+    expect(() => removeRoadTile(makeState({ t1: makeTile('t1', 0, 0, { terrain: 'weepingForest', tier: 'dirt' }) }), 'p1', 't1')).toThrow(
+      /not a removable road/
+    );
+    expect(() => removeRoadTile(makeState({ t1: makeTile('t1', 0, 0, { terrain: 'scarPath', tier: 'cobble' }) }), 'p1', 't1')).toThrow(
+      /not a removable road/
+    );
+  });
+
+  it('uses one removable-road predicate for logic and preview validation', () => {
+    expect(isRemovableRoadTile(makeTile('road', 0, 0, { terrain: 'scarPath', tier: 'dirt' }))).toBe(true);
+    expect(isRemovableRoadTile(makeTile('forestDirt', 0, 0, { terrain: 'weepingForest', tier: 'dirt' }))).toBe(false);
+    expect(isRemovableRoadTile(makeTile('upgradedRoad', 0, 0, { terrain: 'scarPath', tier: 'cobble' }))).toBe(false);
   });
 });
 

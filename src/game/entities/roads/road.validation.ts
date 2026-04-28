@@ -1,4 +1,4 @@
-import { TerritoryState } from '../../core/game.types';
+import { MapTile, TerritoryState } from '../../core/game.types';
 import { TerrainType } from '../../core/economy.types';
 import { getTileAt } from '../../map/map.query';
 
@@ -26,6 +26,10 @@ export function canPlaceRoadForPlayer(territory: TerritoryState, x: number, y: n
 	if (!tile || tile.ownerId !== ownerId) return { ok: false, reason: 'unowned' };
 
 	return { ok: true } as const;
+}
+
+export function isRemovableRoadTile(tile: MapTile | undefined): boolean {
+	return !!tile && tile.terrain === 'scarPath' && tile.tier === 'dirt';
 }
 
 

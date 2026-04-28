@@ -22,6 +22,7 @@ import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
 import { screenToIsoTile } from '../game/iso/iso.inverse';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
+import { isRemovableRoadTile } from '../game/entities/roads/road.validation';
 
 const CHUNK_SCREEN_SIZE = 512;
 // Starting buildings are placed at tile (7,7); center on (7,7).
@@ -179,7 +180,7 @@ export function GameStage() {
     const tileId = territory.tileIndex?.[tileKey];
     const tile = tileId ? territory.tiles[tileId] : undefined;
     if (!tile || tile.buildingId || tile.ownerId !== player1Id) return false;
-    if (roadRemovalMode) return tile.terrain === 'scarPath' || tile.tier === 'dirt';
+    if (roadRemovalMode) return isRemovableRoadTile(tile);
     return ['scarredEarth', 'weepingForest', 'ashBog'].includes(tile.terrain) && tile.tier === 'grass';
   }, [ghostTile, roadPlacementMode, roadRemovalMode, territory]);
 

@@ -1,6 +1,6 @@
 import { EconomySimulationState } from '../../core/economy.simulation';
 import { RoadNetwork, RoadSegment } from './road.types';
-import { canPlaceRoadForPlayer } from './road.validation';
+import { canPlaceRoadForPlayer, isRemovableRoadTile } from './road.validation';
 import { BuildingInstance, MapTile, Position } from '../../core/game.types';
 
 export function addRoadSegment(network: RoadNetwork, x: number, y: number): RoadNetwork {
@@ -80,7 +80,7 @@ export function removeRoadTile(
 	const tile = state.territory.tiles[tileId];
 	if (!tile) throw new Error(`Unknown road tile: ${tileId}`);
 	if (tile.ownerId !== ownerId) throw new Error(`Cannot remove road from unowned tile ${tileId}`);
-	if (tile.terrain !== 'scarPath' && tile.tier !== 'dirt') throw new Error(`Tile ${tileId} is not a removable road`);
+	if (!isRemovableRoadTile(tile)) throw new Error(`Tile ${tileId} is not a removable road`);
 	if (tile.buildingId) throw new Error(`Cannot remove road under building ${tile.buildingId}`);
 
 	return {

@@ -71,10 +71,17 @@
 
 ### Phase 6: Selection Feedback Polish
 
-- [ ] Add deterministic selection summary copy for buildings, workers, and tiles.
-- [ ] Add a compact selected-object HUD chip that mirrors the current selection.
-- [ ] Keep the chip low-chrome and responsive so it does not cover the map center.
-- [ ] Add focused tests for selection copy and run browser QA with a selected building.
+- [x] Add deterministic selection summary copy for buildings, workers, and tiles.
+- [x] Add a compact selected-object HUD chip that mirrors the current selection.
+- [x] Keep the chip low-chrome and responsive so it does not cover the map center.
+- [x] Add focused tests for selection copy and run production browser QA for the layout path.
+
+### Phase 7: Road Removal Consistency
+
+- [x] Verify external review feedback against `placeRoadTile` road stamping behavior.
+- [x] Add regression coverage for partial road marker matches.
+- [x] Require both `scarPath` terrain and `dirt` tier before a road tile can be removed.
+- [x] Reuse the same removable-road predicate for ghost preview validity.
 
 ## Execution Order
 
