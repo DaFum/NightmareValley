@@ -13,8 +13,11 @@ import { BUILDING_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
+import { isConstructed } from "../entities/buildings/building.types";
 
 // Exported from original but using relative imports
+import { processConstruction, autoSpawnConstructionWorkers } from "../economy/construction.logic";
+import { updateWorkersAI } from "../entities/workers/worker.logic";
 import { processExtraction } from "../economy/extraction.logic";
 import { processProduction } from "../economy/production.logic";
 import {
@@ -46,7 +49,8 @@ export function createBuildingInstance(
     id,
     type,
     ownerId,
-    level: 1,
+    level: 0,
+    constructionProgress: 0,
     integrity: 100,
     position,
     connectedToRoad: false,
@@ -388,6 +392,10 @@ export function upgradeBuilding(
     throw new Error(`Building ${buildingId} belongs to another regime`);
   }
 
+  if (!isConstructed(building)) {
+    throw new Error(`Building is still under construction`);
+  }
+
   const cost = getUpgradeCost(building, building.level + 1);
   if (!cost) {
     throw new Error(`Building ${buildingId} cannot ascend further`);
@@ -537,6 +545,9 @@ export function simulateTick(
   next.tick += 1;
   next.ageOfTeeth += deltaSec;
 
+  next = processConstruction(next, deltaSec);
+  next = autoSpawnConstructionWorkers(next);
+  next = updateWorkersAI(next, deltaSec, config);
   next = updateWorkersPassiveState(next, deltaSec, config);
   next = processExtraction(next, deltaSec, config);
   next = processProduction(next, deltaSec, config);

@@ -25,6 +25,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 12,
     },
     description: "Converts living forest into structural obedience.",
+    constructionTime: 60,
   },
 
   seedOfTheHowlingRoot: {
@@ -40,6 +41,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     allowedTerrain: ["scarredEarth", "weepingForest"],
     requiresRoadConnection: true,
     description: "Replants the scream where supply has thinned.",
+    constructionTime: 60,
   },
 
   millOfGnashing: {
@@ -58,6 +60,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["sinewTimber"],
     outputPriority: ["toothPlanks"],
     description: "Its rotational theology is efficient.",
+    constructionTime: 90,
   },
 
   sepulcherQuarry: {
@@ -78,6 +81,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 14,
     },
     description: "Stone extracted like molars from the dead.",
+    constructionTime: 90,
   },
 
   wombWell: {
@@ -98,6 +102,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 10,
     },
     description: "Draws pale fluid from the maternal deep.",
+    constructionTime: 60,
   },
 
   shoreOfHooks: {
@@ -118,6 +123,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 15,
     },
     description: "The fish are blind because the lake learned first.",
+    constructionTime: 60,
   },
 
   fieldOfMouths: {
@@ -138,6 +144,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 18,
     },
     description: "The crop whispers when stepped on.",
+    constructionTime: 60,
   },
 
   dustCathedralMill: {
@@ -156,6 +163,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["marrowGrain"],
     outputPriority: ["boneDust"],
     description: "Flour production for a morally compromised state.",
+    constructionTime: 90,
   },
 
   ovenOfLastBread: {
@@ -174,6 +182,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["boneDust", "amnioticWater"],
     outputPriority: ["funeralLoaf"],
     description: "Where hunger becomes policy and policy becomes crust.",
+    constructionTime: 90,
   },
 
   styOfConsumption: {
@@ -194,6 +203,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 20,
     },
     description: "A biomass solution with hooves.",
+    constructionTime: 60,
   },
 
   houseOfFlensing: {
@@ -212,6 +222,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["pigFleshMass"],
     outputPriority: ["flensedMeat", "saintFat"],
     description: "Separates nutrition from sacrament.",
+    constructionTime: 120,
   },
 
   coalWound: {
@@ -232,6 +243,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 20,
     },
     description: "A cavity in the mountain that exhales fuel.",
+    constructionTime: 90,
   },
 
   ironVeinPit: {
@@ -252,6 +264,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 22,
     },
     description: "Iron drawn from the subterranean circulatory system.",
+    constructionTime: 90,
   },
 
   goldCatacomb: {
@@ -272,6 +285,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       cycleTimeSec: 24,
     },
     description: "Wealth mined from the after-chambers.",
+    constructionTime: 120,
   },
 
   bloodSmeltery: {
@@ -290,6 +304,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["veinIronOre", "graveCoal"],
     outputPriority: ["veinIronBar", "lungAsh"],
     description: "Transforms geology into instruments of intent.",
+    constructionTime: 120,
   },
 
   haloLiquefier: {
@@ -308,6 +323,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["cathedralGoldOre", "graveCoal"],
     outputPriority: ["haloGoldBar", "lungAsh"],
     description: "Turns sanctity into payroll.",
+    constructionTime: 150,
   },
 
   instrumentCrucible: {
@@ -326,6 +342,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["veinIronBar"],
     outputPriority: ["tormentInstrument"],
     description: "Produces civilizational leverage.",
+    constructionTime: 150,
   },
 
   bladeVestry: {
@@ -344,6 +361,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["veinIronBar"],
     outputPriority: ["ribBlade"],
     description: "Produces persuasive metal.",
+    constructionTime: 150,
   },
 
   skinStitchery: {
@@ -362,6 +380,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["toothPlanks", "saintFat"],
     outputPriority: ["skinWall"],
     description: "Armor with unfortunate texture.",
+    constructionTime: 120,
   },
 
   vaultOfDigestiveStone: {
@@ -374,6 +393,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     allowedTerrain: ["scarredEarth"],
     requiresRoadConnection: true,
     description: "A warehouse pretending to be a stomach.",
+    constructionTime: 90,
   },
 
   pitOfWarBirth: {
@@ -389,6 +409,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     allowedTerrain: ["scarredEarth"],
     requiresRoadConnection: true,
     description: "Converts inventory into military childhood.",
+    constructionTime: 180,
   },
 
   spireOfJurisdiction: {
@@ -405,6 +426,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     requiresRoadConnection: true,
     territoryInfluence: 4,
     description: "Marks where the state is allowed to keep existing.",
+    constructionTime: 180,
   },
 
   refectoryOfSalt: {
@@ -423,6 +445,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["eyelessFish"],
     outputPriority: ["brainSalt"],
     description: "Preserves thought by pulverizing its source.",
+    constructionTime: 90,
   },
 
   fatRenderer: {
@@ -441,6 +464,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["saintFat"],
     outputPriority: ["saintFat"],
     description: "A blasphemous efficiency loop.",
+    constructionTime: 90,
   },
 
   ashPress: {
@@ -459,6 +483,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     inputPriority: ["lungAsh"],
     outputPriority: ["graveCoal"],
     description: "Recycles exhaustion into further industry.",
+    constructionTime: 90,
   },
 };
 

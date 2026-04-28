@@ -1,61 +1,107 @@
 import { EconomySimulationState } from "../../core/economy.simulation";
 import { SimulationConfig } from "../../economy/balancing.constants";
-import { findPathAStar } from "../../pathing/path.a-star";
-import { createGridFromTerritory } from "../../pathing/path.grid";
+import { findPath } from "../../pathing/path.a-star";
+import { isConstructed } from "../buildings/building.types";
+
+const MOVE_SPEED = 1.0; // grid tiles per second
+const ARRIVAL_THRESHOLD = 0.5;
+
+export function isWorkerAtBuilding(
+  workerPos: { x: number; y: number },
+  buildingPos: { x: number; y: number }
+): boolean {
+  const dx = workerPos.x - buildingPos.x;
+  const dy = workerPos.y - buildingPos.y;
+  return Math.sqrt(dx * dx + dy * dy) < ARRIVAL_THRESHOLD;
+}
 
 export function updateWorkersAI(
   state: EconomySimulationState,
   deltaSec: number,
   _config: SimulationConfig
 ): EconomySimulationState {
+  const workers = { ...state.workers };
 
-  const moveSpeed = 1.0; // grid tiles per second
+  for (const [id, worker] of Object.entries(workers)) {
+    const building = worker.currentBuildingId
+      ? state.buildings[worker.currentBuildingId]
+      : undefined;
 
-  for (const worker of Object.values(state.workers)) {
-    // If worker has no active destination, give it a random one nearby to prove pathing
-    if (!worker.path || worker.path.length === 0) {
-       // For MVP, just clamp random targets within 0..9 grid of the map
-       const targetX = Math.max(0, Math.min(9, Math.round(worker.position.x + (Math.random() * 4 - 2))));
-       const targetY = Math.max(0, Math.min(9, Math.round(worker.position.y + (Math.random() * 4 - 2))));
-
-       // Calculate an actual path using A*
-       const grid = createGridFromTerritory(state.territory, 10, 10);
-       const pathResult = findPathAStar(grid, worker.position, {x: targetX, y: targetY});
-
-       if (pathResult.points.length > 0) {
-         worker.path = pathResult.points;
-         worker.isIdle = false;
-       }
-    }
-
-    if (worker.path && worker.path.length > 0) {
-      const target = worker.path[0];
-      const dx = target.x - worker.position.x;
-      const dy = target.y - worker.position.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 0.1) {
-        // Reached waypoint
-        worker.position.x = target.x;
-        worker.position.y = target.y;
-        worker.path.shift();
-        if (worker.path.length === 0) {
-          worker.isIdle = true;
-        }
-      } else {
-        // Move towards waypoint
-        const step = moveSpeed * deltaSec;
-        if (step >= dist) {
-          worker.position.x = target.x;
-          worker.position.y = target.y;
-          worker.path.shift();
-        } else {
-          worker.position.x += (dx / dist) * step;
-          worker.position.y += (dy / dist) * step;
-        }
+    if (worker.type === "burdenThrall") {
+      if (!building || isConstructed(building)) {
+        workers[id] = { ...worker, isIdle: true, currentBuildingId: undefined, path: [] };
+        continue;
       }
     }
+
+    if (!building) {
+      workers[id] = { ...worker, isIdle: true };
+      continue;
+    }
+
+    if (isWorkerAtBuilding(worker.position, building.position)) {
+      workers[id] = { ...worker, position: { x: building.position.x, y: building.position.y }, path: [], isIdle: false };
+      continue;
+    }
+
+    let path = worker.path && worker.path.length > 0 ? worker.path : undefined;
+
+    if (!path) {
+      const result = findPath(worker.position, building.position, state);
+      path = result.isComplete && result.points.length > 0 ? result.points : undefined;
+    }
+
+    if (!path || path.length === 0) {
+      // No path from A* — move directly toward building (open terrain)
+      const dx = building.position.x - worker.position.x;
+      const dy = building.position.y - worker.position.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const step = MOVE_SPEED * deltaSec;
+      let pos: { x: number; y: number };
+      if (step >= dist) {
+        pos = { x: building.position.x, y: building.position.y };
+      } else {
+        pos = {
+          x: worker.position.x + (dx / dist) * step,
+          y: worker.position.y + (dy / dist) * step,
+        };
+      }
+      const arrived = isWorkerAtBuilding(pos, building.position);
+      workers[id] = { ...worker, position: pos, isIdle: false, path: arrived ? [] : worker.path };
+      continue;
+    }
+
+    let remaining = MOVE_SPEED * deltaSec;
+    let pos = { ...worker.position };
+    let pathCopy = [...path];
+
+    while (remaining > 0 && pathCopy.length > 0) {
+      const target = pathCopy[0];
+      const dx = target.x - pos.x;
+      const dy = target.y - pos.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist <= remaining) {
+        pos = { x: target.x, y: target.y };
+        remaining -= dist;
+        pathCopy.shift();
+      } else {
+        pos = {
+          x: pos.x + (dx / dist) * remaining,
+          y: pos.y + (dy / dist) * remaining,
+        };
+        remaining = 0;
+      }
+    }
+
+    const arrived = isWorkerAtBuilding(pos, building.position);
+    workers[id] = {
+      ...worker,
+      position: arrived ? { x: building.position.x, y: building.position.y } : pos,
+      path: arrived ? [] : pathCopy,
+      isIdle: false,
+    };
   }
 
-  return state;
+  return { ...state, workers };
 }

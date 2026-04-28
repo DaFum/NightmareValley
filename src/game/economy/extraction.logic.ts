@@ -1,4 +1,5 @@
 import { EconomySimulationState } from "../core/economy.simulation";
+import { isConstructed } from '../entities/buildings/building.types';
 import { SimulationConfig } from "./balancing.constants";
 import { BuildingInstance, MapTile } from "../core/game.types";
 import { BuildingDefinition, ResourceType } from "../core/economy.types";
@@ -17,6 +18,7 @@ export function processExtraction(
 ): EconomySimulationState {
   for (const building of Object.values(state.buildings)) {
     if (!building.isActive) continue;
+    if (!isConstructed(building)) continue;
     if (!building.connectedToRoad && requiresRoad(building.type)) continue;
 
     const def = BUILDING_DEFINITIONS[building.type];

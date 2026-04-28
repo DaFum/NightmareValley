@@ -2,6 +2,7 @@ import {
   placeBuilding,
   upgradeBuilding,
   syncStockFromVaults,
+  simulateTick,
   EconomySimulationState,
 } from "../../game/core/economy.simulation";
 import { TerritoryState } from "../../game/core/game.types";
@@ -219,7 +220,114 @@ describe("placeBuilding vault deduction", () => {
   });
 });
 
+describe("construction guards", () => {
+  it("building under construction does not extract resources", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "organHarvester",
+          ownerId: "p1",
+          level: 0,
+          constructionProgress: 0,
+          position: { x: 0, y: 0 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: true,
+          integrity: 100,
+        } as any,
+      },
+      territory: {
+        tiles: {
+          "tile_0_0": {
+            id: "tile_0_0",
+            position: { x: 0, y: 0 },
+            terrain: "scarredEarth",
+            ownerId: "p1",
+            footfall: 0,
+            tier: "grass",
+            resourceDeposit: { sinewTimber: 999 },
+          } as any,
+        },
+        tileIndex: { "0,0": "tile_0_0" },
+      } as any,
+      workers: {
+        w1: { id: "w1", type: "timberExecutioner", ownerId: "p1", assignedBuildingId: "b1" } as any,
+      },
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    } as any;
+
+    const next = simulateTick(state, 30);
+    const building = next.buildings["b1"];
+    expect(building.outputBuffer["sinewTimber"] ?? 0).toBe(0);
+  });
+
+  it("building under construction does not process recipes", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "millOfGnashing",
+          ownerId: "p1",
+          level: 0,
+          constructionProgress: 0.3,
+          position: { x: 0, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: 10 },
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: true,
+          integrity: 100,
+        } as any,
+      },
+      territory: { tiles: {}, tileIndex: {} } as any,
+      workers: {
+        w1: { id: "w1", type: "gnashSawyer", ownerId: "p1", assignedBuildingId: "b1" } as any,
+      },
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    } as any;
+
+    const next = simulateTick(state, 30);
+    const building = next.buildings["b1"];
+    expect(building.outputBuffer["toothPlanks"] ?? 0).toBe(0);
+  });
+});
+
 describe("upgradeBuilding vault deduction", () => {
+  it("throws error when trying to upgrade a building still under construction", () => {
+    const state = makeState({
+      players: { p1: { id: "p1", stock: { toothPlanks: 20 }, buildings: ["b1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "organHarvester",
+          level: 0,
+          constructionProgress: 0, // under construction
+          position: { x: 0, y: 0 },
+          outputBuffer: {}, inputBuffer: {}, internalStorage: {},
+          assignedWorkers: [], progressSec: 0, isActive: true,
+        } as any,
+      },
+    });
+
+    expect(() => upgradeBuilding(state, "p1", "b1")).toThrow("Building is still under construction");
+  });
+
   it("deducts upgrade cost from vault outputBuffer", () => {
     // organHarvester upgrade from L1→L2 costs {toothPlanks: 1, sepulcherStone: 1}
     const state = makeState({
