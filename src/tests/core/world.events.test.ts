@@ -36,7 +36,9 @@ describe('applyScheduledWorldEvents', () => {
   });
 
   it('emits deterministic events when crossing event intervals', () => {
-    const next = applyScheduledWorldEvents(makeWorld(125, { lastEventStep: 0, log: [] }));
+    const world = makeWorld(125, { lastEventStep: 0, log: [] });
+    world.seed = 2; // seed=2, step=1 -> Ashfall Blessing
+    const next = applyScheduledWorldEvents(world);
 
     expect(next.events?.lastEventStep).toBe(1);
     expect(next.events?.log[0].title).toBe('Ashfall Blessing');
@@ -45,30 +47,34 @@ describe('applyScheduledWorldEvents', () => {
 
   it('applies later event effects without duplicating old events', () => {
     const world = makeWorld(365, { lastEventStep: 1, log: [{ id: 'event_1', age: 125, title: 'Ashfall Blessing', description: '', severity: 'info' }] });
+    world.seed = 3; // For step 2 and 3, Random(3 * 1000 + step) -> step 2 is Road Congestion, step 3 is Morale Shock
 
     const next = applyScheduledWorldEvents(world);
 
     expect(next.events?.lastEventStep).toBe(3);
-    expect(next.events?.log.map((event) => event.title)).toEqual(['Resource Drought', 'Road Congestion', 'Ashfall Blessing']);
-    expect(next.transport.networkStress).toBe(8);
+    expect(next.events?.log.map((event) => event.title)).toEqual(['Morale Shock', 'Road Congestion', 'Ashfall Blessing']);
+    expect(next.workers.w1.morale).toBe(92); // 100 - 8 from Morale Shock
+    expect(next.transport.networkStress).toBe(8); // from Road Congestion
   });
 
   it('applies drought by reducing vault water and grain reserves', () => {
     const world = {
-      ...makeWorld(365, { lastEventStep: 2, log: [] }),
-      buildings: {
+      ...makeWorld(365, { lastEventStep: 1, log: [] }),
+      seed: 1, // seed=1, step=2 produces 'Ashfall Blessing', step 3 produces 'Resource Drought'.
+    };
+    world.buildings = {
         vault: {
           id: 'vault',
           type: 'vaultOfDigestiveStone',
           ownerId: 'p1',
           outputBuffer: { amnioticWater: 5, marrowGrain: 2 },
         } as any,
-      },
     };
+    world.ageOfTeeth = 365; // evaluates step 2 and step 3
 
     const next = applyScheduledWorldEvents(world);
 
-    expect(next.events?.log[0].title).toBe('Resource Drought');
+    expect(next.events?.log[0].title).toBe('Resource Drought'); // since step 3 was drought, and unshift puts it first
     expect(next.buildings.vault.outputBuffer.amnioticWater).toBe(2);
     expect(next.buildings.vault.outputBuffer.marrowGrain).toBe(0);
   });

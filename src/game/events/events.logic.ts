@@ -1,3 +1,4 @@
+import { Random } from '../core/random';
 import { WorldEventLogEntry, WorldState } from '../world/world.types';
 
 const EVENT_INTERVAL_SEC = 120;
@@ -84,7 +85,11 @@ export function applyScheduledWorldEvents(world: WorldState): WorldState {
   const log = [...(world.events?.log ?? [])];
 
   for (let step = previousStep + 1; step <= currentStep; step++) {
-    const event = EVENTS[(step - 1) % EVENTS.length];
+    const random = new Random(world.seed * 1000 + step);
+    // Advance RNG state a few times to ensure better distribution for similar seeds
+    random.next();
+    random.next();
+    const event = EVENTS[random.int(EVENTS.length)];
     next = event.apply(next, step);
     log.unshift({
       id: `event_${step}`,

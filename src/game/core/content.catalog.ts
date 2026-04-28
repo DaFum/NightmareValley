@@ -89,7 +89,7 @@ export function createContentCatalog(): ContentCatalog {
       .map((building) => building.type),
   }));
 
-const resourceTypes = unique([
+  const resourceTypes = unique([
     ...buildings.flatMap((building) => building.produces),
     ...buildings.flatMap((building) => building.consumes),
     ...Object.values(BUILDING_DEFINITIONS).flatMap((definition) => Object.keys(definition.buildCost.resources) as ResourceType[]),

@@ -3,8 +3,10 @@ import { WorldEventLogEntry } from '../../game/world/world.types';
 
 const EMPTY_EVENTS: WorldEventLogEntry[] = [];
 
+import { useShallow } from 'zustand/react/shallow';
+
 export default function EventLogPanel(): JSX.Element {
-  const events = useGameStore((state) => state.gameState.events?.log ?? EMPTY_EVENTS);
+  const events = useGameStore(useShallow((state) => state.gameState.events?.log ?? EMPTY_EVENTS));
   const alert = events.find((event) => event.severity === 'danger')
     ?? events.find((event) => event.severity === 'warning');
 
