@@ -8,6 +8,7 @@ import WarehousePanel from '../../ui/panels/WarehousePanel';
 import SettlementBriefPanel from '../../ui/panels/SettlementBriefPanel';
 import GameGuidePanel from '../../ui/panels/GameGuidePanel';
 import EventLogPanel from '../../ui/panels/EventLogPanel';
+import ResumeRunPrompt from '../../ui/panels/ResumeRunPrompt';
 import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import { HudLayout } from './HudLayout';
 import Particles from '../../components/Particles';
@@ -67,6 +68,7 @@ export function GameLayout({
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+  const [resumePromptDismissed, setResumePromptDismissed] = React.useState(false);
   const [dismissedVictory, setDismissedVictory] = React.useState(false);
   const gameState = useGameStore((state) => state.gameState);
   const isRunning = useGameStore((state) => state.isRunning);
@@ -82,6 +84,9 @@ export function GameLayout({
   const focusMode = useUIStore((state) => state.focusMode);
   const minimalHud = useUIStore((state) => state.minimalHud);
   const guideOpen = useUIStore((state) => state.guideOpen);
+  const autosaveEnabled = useUIStore((state) => state.autosaveEnabled);
+  const setAutosaveEnabled = useUIStore((state) => state.setAutosaveEnabled);
+  const toggleAutosaveEnabled = useUIStore((state) => state.toggleAutosaveEnabled);
   const togglePanel = useUIStore((state) => state.togglePanel);
   const toggleRoadPlacementMode = useUIStore((state) => state.toggleRoadPlacementMode);
   const toggleRoadRemovalMode = useUIStore((state) => state.toggleRoadRemovalMode);
@@ -94,6 +99,7 @@ export function GameLayout({
   const outcome = React.useMemo(() => evaluateGameOutcome(gameState, player1Id), [gameState]);
   const visibleOutcome = outcome.kind === 'victory' && dismissedVictory ? { ...outcome, kind: 'in-progress' as const } : outcome;
   const savedGameAvailable = hasSavedGame();
+  const showResumePrompt = savedGameAvailable && gameState.tick === 0 && !resumePromptDismissed && !menuOpen && !settingsOpen && !shortcutsOpen;
 
   React.useEffect(() => {
     if (outcome.kind !== 'in-progress') {
@@ -111,6 +117,8 @@ export function GameLayout({
   }, [focusMode, guideOpen, minimalHud]);
 
   React.useEffect(() => {
+    if (!autosaveEnabled) return;
+
     const saveCurrentRun = () => {
       useGameStore.getState().saveGame();
     };
@@ -126,7 +134,7 @@ export function GameLayout({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', saveCurrentRun);
     };
-  }, []);
+  }, [autosaveEnabled]);
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -190,6 +198,20 @@ export function GameLayout({
     resetGame();
   }, [resetGame]);
 
+  const handleResumeSavedRun = React.useCallback(() => {
+    if (loadSavedGame()) {
+      setDismissedVictory(false);
+      setResumePromptDismissed(true);
+    }
+  }, [loadSavedGame]);
+
+  const handleStartFreshRun = React.useCallback(() => {
+    clearSavedGame();
+    setAutosaveEnabled(false);
+    setResumePromptDismissed(true);
+    resetGame();
+  }, [clearSavedGame, resetGame, setAutosaveEnabled]);
+
   const handleScenarioChange = React.useCallback((profile: typeof activeScenario) => {
     setDismissedVictory(false);
     setScenarioProfile(profile);
@@ -216,6 +238,12 @@ export function GameLayout({
       <SvgAnimationIntegrator />
       <Particles />
       <HudLayout top={resolvedHud} right={inspector} bottom={panels} isMobile={isMobile} />
+      <ResumeRunPrompt
+        visible={showResumePrompt}
+        onResume={handleResumeSavedRun}
+        onNewRun={handleStartFreshRun}
+        onDismiss={() => setResumePromptDismissed(true)}
+      />
       {showDebugPanel && (
         <div className="game-layout__debug-panel">
           <DebugLogisticsPanel />
@@ -236,20 +264,22 @@ export function GameLayout({
           }}
           onSave={() => {
             saveGame();
+            setAutosaveEnabled(true);
             setMenuOpen(false);
           }}
           onLoad={() => {
-            if (loadSavedGame()) {
-              setDismissedVictory(false);
-              setMenuOpen(false);
-            }
+            handleResumeSavedRun();
+            setMenuOpen(false);
           }}
           onClearSave={() => {
             clearSavedGame();
+            setAutosaveEnabled(false);
             setMenuOpen(false);
           }}
+          onToggleAutosave={toggleAutosaveEnabled}
           onClose={() => setMenuOpen(false)}
           hasSavedGame={savedGameAvailable}
+          autosaveEnabled={autosaveEnabled}
         />
         <SettingsDialog
           open={settingsOpen}

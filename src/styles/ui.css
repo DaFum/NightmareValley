@@ -547,6 +547,58 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   line-height: 1.35;
 }
 
+.resume-run-prompt {
+  position: fixed;
+  z-index: 35;
+  top: clamp(5.5rem, 11vh, 7.25rem);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: min(38rem, calc(100vw - 2rem));
+  padding: 0.75rem 0.85rem;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+.resume-run-prompt > div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.resume-run-prompt strong {
+  color: var(--text-strong);
+  font-size: 0.95rem;
+}
+
+.resume-run-prompt span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.resume-run-prompt__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.4rem;
+}
+
+@media (max-width: 640px) {
+  .resume-run-prompt {
+    top: auto;
+    bottom: 5.75rem;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .resume-run-prompt__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+  }
+}
+
 .settings-option {
   display: grid;
   gap: 4px;

@@ -15,12 +15,15 @@ export interface UIStore {
   focusMode: boolean;
   minimalHud: boolean;
   guideOpen: boolean;
+  autosaveEnabled: boolean;
   setFocusMode: (value: boolean) => void;
   setMinimalHud: (value: boolean) => void;
   setGuideOpen: (value: boolean) => void;
+  setAutosaveEnabled: (value: boolean) => void;
   toggleFocusMode: () => void;
   toggleMinimalHud: () => void;
   toggleGuideOpen: () => void;
+  toggleAutosaveEnabled: () => void;
   isDebugSpawningWarehouse: boolean;
   setDebugSpawningWarehouse: (v: boolean) => void;
   showFootfallHeatmap: boolean;
@@ -38,7 +41,7 @@ function readStoredFlag(key: string, fallback = false) {
 function writeStoredFlag(key: string, value: boolean) {
   try {
     if (value) localStorage.setItem(key, '1');
-    else localStorage.removeItem(key);
+    else localStorage.setItem(key, '0');
   } catch {
     // Local storage can be unavailable in private or test contexts.
   }
@@ -52,6 +55,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
   focusMode: readStoredFlag('ui:focus'),
   minimalHud: readStoredFlag('ui:minimalHud', readStoredFlag('ui:hudHidden')),
   guideOpen: readStoredFlag('ui:guideOpen', true),
+  autosaveEnabled: readStoredFlag('ui:autosaveEnabled', true),
   isDebugSpawningWarehouse: false,
   showFootfallHeatmap: false,
 
@@ -108,11 +112,18 @@ export const useUIStore = create<UIStore>((set, get) => ({
     set({ guideOpen: value });
   },
 
+  setAutosaveEnabled: (value) => {
+    writeStoredFlag('ui:autosaveEnabled', value);
+    set({ autosaveEnabled: value });
+  },
+
   toggleFocusMode: () => get().setFocusMode(!get().focusMode),
 
   toggleMinimalHud: () => get().setMinimalHud(!get().minimalHud),
 
   toggleGuideOpen: () => get().setGuideOpen(!get().guideOpen),
+
+  toggleAutosaveEnabled: () => get().setAutosaveEnabled(!get().autosaveEnabled),
 
   setDebugSpawningWarehouse: (v: boolean) => {
     set({ isDebugSpawningWarehouse: v });
