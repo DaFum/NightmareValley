@@ -72,8 +72,22 @@ describe("updateWorkersAI", () => {
     expect(worker.isIdle).toBe(false);
   });
 
-  it("does not move burdenThrall workers", () => {
+  it("transitions burdenThrall back to idle when building finishes construction", () => {
+    const state = makeState({ type: "burdenThrall", isIdle: false });
+    state.buildings["b1"].constructionProgress = undefined; // Fully constructed
+    state.buildings["b1"].level = 1;
+
+    const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
+    const worker = next.workers["w1"];
+    expect(worker.isIdle).toBe(true);
+    expect(worker.currentBuildingId).toBeUndefined();
+    expect(worker.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("does not move burdenThrall workers assigned to constructed buildings", () => {
     const state = makeState({ type: "burdenThrall" });
+    state.buildings["b1"].constructionProgress = undefined; // Fully constructed
+    state.buildings["b1"].level = 1;
     const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
     expect(next.workers["w1"].position).toEqual({ x: 0, y: 0 });
   });
@@ -89,5 +103,21 @@ describe("updateWorkersAI", () => {
     const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
     expect(next.workers["w1"].position).toEqual({ x: 5, y: 5 });
     expect(next.workers["w1"].isIdle).toBe(false);
+  });
+
+  it("limits movement per tick to moveSpeed * deltaSec", () => {
+    // "w1" is at 0,0 and target is at 5,5
+    const state = makeState();
+    // Simulate with a small delta so they don't arrive immediately
+    const deltaSec = 0.5;
+    const next = updateWorkersAI(state, deltaSec, DEFAULT_SIMULATION_CONFIG);
+    const worker = next.workers["w1"];
+
+    // Timber Executioner moveSpeed is 1
+    const dx = worker.position.x - 0;
+    const dy = worker.position.y - 0;
+    const distanceMoved = Math.sqrt(dx * dx + dy * dy);
+
+    expect(distanceMoved).toBeCloseTo(1.0 * deltaSec);
   });
 });

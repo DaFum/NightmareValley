@@ -9,8 +9,18 @@ const TILE_H = 144; // native SVG art height in px (manifest)
 
 function looksAnimated(svgText: string) {
   if (!svgText) return false;
-  const lower = svgText.toLowerCase();
-  return lower.includes('<animate') || lower.includes('@keyframes') || lower.includes('animation:');
+  const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+  const hasAnimationElements = doc.querySelectorAll('animate, animateMotion, animateTransform, set').length > 0;
+
+  let hasCSSAnimation = false;
+  const styles = doc.querySelectorAll('style');
+  styles.forEach(style => {
+    const text = style.textContent || '';
+    if (/@keyframes/.test(text)) hasCSSAnimation = true;
+    if (/animation:/.test(text) && !/animation:\s*none/.test(text)) hasCSSAnimation = true;
+  });
+
+  return hasAnimationElements || hasCSSAnimation;
 }
 
 export default function SvgAnimationIntegrator(): null {
@@ -20,12 +30,26 @@ export default function SvgAnimationIntegrator(): null {
     if (!ready) return;
 
     let mounted = true;
-    const cancelFns: (() => void)[] = [];
     const replacedKeys = new Set<string>();
+    const drawFns: (() => void)[] = [];
+    let rafId: number | null = null;
+    let lastTime = 0;
+
+    // Single shared loop for all active animated textures, throttled to ~30 FPS
+    const sharedLoop = (time: number) => {
+      if (!mounted) return;
+      rafId = window.requestAnimationFrame(sharedLoop);
+
+      const delta = time - lastTime;
+      if (delta > 33) {
+        lastTime = time;
+        drawFns.forEach((fn) => fn());
+      }
+    };
+    rafId = window.requestAnimationFrame(sharedLoop);
 
     try {
       const keys = Object.keys((PIXI.utils as any).TextureCache ?? {});
-
       const terrainKeys = keys.filter((k) => typeof k === 'string' && k.startsWith(TERRAIN_PREFIX));
 
       terrainKeys.forEach((key) => {
@@ -61,13 +85,7 @@ export default function SvgAnimationIntegrator(): null {
               const ctx = canvas.getContext('2d');
               if (!ctx) return;
 
-              let rafId: number | null = null;
-
-              cancelFns.push(() => {
-                if (rafId !== null) window.cancelAnimationFrame(rafId);
-              });
-
-              // Create texture once outside the loop
+              // Create texture once
               let baseTex: PIXI.BaseTexture | null = null;
               try {
                 baseTex = new PIXI.BaseTexture(canvas);
@@ -78,33 +96,25 @@ export default function SvgAnimationIntegrator(): null {
                 // Ignore initial texture swap errors
               }
 
-              // Drawing loop: copy the live <img> (which runs SVG animations) into canvas
-              const draw = () => {
+              // Register draw function to shared loop
+              drawFns.push(() => {
                 if (!mounted) return;
                 try {
                   ctx.clearRect(0, 0, w, h);
                   ctx.drawImage(img, 0, 0, w, h);
-
-                  if (baseTex) {
-                    baseTex.update();
-                  }
+                  if (baseTex) baseTex.update();
                 } catch (err) {
                   // ignore draw errors
                 }
-
-                rafId = window.requestAnimationFrame(draw);
-              };
-
-              // Start loop
-              draw();
+              });
             };
 
-            img.onerror = () => {
-              // Loading failed; skip
+            img.onerror = (err) => {
+              console.warn(`SvgAnimationIntegrator: Failed to load SVG image source. URL: ${url}`, err);
             };
           })
-          .catch(() => {
-            // ignore fetch errors
+          .catch((err) => {
+            console.warn(`SvgAnimationIntegrator: Failed to fetch SVG text. URL: ${url}`, err);
           });
       });
     } catch (err) {
@@ -115,7 +125,10 @@ export default function SvgAnimationIntegrator(): null {
 
     return () => {
       mounted = false;
-      cancelFns.forEach((fn) => fn());
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+      replacedKeys.forEach(key => {
+        try { PIXI.Texture.removeFromCache(key); } catch (e) { /* ignore */ }
+      });
     };
   }, [ready]);
 

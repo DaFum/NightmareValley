@@ -1,6 +1,7 @@
 import { EconomySimulationState } from "../../core/economy.simulation";
 import { SimulationConfig } from "../../economy/balancing.constants";
 import { findPath } from "../../pathing/path.a-star";
+import { isConstructed } from "../buildings/building.types";
 
 const MOVE_SPEED = 1.0; // grid tiles per second
 const ARRIVAL_THRESHOLD = 0.5;
@@ -22,11 +23,16 @@ export function updateWorkersAI(
   const workers = { ...state.workers };
 
   for (const [id, worker] of Object.entries(workers)) {
-    if (worker.type === "burdenThrall") continue;
-
     const building = worker.currentBuildingId
       ? state.buildings[worker.currentBuildingId]
       : undefined;
+
+    if (worker.type === "burdenThrall") {
+      if (!building || isConstructed(building)) {
+        workers[id] = { ...worker, isIdle: true, currentBuildingId: undefined, path: [] };
+        continue;
+      }
+    }
 
     if (!building) {
       workers[id] = { ...worker, isIdle: true };

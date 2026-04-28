@@ -2,13 +2,12 @@ import React from 'react';
 import { Container, Sprite } from '@pixi/react';
 import { useTextures } from '../utils/textureRegistry';
 import { IsoRenderWorld } from '../../game/render/render.types';
-import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../../game/iso/iso.constants';
+import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, TERRAIN_Z_INDEX_BIAS } from '../../game/iso/iso.constants';
 
 interface IsoTerrainLayerProps {
   tiles: IsoRenderWorld['tiles'];
 }
 
-const TILE_ANCHOR = { x: 0.5, y: 0.5 } as const;
 const warnedMissingTerrainTextures = new Set<string>();
 
 export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
@@ -56,23 +55,13 @@ export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: Is
               y={tile.screenY}
               anchor={{ x: 0.5, y: 1 }}
               scale={scale}
-              zIndex={tile.screenY - 1000}
+              zIndex={tile.screenY + TERRAIN_Z_INDEX_BIAS}
               eventMode="none"
             />
           );
         }
 
-        return (
-          <Sprite
-            key={tile.id}
-            texture={texture}
-            x={tile.screenX}
-            y={tile.screenY}
-            anchor={TILE_ANCHOR}
-            zIndex={tile.screenY - 1000}
-            eventMode="none"
-          />
-        );
+        return null;
       })}
     </Container>
   );
