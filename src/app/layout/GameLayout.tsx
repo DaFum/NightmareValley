@@ -10,6 +10,7 @@ import GameGuidePanel from '../../ui/panels/GameGuidePanel';
 import EventLogPanel from '../../ui/panels/EventLogPanel';
 import ResumeRunPrompt from '../../ui/panels/ResumeRunPrompt';
 import TacticalMapPanel from '../../ui/panels/TacticalMapPanel';
+import SelectionStatusChip from '../../ui/hud/SelectionStatusChip';
 import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import { HudLayout } from './HudLayout';
 import Particles from '../../components/Particles';
@@ -244,6 +245,7 @@ export function GameLayout({
       <Particles />
       <HudLayout top={resolvedHud} right={inspector} bottom={panels} isMobile={isMobile} />
       <TacticalMapPanel />
+      <SelectionStatusChip />
       <ResumeRunPrompt
         visible={showResumePrompt}
         onResume={handleResumeSavedRun}

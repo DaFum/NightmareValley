@@ -69,6 +69,13 @@
 - [x] Update the spritesheet loader so `ui` entries register without a group prefix.
 - [x] Verify manifest files and TypeScript build after the asset change.
 
+### Phase 6: Selection Feedback Polish
+
+- [ ] Add deterministic selection summary copy for buildings, workers, and tiles.
+- [ ] Add a compact selected-object HUD chip that mirrors the current selection.
+- [ ] Keep the chip low-chrome and responsive so it does not cover the map center.
+- [ ] Add focused tests for selection copy and run browser QA with a selected building.
+
 ## Execution Order
 
 1. Close review comments with tests and targeted code changes.
