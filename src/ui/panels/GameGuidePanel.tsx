@@ -4,10 +4,13 @@ import { player1Id, useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
 
 export default function GameGuidePanel(): JSX.Element | null {
-  const gameState = useGameStore((state) => state.gameState);
+  const guideCheckBucket = useGameStore((state) => Math.floor(state.gameState.ageOfTeeth));
   const guideOpen = useUIStore((state) => state.guideOpen);
   const setGuideOpen = useUIStore((state) => state.setGuideOpen);
-  const step = useMemo(() => getTutorialStep(gameState, player1Id), [gameState]);
+  const step = useMemo(
+    () => getTutorialStep(useGameStore.getState().gameState, player1Id),
+    [guideCheckBucket]
+  );
 
   if (!guideOpen) return null;
 

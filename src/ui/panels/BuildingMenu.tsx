@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '../../store/ui.store';
 import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
@@ -59,32 +60,71 @@ export function BuildingMenu() {
     toggleRoadPlacementMode,
     toggleRoadRemovalMode,
   } = useUIStore();
-  const gameState = useGameStore(state => state.gameState);
-  const [category, setCategory] = useState<BuildCategory>('campaign');
+  const economySnapshot = useGameStore(useShallow((state) => {
+    const gameState = state.gameState;
+    const player = gameState.players[player1Id];
+    const availableInventory: ResourceInventory = {} as ResourceInventory;
+    let hasVault = false;
 
-  const player = gameState.players[player1Id];
-
-  if (!player) return null;
-
-  // Aggregate vault outputBuffers directly — avoids relying on player.stock which can lag
-  // behind vault deductions until the next simulateTick syncs it.
-  const availableInventory: ResourceInventory = {} as ResourceInventory;
-  let hasVault = false;
-  for (const buildingId of player.buildings) {
-    const b = gameState.buildings[buildingId];
-    if (b?.type === 'vaultOfDigestiveStone') {
-      hasVault = true;
-      for (const [res, amt] of Object.entries(b.outputBuffer)) {
-        (availableInventory as Record<string, number>)[res] = ((availableInventory as Record<string, number>)[res] ?? 0) + (amt ?? 0);
+    if (player) {
+      for (const buildingId of player.buildings) {
+        const b = gameState.buildings[buildingId];
+        if (b?.type === 'vaultOfDigestiveStone') {
+          hasVault = true;
+          for (const [res, amt] of Object.entries(b.outputBuffer)) {
+            (availableInventory as Record<string, number>)[res] = ((availableInventory as Record<string, number>)[res] ?? 0) + (amt ?? 0);
+          }
+        }
       }
     }
-  }
-  const inventory = hasVault ? availableInventory : player.stock;
+
+    const inventory = hasVault ? availableInventory : player?.stock ?? {};
+    const nextObjective = getCampaignObjectives(gameState, player1Id).find((objective) => !objective.complete);
+
+    return {
+      hasPlayer: !!player,
+      nextObjectiveLabel: nextObjective?.label ?? 'All campaign objectives complete',
+      toothPlanks: inventory.toothPlanks ?? 0,
+      sepulcherStone: inventory.sepulcherStone ?? 0,
+      marrowGrain: inventory.marrowGrain ?? 0,
+      boneDust: inventory.boneDust ?? 0,
+      amnioticWater: inventory.amnioticWater ?? 0,
+      eyelessFish: inventory.eyelessFish ?? 0,
+      brainSalt: inventory.brainSalt ?? 0,
+      funeralLoaf: inventory.funeralLoaf ?? 0,
+      graveCoal: inventory.graveCoal ?? 0,
+      veinIronOre: inventory.veinIronOre ?? 0,
+      veinIronBar: inventory.veinIronBar ?? 0,
+      tormentInstrument: inventory.tormentInstrument ?? 0,
+      haloGoldBar: inventory.haloGoldBar ?? 0,
+      cathedralGoldOre: inventory.cathedralGoldOre ?? 0,
+      sinewTimber: inventory.sinewTimber ?? 0,
+    };
+  }));
+  const [category, setCategory] = useState<BuildCategory>('campaign');
+
+  if (!economySnapshot.hasPlayer) return null;
+
+  const inventory: ResourceInventory = {
+    toothPlanks: economySnapshot.toothPlanks,
+    sepulcherStone: economySnapshot.sepulcherStone,
+    marrowGrain: economySnapshot.marrowGrain,
+    boneDust: economySnapshot.boneDust,
+    amnioticWater: economySnapshot.amnioticWater,
+    eyelessFish: economySnapshot.eyelessFish,
+    brainSalt: economySnapshot.brainSalt,
+    funeralLoaf: economySnapshot.funeralLoaf,
+    graveCoal: economySnapshot.graveCoal,
+    veinIronOre: economySnapshot.veinIronOre,
+    veinIronBar: economySnapshot.veinIronBar,
+    tormentInstrument: economySnapshot.tormentInstrument,
+    haloGoldBar: economySnapshot.haloGoldBar,
+    cathedralGoldOre: economySnapshot.cathedralGoldOre,
+    sinewTimber: economySnapshot.sinewTimber,
+  };
 
   const isOpen = activePanel === 'buildingMenu';
 
-  const objectives = useMemo(() => getCampaignObjectives(gameState, player1Id), [gameState]);
-  const nextObjective = objectives.find((objective) => !objective.complete);
   const toolHint = getToolHint({
     isOpen,
     roadPlacementMode,
@@ -139,7 +179,7 @@ export function BuildingMenu() {
 
           <div className="build-menu-panel__campaign-note">
             <span>Next objective</span>
-            <strong>{nextObjective ? nextObjective.label : 'All campaign objectives complete'}</strong>
+            <strong>{economySnapshot.nextObjectiveLabel}</strong>
           </div>
 
           <div className="build-menu-tabs" aria-label="Build categories">

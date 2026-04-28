@@ -1685,45 +1685,45 @@
   ],
   "terrain": {
     "assigned": {
-      "ashBog_1": { "file": "terrain/ashBog_1.svg", "box": [0,0,128,144] },
-      "ashBog_2": { "file": "terrain/ashBog_2.svg", "box": [0,0,128,144] },
-      "ashBog_3": { "file": "terrain/ashBog_3.svg", "box": [0,0,128,144] },
-      "ashBog_4": { "file": "terrain/ashBog_4.svg", "box": [0,0,128,144] },
+      "ashBog_1": { "file": "terrain/ashBog_1.png", "box": [0,0,64,32] },
+      "ashBog_2": { "file": "terrain/ashBog_2.png", "box": [0,0,64,32] },
+      "ashBog_3": { "file": "terrain/ashBog_3.png", "box": [0,0,64,32] },
+      "ashBog_4": { "file": "terrain/ashBog_4.png", "box": [0,0,64,32] },
 
-      "cathedralRock_1": { "file": "terrain/cathedralRock_1.svg", "box": [0,0,128,144] },
-      "cathedralRock_2": { "file": "terrain/cathedralRock_2.svg", "box": [0,0,128,144] },
-      "cathedralRock_3": { "file": "terrain/cathedralRock_3.svg", "box": [0,0,128,144] },
-      "cathedralRock_4": { "file": "terrain/cathedralRock_4.svg", "box": [0,0,128,144] },
+      "cathedralRock_1": { "file": "terrain/cathedralRock_1.png", "box": [0,0,64,32] },
+      "cathedralRock_2": { "file": "terrain/cathedralRock_2.png", "box": [0,0,64,32] },
+      "cathedralRock_3": { "file": "terrain/cathedralRock_3.png", "box": [0,0,64,32] },
+      "cathedralRock_4": { "file": "terrain/cathedralRock_4.png", "box": [0,0,64,32] },
 
-      "occupiedScar_1": { "file": "terrain/occupiedScar_1.svg", "box": [0,0,128,144] },
-      "occupiedScar_2": { "file": "terrain/occupiedScar_2.svg", "box": [0,0,128,144] },
-      "occupiedScar_3": { "file": "terrain/occupiedScar_3.svg", "box": [0,0,128,144] },
-      "occupiedScar_4": { "file": "terrain/occupiedScar_4.svg", "box": [0,0,128,144] },
+      "occupiedScar_1": { "file": "terrain/occupiedScar_1.png", "box": [0,0,64,32] },
+      "occupiedScar_2": { "file": "terrain/occupiedScar_2.png", "box": [0,0,64,32] },
+      "occupiedScar_3": { "file": "terrain/occupiedScar_3.png", "box": [0,0,64,32] },
+      "occupiedScar_4": { "file": "terrain/occupiedScar_4.png", "box": [0,0,64,32] },
 
-      "placentaLake_1": { "file": "terrain/placentaLake_1.svg", "box": [0,0,128,144] },
-      "placentaLake_2": { "file": "terrain/placentaLake_2.svg", "box": [0,0,128,144] },
-      "placentaLake_3": { "file": "terrain/placentaLake_3.svg", "box": [0,0,128,144] },
-      "placentaLake_4": { "file": "terrain/placentaLake_4.svg", "box": [0,0,128,144] },
+      "placentaLake_1": { "file": "terrain/placentaLake_1.png", "box": [0,0,64,32] },
+      "placentaLake_2": { "file": "terrain/placentaLake_2.png", "box": [0,0,64,32] },
+      "placentaLake_3": { "file": "terrain/placentaLake_3.png", "box": [0,0,64,32] },
+      "placentaLake_4": { "file": "terrain/placentaLake_4.png", "box": [0,0,64,32] },
 
-      "ribMountain_1": { "file": "terrain/ribMountain_1.svg", "box": [0,0,128,144] },
-      "ribMountain_2": { "file": "terrain/ribMountain_2.svg", "box": [0,0,128,144] },
-      "ribMountain_3": { "file": "terrain/ribMountain_3.svg", "box": [0,0,128,144] },
-      "ribMountain_4": { "file": "terrain/ribMountain_4.svg", "box": [0,0,128,144] },
+      "ribMountain_1": { "file": "terrain/ribMountain_1.png", "box": [0,0,64,32] },
+      "ribMountain_2": { "file": "terrain/ribMountain_2.png", "box": [0,0,64,32] },
+      "ribMountain_3": { "file": "terrain/ribMountain_3.png", "box": [0,0,64,32] },
+      "ribMountain_4": { "file": "terrain/ribMountain_4.png", "box": [0,0,64,32] },
 
-      "scarPath_1": { "file": "terrain/scarPath_1.svg", "box": [0,0,128,144] },
-      "scarPath_2": { "file": "terrain/scarPath_2.svg", "box": [0,0,128,144] },
-      "scarPath_3": { "file": "terrain/scarPath_3.svg", "box": [0,0,128,144] },
-      "scarPath_4": { "file": "terrain/scarPath_4.svg", "box": [0,0,128,144] },
+      "scarPath_1": { "file": "terrain/scarPath_1.png", "box": [0,0,64,32] },
+      "scarPath_2": { "file": "terrain/scarPath_2.png", "box": [0,0,64,32] },
+      "scarPath_3": { "file": "terrain/scarPath_3.png", "box": [0,0,64,32] },
+      "scarPath_4": { "file": "terrain/scarPath_4.png", "box": [0,0,64,32] },
 
-      "scarredEarth_1": { "file": "terrain/scarredEarth_1.svg", "box": [0,0,128,144] },
-      "scarredEarth_2": { "file": "terrain/scarredEarth_2.svg", "box": [0,0,128,144] },
-      "scarredEarth_3": { "file": "terrain/scarredEarth_3.svg", "box": [0,0,128,144] },
-      "scarredEarth_4": { "file": "terrain/scarredEarth_4.svg", "box": [0,0,128,144] },
+      "scarredEarth_1": { "file": "terrain/scarredEarth_1.png", "box": [0,0,64,32] },
+      "scarredEarth_2": { "file": "terrain/scarredEarth_2.png", "box": [0,0,64,32] },
+      "scarredEarth_3": { "file": "terrain/scarredEarth_3.png", "box": [0,0,64,32] },
+      "scarredEarth_4": { "file": "terrain/scarredEarth_4.png", "box": [0,0,64,32] },
 
-      "weepingForest_1": { "file": "terrain/weepingForest_1.svg", "box": [0,0,128,144] },
-      "weepingForest_2": { "file": "terrain/weepingForest_2.svg", "box": [0,0,128,144] },
-      "weepingForest_3": { "file": "terrain/weepingForest_3.svg", "box": [0,0,128,144] },
-      "weepingForest_4": { "file": "terrain/weepingForest_4.svg", "box": [0,0,128,144] }
+      "weepingForest_1": { "file": "terrain/weepingForest_1.png", "box": [0,0,64,32] },
+      "weepingForest_2": { "file": "terrain/weepingForest_2.png", "box": [0,0,64,32] },
+      "weepingForest_3": { "file": "terrain/weepingForest_3.png", "box": [0,0,64,32] },
+      "weepingForest_4": { "file": "terrain/weepingForest_4.png", "box": [0,0,64,32] }
     }
   }
 }

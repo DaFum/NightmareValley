@@ -403,7 +403,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       } = runBoundedSimulationSteps(gameState, deltaSec, tickRate, fixedStepSec, maxSteps, {
         profile,
       });
-      set({ gameState: nextState });
+      if (stepsProcessed > 0 || nextState !== gameState) {
+        set({ gameState: nextState });
+      }
       return { stepsProcessed, carryoverSec, droppedFrameDebt };
     } catch (error) {
       console.error("Simulation frame failed:", error);

@@ -2,6 +2,81 @@ import * as PIXI from "pixi.js";
 import { loadSpritesheets } from "./spritesheetLoader";
 import { useState, useEffect } from "react";
 
+const TERRAIN_NAMES = [
+  'scarredEarth_1','scarredEarth_2','scarredEarth_3','scarredEarth_4',
+  'weepingForest_1','weepingForest_2','weepingForest_3','weepingForest_4',
+  'ribMountain_1','ribMountain_2','ribMountain_3','ribMountain_4',
+  'placentaLake_1','placentaLake_2','placentaLake_3','placentaLake_4',
+  'scarPath_1','scarPath_2','scarPath_3','scarPath_4',
+  'occupiedScar_1','occupiedScar_2','occupiedScar_3','occupiedScar_4',
+  'ashBog_1','ashBog_2','ashBog_3','ashBog_4',
+  'cathedralRock_1','cathedralRock_2','cathedralRock_3','cathedralRock_4',
+] as const;
+
+const TERRAIN_PALETTE: Record<string, [string, string]> = {
+  scarredEarth:  ['#5E3C22', '#1E0C06'],
+  weepingForest: ['#264222', '#0E1A0C'],
+  ribMountain:   ['#363854', '#141620'],
+  placentaLake:  ['#0E1E40', '#030810'],
+  scarPath:      ['#3E2A14', '#1A1008'],
+  occupiedScar:  ['#320C0C', '#100404'],
+  ashBog:        ['#1E2028', '#0A0A10'],
+  cathedralRock: ['#1C1C2C', '#090912'],
+};
+
+function shouldUseProceduralTerrainFallback() {
+  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('procedural-terrain');
+}
+
+function installProceduralTerrainTextures(forceReplace: boolean) {
+  if (typeof document === 'undefined') return;
+
+  const tileW = 64;
+  const tileH = 32;
+  const created: string[] = [];
+
+  for (const name of TERRAIN_NAMES) {
+    const key = `terrain_${name}`;
+    if (!forceReplace && PIXI.utils.TextureCache[key]) continue;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = tileW;
+    canvas.height = tileH;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) continue;
+
+    const baseName = name.replace(/_[1234]$/, '');
+    const [light, dark] = TERRAIN_PALETTE[baseName] ?? ['#444', '#222'];
+    const grad = ctx.createLinearGradient(0, 0, tileW, tileH);
+    grad.addColorStop(0, light);
+    grad.addColorStop(1, dark);
+
+    ctx.beginPath();
+    ctx.moveTo(tileW / 2, 0);
+    ctx.lineTo(tileW, tileH / 2);
+    ctx.lineTo(tileW / 2, tileH);
+    ctx.lineTo(0, tileH / 2);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const tex = PIXI.Texture.from(canvas);
+    if (forceReplace) {
+      try { PIXI.Texture.removeFromCache(key); } catch {}
+    }
+    PIXI.Texture.addToCache(tex, key);
+    created.push(key);
+  }
+
+  if (created.length > 0) {
+    console.info('TextureRegistry: installed procedural terrain textures:', created.length);
+  }
+}
+
 class TextureRegistryService {
   private isReady = false;
   private initPromise: Promise<void> | null = null;
@@ -41,72 +116,10 @@ class TextureRegistryService {
         }
             // Ensure basic terrain textures exist so map tiles render even
             // if terrain art isn't present in the spritesheet manifest.
+            // Manifest terrain PNGs are the normal map art path. The procedural
+            // terrain fallback is only forced by query param for debugging.
             try {
-              const terrainNames = [
-                'scarredEarth_1','scarredEarth_2','scarredEarth_3','scarredEarth_4',
-                'weepingForest_1','weepingForest_2','weepingForest_3','weepingForest_4',
-                'ribMountain_1','ribMountain_2','ribMountain_3','ribMountain_4',
-                'placentaLake_1','placentaLake_2','placentaLake_3','placentaLake_4',
-                'scarPath_1','scarPath_2','scarPath_3','scarPath_4',
-                'occupiedScar_1','occupiedScar_2','occupiedScar_3','occupiedScar_4',
-                'ashBog_1','ashBog_2','ashBog_3','ashBog_4',
-                'cathedralRock_1','cathedralRock_2','cathedralRock_3','cathedralRock_4',
-              ];
-              const tileW = 64;
-              const tileH = 32;
-              const created: string[] = [];
-              for (const name of terrainNames) {
-                const key = `terrain_${name}`;
-                if (!PIXI.utils.TextureCache[key]) {
-                  try {
-                    if (typeof document !== 'undefined') {
-                      const canvas = document.createElement('canvas');
-                      canvas.width = tileW;
-                      canvas.height = tileH;
-                      const ctx = canvas.getContext('2d');
-                      if (ctx) {
-                        // Map terrain name to [lightColor, darkColor] for gradient
-                        const palette: Record<string, [string, string]> = {
-                          scarredEarth:  ['#5E3C22', '#1E0C06'],
-                          weepingForest: ['#264222', '#0E1A0C'],
-                          ribMountain:   ['#363854', '#141620'],
-                          placentaLake:  ['#0E1E40', '#030810'],
-                          scarPath:      ['#3E2A14', '#1A1008'],
-                          occupiedScar:  ['#320C0C', '#100404'],
-                          ashBog:        ['#1E2028', '#0A0A10'],
-                          cathedralRock: ['#1C1C2C', '#090912'],
-                        };
-                        const baseName = name.replace(/_[1234]$/, ''); // Extract base name from variants
-                        const [light, dark] = palette[baseName] ?? ['#444', '#222'];
-                        const grad = ctx.createLinearGradient(0, 0, tileW, tileH);
-                        grad.addColorStop(0, light);
-                        grad.addColorStop(1, dark);
-                        // Draw proper isometric diamond (transparent corners)
-                        ctx.beginPath();
-                        ctx.moveTo(tileW / 2, 0);
-                        ctx.lineTo(tileW, tileH / 2);
-                        ctx.lineTo(tileW / 2, tileH);
-                        ctx.lineTo(0, tileH / 2);
-                        ctx.closePath();
-                        ctx.fillStyle = grad;
-                        ctx.fill();
-                      }
-                      const tex = PIXI.Texture.from(canvas);
-                      PIXI.Texture.addToCache(tex, key);
-                    } else {
-                      // Non-browser fallback
-                      PIXI.Texture.addToCache(PIXI.Texture.WHITE, key);
-                    }
-                    created.push(key);
-                  } catch (e) {
-                    // ignore failures creating fallback
-                  }
-                }
-              }
-              if (created.length > 0) {
-                // eslint-disable-next-line no-console
-                console.info('TextureRegistry: created terrain fallbacks:', created);
-              }
+              installProceduralTerrainTextures(shouldUseProceduralTerrainFallback());
             } catch (e) {
               // ignore
             }

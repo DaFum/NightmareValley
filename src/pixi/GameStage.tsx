@@ -204,8 +204,8 @@ export function GameStage() {
 
   return (
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown} pointermove={handlePointerMove}>
-      <IsoTerrainLayer tiles={visibleTiles} />
-      <IsoResourceLayer tiles={visibleTiles} />
+      <IsoTerrainLayer tiles={world.tiles} />
+      <IsoResourceLayer tiles={world.tiles} />
       <IsoFootfallLayer tiles={visibleTiles} />
       {drawHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />

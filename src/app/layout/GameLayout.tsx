@@ -9,6 +9,7 @@ import SettlementBriefPanel from '../../ui/panels/SettlementBriefPanel';
 import GameGuidePanel from '../../ui/panels/GameGuidePanel';
 import EventLogPanel from '../../ui/panels/EventLogPanel';
 import ResumeRunPrompt from '../../ui/panels/ResumeRunPrompt';
+import TacticalMapPanel from '../../ui/panels/TacticalMapPanel';
 import { BuildingMenu } from '../../ui/panels/BuildingMenu';
 import { HudLayout } from './HudLayout';
 import Particles from '../../components/Particles';
@@ -70,7 +71,8 @@ export function GameLayout({
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
   const [resumePromptDismissed, setResumePromptDismissed] = React.useState(false);
   const [dismissedVictory, setDismissedVictory] = React.useState(false);
-  const gameState = useGameStore((state) => state.gameState);
+  const isFreshRun = useGameStore((state) => state.gameState.tick === 0);
+  const outcomeCheckBucket = useGameStore((state) => Math.floor(state.gameState.ageOfTeeth));
   const isRunning = useGameStore((state) => state.isRunning);
   const activeScenario = useGameStore((state) => state.activeScenario);
   const setRunning = useGameStore((state) => state.setRunning);
@@ -96,10 +98,13 @@ export function GameLayout({
   const setRoadPlacementMode = useUIStore((state) => state.setRoadPlacementMode);
   const setRoadRemovalMode = useUIStore((state) => state.setRoadRemovalMode);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
-  const outcome = React.useMemo(() => evaluateGameOutcome(gameState, player1Id), [gameState]);
+  const outcome = React.useMemo(
+    () => evaluateGameOutcome(useGameStore.getState().gameState, player1Id),
+    [outcomeCheckBucket]
+  );
   const visibleOutcome = outcome.kind === 'victory' && dismissedVictory ? { ...outcome, kind: 'in-progress' as const } : outcome;
   const savedGameAvailable = hasSavedGame();
-  const showResumePrompt = savedGameAvailable && gameState.tick === 0 && !resumePromptDismissed && !menuOpen && !settingsOpen && !shortcutsOpen;
+  const showResumePrompt = savedGameAvailable && isFreshRun && !resumePromptDismissed && !menuOpen && !settingsOpen && !shortcutsOpen;
 
   React.useEffect(() => {
     if (outcome.kind !== 'in-progress') {
@@ -237,7 +242,7 @@ export function GameLayout({
       </section>
       <SvgAnimationIntegrator />
       <Particles />
-      <HudLayout top={resolvedHud} right={inspector} bottom={panels} isMobile={isMobile} />
+      <HudLayout top={resolvedHud} left={<TacticalMapPanel />} right={inspector} bottom={panels} isMobile={isMobile} />
       <ResumeRunPrompt
         visible={showResumePrompt}
         onResume={handleResumeSavedRun}

@@ -70,6 +70,13 @@
 - [x] Ensure new assets are referenced by `src/assets/spritesheets/manifest.json`.
 - [x] Run manifest existence tests after any asset change.
 
+### Phase 6: Tactical Map Readability
+
+- [x] Add a compact minimap that summarizes terrain, ownership, buildings, roads, and active carriers.
+- [x] Keep the minimap in the left HUD slot on desktop and collapse it cleanly on mobile/minimal HUD.
+- [x] Add deterministic tests for minimap projection, bounds, and status counts.
+- [x] Verify the new map surface with unit tests and production build.
+
 ## Execution Order
 
 1. Implement tutorial derivation and tests.
