@@ -1,8 +1,9 @@
 import React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useGameStore } from '../../store/game.store';
+import { player1Id, useGameStore } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
+import { CONTENT_CATALOG } from '../../game/core/content.catalog';
 
 const resourceFileByLabel: Record<string, string> = {
   Teeth: 'resources/toothPlanks.png',
@@ -10,7 +11,10 @@ const resourceFileByLabel: Record<string, string> = {
   Marrow: 'resources/marrowGrain.png',
   Dust: 'resources/boneDust.png',
   Bile: 'resources/amnioticWater.png',
+  Fish: 'resources/eyelessFish.png',
+  Salt: 'resources/brainSalt.png',
   Loaf: 'resources/funeralLoaf.png',
+  Tools: 'resources/tormentInstrument.png',
 };
 
 const compactNumberFormatter = new Intl.NumberFormat(undefined, {
@@ -26,84 +30,95 @@ const signedCompactFormatter = new Intl.NumberFormat(undefined, {
 });
 
 type TrendMap = Partial<Record<ResourceType, number>>;
+type ResourceTone = 'bone' | 'stone' | 'marrow' | 'bile' | 'flesh' | 'salt';
+type DisplayResource = {
+  label: string;
+  key: ResourceType;
+  tone: ResourceTone;
+};
+
+const DISPLAY_RESOURCES: DisplayResource[] = [
+  { label: 'Teeth', key: 'toothPlanks', tone: 'bone' },
+  { label: 'Stone', key: 'sepulcherStone', tone: 'stone' },
+  { label: 'Marrow', key: 'marrowGrain', tone: 'marrow' },
+  { label: 'Dust', key: 'boneDust', tone: 'bone' },
+  { label: 'Bile', key: 'amnioticWater', tone: 'bile' },
+  { label: 'Fish', key: 'eyelessFish', tone: 'flesh' },
+  { label: 'Salt', key: 'brainSalt', tone: 'salt' },
+  { label: 'Loaf', key: 'funeralLoaf', tone: 'flesh' },
+  { label: 'Tools', key: 'tormentInstrument', tone: 'bone' },
+];
+
+type ResourceSnapshot = Record<ResourceType, number>;
 
 export function ResourceBar() {
-  const { ageOfTeeth, buildings, transport, stock } = useGameStore(
+  const resourceSnapshot = useGameStore(
     useShallow((state) => {
-      const playerIds = Object.keys(state.gameState.players);
+      const player = state.gameState.players[player1Id] ?? Object.values(state.gameState.players)[0];
+      const stock = player?.stock ?? {};
+
       return {
-        ageOfTeeth: state.gameState.ageOfTeeth,
-        buildings: state.gameState.buildings,
-        transport: state.gameState.transport,
-        stock: playerIds.length > 0 ? state.gameState.players[playerIds[0]].stock : {},
+        queuedJobs: state.gameState.transport.queuedJobCount ?? 0,
+        trendBucket: Math.floor(state.gameState.ageOfTeeth / 5),
+        toothPlanks: stock.toothPlanks ?? 0,
+        sepulcherStone: stock.sepulcherStone ?? 0,
+        marrowGrain: stock.marrowGrain ?? 0,
+        boneDust: stock.boneDust ?? 0,
+        amnioticWater: stock.amnioticWater ?? 0,
+        eyelessFish: stock.eyelessFish ?? 0,
+        brainSalt: stock.brainSalt ?? 0,
+        funeralLoaf: stock.funeralLoaf ?? 0,
+        tormentInstrument: stock.tormentInstrument ?? 0,
       };
     })
   );
-  const trendRef = React.useRef<{ age: number; stock: TrendMap } | null>(null);
+  const { queuedJobs, trendBucket } = resourceSnapshot;
+  const values = React.useMemo(() => ({
+    toothPlanks: resourceSnapshot.toothPlanks,
+    sepulcherStone: resourceSnapshot.sepulcherStone,
+    marrowGrain: resourceSnapshot.marrowGrain,
+    boneDust: resourceSnapshot.boneDust,
+    amnioticWater: resourceSnapshot.amnioticWater,
+    eyelessFish: resourceSnapshot.eyelessFish,
+    brainSalt: resourceSnapshot.brainSalt,
+    funeralLoaf: resourceSnapshot.funeralLoaf,
+    tormentInstrument: resourceSnapshot.tormentInstrument,
+  } as ResourceSnapshot), [resourceSnapshot]);
+  const trendRef = React.useRef<{ bucket: number; values: ResourceSnapshot } | null>(null);
   const [trendPerMin, setTrendPerMin] = React.useState<TrendMap>({});
 
   React.useEffect(() => {
     const previous = trendRef.current;
     if (!previous) {
-      trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
+      trendRef.current = { bucket: trendBucket, values: { ...values } };
       return;
     }
-    const elapsedSec = ageOfTeeth - previous.age;
+    const elapsedSec = (trendBucket - previous.bucket) * 5;
     // Always keep the baseline current so stock changes while paused (e.g. building
     // placement costs) don't produce a bogus spike when the simulation resumes.
     if (!Number.isFinite(elapsedSec) || elapsedSec <= 0) {
-      trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
+      trendRef.current = { bucket: trendBucket, values: { ...values } };
       return;
     }
-    // Sample at most once per 5 game-seconds. Shorter windows produce
-    // noisy, flickering values when a single recipe completes in one tick.
-    if (elapsedSec < 5.0) return;
     const nextTrend: TrendMap = {};
-    const keys = new Set([...Object.keys(stock), ...Object.keys(previous.stock)]);
-    for (const key of keys) {
-      const resource = key as ResourceType;
-      const prev = previous.stock[resource] ?? 0;
-      const curr = (stock[resource] as number | undefined) ?? 0;
+    for (const { key: resource } of DISPLAY_RESOURCES) {
+      const prev = previous.values[resource] ?? 0;
+      const curr = values[resource] ?? 0;
       nextTrend[resource] = ((curr - prev) / elapsedSec) * 60;
     }
     setTrendPerMin(nextTrend);
-    trendRef.current = { age: ageOfTeeth, stock: { ...stock } };
-  }, [ageOfTeeth, stock]);
-
-  const topStats = React.useMemo(() => {
-    const sources: Partial<Record<ResourceType, number>> = {};
-    const sinks: Partial<Record<ResourceType, number>> = {};
-    for (const building of Object.values(buildings)) {
-      for (const [resource, amount] of Object.entries(building.outputBuffer)) {
-        sources[resource as ResourceType] = (sources[resource as ResourceType] ?? 0) + (amount ?? 0);
-      }
-      for (const [resource, amount] of Object.entries(building.inputBuffer)) {
-        sinks[resource as ResourceType] = (sinks[resource as ResourceType] ?? 0) + (amount ?? 0);
-      }
-    }
-    return { sources, sinks, queuedJobs: transport.queuedJobCount ?? 0 };
-  }, [buildings, transport.queuedJobCount]);
-
-  const resources = [
-    { label: 'Teeth', key: 'toothPlanks' as const, value: stock.toothPlanks ?? 0, tone: 'bone' as const },
-    { label: 'Stone', key: 'sepulcherStone' as const, value: stock.sepulcherStone ?? 0, tone: 'stone' as const },
-    { label: 'Marrow', key: 'marrowGrain' as const, value: stock.marrowGrain ?? 0, tone: 'marrow' as const },
-    { label: 'Dust', key: 'boneDust' as const, value: stock.boneDust ?? 0, tone: 'bone' as const },
-    { label: 'Bile', key: 'amnioticWater' as const, value: stock.amnioticWater ?? 0, tone: 'bile' as const },
-    { label: 'Loaf', key: 'funeralLoaf' as const, value: stock.funeralLoaf ?? 0, tone: 'flesh' as const },
-  ];
+    trendRef.current = { bucket: trendBucket, values: { ...values } };
+  }, [trendBucket, values]);
 
   return (
     <div className="resource-strip" aria-label="Resources">
-      {resources.map((resource) => (
+      {DISPLAY_RESOURCES.map((resource) => (
         <ResourceChip
           key={resource.label}
           label={resource.label}
-          value={resource.value}
+          value={values[resource.key] ?? 0}
           trendPerMin={trendPerMin[resource.key] ?? 0}
-          topSource={topStats.sources[resource.key] ?? 0}
-          topSink={topStats.sinks[resource.key] ?? 0}
-          queuedJobs={topStats.queuedJobs}
+          queuedJobs={queuedJobs}
           tone={resource.tone}
         />
       ))}
@@ -115,18 +130,17 @@ type ResourceChipProps = {
   label: string;
   value: number;
   trendPerMin: number;
-  topSource: number;
-  topSink: number;
   queuedJobs: number;
-  tone: 'bone' | 'stone' | 'marrow' | 'bile' | 'flesh';
+  tone: ResourceTone;
 };
 
-function ResourceChip({ label, value, trendPerMin, topSource, topSink, queuedJobs, tone }: ResourceChipProps) {
+const ResourceChip = React.memo(function ResourceChip({ label, value, trendPerMin, queuedJobs, tone }: ResourceChipProps) {
   const image = imageMap[resourceFileByLabel[label]];
   const formattedValue = compactNumberFormatter.format(value);
   const trendLabel = `${signedCompactFormatter.format(trendPerMin)}/m`;
-  const trendColor = trendPerMin >= 0 ? '#7ee787' : '#ff7b72';
-  const tooltip = `${label}: ${exactNumberFormatter.format(value)} | Trend ${trendLabel} | Source buffer ${exactNumberFormatter.format(topSource)} | Sink buffer ${exactNumberFormatter.format(topSink)} | Queue ${queuedJobs}`;
+  const trendClass = trendPerMin >= 0 ? 'resource-chip__trend--up' : 'resource-chip__trend--down';
+  const catalogTooltip = CONTENT_CATALOG.resources.find((entry) => entry.label === label || entry.type === label)?.tooltip;
+  const tooltip = `${catalogTooltip ?? label} Stock ${exactNumberFormatter.format(value)}. Trend ${trendLabel}. Delivery queue ${queuedJobs}.`;
 
   return (
     <div
@@ -137,7 +151,7 @@ function ResourceChip({ label, value, trendPerMin, topSource, topSink, queuedJob
       {image ? <img src={image} alt="" aria-hidden="true" /> : null}
       <span>{label}</span>
       <strong>{formattedValue}</strong>
-      <small style={{ color: trendColor }}>{trendLabel}</small>
+      <small className={`resource-chip__trend ${trendClass}`}>{trendLabel}</small>
     </div>
   );
-}
+});

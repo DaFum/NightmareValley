@@ -4,6 +4,8 @@ import {
   placeBuilding,
   upgradeBuilding,
   connectBuildingToRoad,
+  setBuildingRecipe,
+  toggleBuildingAutoHire,
   spawnWorker,
   syncStockFromVaults,
 } from '../game/core/economy.simulation';
@@ -21,6 +23,7 @@ import {
   SimulationStepProfile,
 } from './game-simulation.utils';
 import { RuntimeIssue, toRuntimeIssue } from './runtime-issue';
+import { placeRoadTile, removeRoadTile } from '../game/entities/roads/road.logic';
 
 export type GameScenarioProfile = 'sandbox' | 'challenging' | 'hardcore';
 
@@ -36,6 +39,7 @@ export interface GameStore {
   lastError?: RuntimeIssue;
   activeScenario: GameScenarioProfile;
   setGameState: (state: WorldState) => void;
+  resetGame: (profile?: GameScenarioProfile) => void;
   setRunning: (running: boolean) => void;
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
@@ -48,8 +52,12 @@ export interface GameStore {
     profile?: SimulationStepProfile[]
   ) => { stepsProcessed: number; carryoverSec: number; droppedFrameDebt: boolean };
   placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => void;
+  placeRoadAt: (ownerId: string, tileId: string) => void;
+  removeRoadAt: (ownerId: string, tileId: string) => void;
   upgradeBuildingAt: (ownerId: string, buildingId: string) => void;
   connectBuildingAt: (buildingId: string) => void;
+  setBuildingRecipeAt: (ownerId: string, buildingId: string, recipeId: string) => void;
+  toggleBuildingAutoHireAt: (ownerId: string, buildingId: string, workerType: WorkerType) => void;
   toggleBuildingActive: (buildingId: string) => void;
   runDebugCommand: (command: DebugCommand) => void;
   dispatchDebugJobsFromHQ: (count: number, resourceType: import("../game/core/economy.types").ResourceType) => void;
@@ -308,6 +316,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   activeScenario: 'challenging',
 
   setGameState: (state) => set({ gameState: state }),
+  resetGame: (profile) => {
+    const nextProfile = profile ?? get().activeScenario;
+    const base = deepClone(initialGameState) as WorldState;
+    set({
+      gameState: withScenarioProfile(base, nextProfile),
+      activeScenario: nextProfile,
+      isRunning: false,
+      tickRate: 1,
+      lastError: undefined,
+    });
+  },
   setRunning: (running) => set({ isRunning: running }),
   togglePlayPause: () => set((state) => ({ isRunning: !state.isRunning })),
   setTickRate: (rate) => {
@@ -377,6 +396,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
+  placeRoadAt: (ownerId, tileId) => {
+    try {
+      const { gameState } = get();
+      const nextEconomy = placeRoadTile(gameState, ownerId, tileId);
+      set({ gameState: { ...gameState, ...nextEconomy } });
+    } catch (error) {
+      console.error("Failed to place road:", error);
+      set({ lastError: toRuntimeIssue(error, 'ROAD_PLACE_FAILURE', 'placeRoadAt', get().gameState.tick) });
+    }
+  },
+
+  removeRoadAt: (ownerId, tileId) => {
+    try {
+      const { gameState } = get();
+      const nextEconomy = removeRoadTile(gameState, ownerId, tileId);
+      set({ gameState: { ...gameState, ...nextEconomy } });
+    } catch (error) {
+      console.error("Failed to remove road:", error);
+      set({ lastError: toRuntimeIssue(error, 'ROAD_REMOVE_FAILURE', 'removeRoadAt', get().gameState.tick) });
+    }
+  },
+
   upgradeBuildingAt: (ownerId, buildingId) => {
     try {
       const { gameState } = get();
@@ -397,6 +438,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) {
       console.error("Failed to connect building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_CONNECT_FAILURE', 'connectBuildingAt', get().gameState.tick) });
+    }
+  },
+
+  setBuildingRecipeAt: (ownerId, buildingId, recipeId) => {
+    try {
+      const { gameState } = get();
+      const nextState = setBuildingRecipe(gameState, ownerId, buildingId, recipeId);
+      set({ gameState: { ...gameState, ...nextState } });
+    } catch (error) {
+      console.error("Failed to set building recipe:", error);
+      set({ lastError: toRuntimeIssue(error, 'BUILD_RECIPE_FAILURE', 'setBuildingRecipeAt', get().gameState.tick) });
+    }
+  },
+
+  toggleBuildingAutoHireAt: (ownerId, buildingId, workerType) => {
+    try {
+      const { gameState } = get();
+      const nextState = toggleBuildingAutoHire(gameState, ownerId, buildingId, workerType);
+      set({ gameState: { ...gameState, ...nextState } });
+    } catch (error) {
+      console.error("Failed to toggle auto-hire:", error);
+      set({ lastError: toRuntimeIssue(error, 'WORKER_AUTOHIRE_FAILURE', 'toggleBuildingAutoHireAt', get().gameState.tick) });
     }
   },
 
@@ -519,7 +582,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const building = gameState.buildings[buildingId];
       if (!building) throw new Error(`Unknown building: ${buildingId}`);
       const spawnPos = { x: building.position.x + 1, y: building.position.y };
-      const nextState = spawnWorker(gameState, ownerId, workerType, spawnPos, buildingId);
+      const nextState = spawnWorker(gameState, ownerId, workerType, spawnPos, buildingId, { chargeCost: true });
       set({ gameState: { ...gameState, ...nextState } });
     } catch (error) {
       console.error("Failed to spawn worker:", error);

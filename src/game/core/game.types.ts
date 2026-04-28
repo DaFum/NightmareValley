@@ -37,6 +37,7 @@ export interface BuildingInstance {
    */
   deliveryPriority?: number;
   pausedInputs?: Partial<Record<ResourceType, boolean>>;
+  autoHire?: Partial<Record<WorkerType, boolean>>;
 }
 
 export interface WorkerInstance {

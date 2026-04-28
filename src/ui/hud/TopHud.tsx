@@ -1,43 +1,27 @@
-import { useEffect, useState } from 'react';
 import { ResourceBar } from './ResourceBar';
 import { PopulationBar } from './PopulationBar';
 import { WorldPulseBar } from './WorldPulseBar';
 import FpsCounter from './FpsCounter';
 import TransportIndicator from './TransportIndicator';
 import { useGameStore } from '../../store/game.store';
+import { useUIStore } from '../../store/ui.store';
 
-export function TopHud() {
+export type TopHudProps = {
+  onOpenMenu?: () => void;
+  onOpenSettings?: () => void;
+};
+
+export function TopHud({ onOpenMenu, onOpenSettings }: TopHudProps) {
   const isRunning = useGameStore(state => state.isRunning);
   const tickRate = useGameStore(state => state.tickRate);
   const togglePlayPause = useGameStore(state => state.togglePlayPause);
   const setTickRate = useGameStore(state => state.setTickRate);
-
-  const [focusMode, setFocusMode] = useState<boolean>(() => {
-    try { return !!localStorage.getItem('ui:focus'); } catch { return false; }
-  });
-
-  const [minimalHud, setMinimalHud] = useState<boolean>(() => {
-    try {
-      const current = localStorage.getItem('ui:minimalHud');
-      if (current !== null) return !!current;
-      // Migrate from legacy key if the new key has not been set yet.
-      return !!localStorage.getItem('ui:hudHidden');
-    } catch { return false; }
-  });
-
-  useEffect(() => {
-    document.body.classList.toggle('ui--focus', focusMode);
-    try { if (focusMode) localStorage.setItem('ui:focus', '1'); else localStorage.removeItem('ui:focus'); } catch {}
-  }, [focusMode]);
-
-  useEffect(() => {
-    document.body.classList.toggle('ui--minimal', minimalHud);
-    try { if (minimalHud) localStorage.setItem('ui:minimalHud', '1'); else localStorage.removeItem('ui:minimalHud'); } catch {}
-  }, [minimalHud]);
-
-  useEffect(() => {
-    try { localStorage.removeItem('ui:hudHidden'); } catch {}
-  }, []);
+  const focusMode = useUIStore(state => state.focusMode);
+  const minimalHud = useUIStore(state => state.minimalHud);
+  const guideOpen = useUIStore(state => state.guideOpen);
+  const toggleFocusMode = useUIStore(state => state.toggleFocusMode);
+  const toggleMinimalHud = useUIStore(state => state.toggleMinimalHud);
+  const toggleGuideOpen = useUIStore(state => state.toggleGuideOpen);
 
   return (
     <div className="top-hud-container">
@@ -57,8 +41,11 @@ export function TopHud() {
             <button className={`hud-button ${tickRate === 2 ? 'active' : ''}`} onClick={() => setTickRate(2)}>2x</button>
             <button className={`hud-button ${tickRate === 5 ? 'active' : ''}`} onClick={() => setTickRate(5)}>5x</button>
           </div>
-          <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={() => setFocusMode(s => !s)} title="Increase world contrast">Focus</button>
-          <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} onClick={() => setMinimalHud(s => !s)} title={minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels'}>{minimalHud ? 'Full HUD' : 'Minimal'}</button>
+          <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={toggleFocusMode} title="Increase world contrast">Focus</button>
+          <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} onClick={toggleMinimalHud} title={minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels'}>{minimalHud ? 'Full HUD' : 'Minimal'}</button>
+          <button className={`hud-button ${guideOpen ? 'active' : ''}`} aria-pressed={guideOpen} onClick={toggleGuideOpen} title={guideOpen ? 'Hide game guide' : 'Show game guide'}>Guide</button>
+          <button className="hud-button" onClick={onOpenSettings}>Settings</button>
+          <button className="hud-button" onClick={onOpenMenu}>Menu</button>
           <FpsCounter />
           <TransportIndicator />
         </nav>

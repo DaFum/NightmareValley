@@ -9,11 +9,12 @@ import {
 } from "./game.types";
 import { BuildingType, WorkerType, ResourceType, ResourceInventory } from "./economy.types";
 import { TransportState } from "../economy/transport.logic";
-import { BUILDING_DEFINITIONS } from "./economy.data";
+import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
 import { isConstructed } from "../entities/buildings/building.types";
+import { expandTerritoryFromInfluence } from "../map/map.territory";
 
 // Exported from original but using relative imports
 import { processConstruction, autoSpawnConstructionWorkers } from "../economy/construction.logic";
@@ -253,7 +254,8 @@ export function spawnWorker(
   ownerId: string,
   workerType: WorkerType,
   position: Position,
-  homeBuildingId?: BuildingId
+  homeBuildingId?: BuildingId,
+  options: { chargeCost?: boolean } = {}
 ): EconomySimulationState {
   const next = cloneState(state);
 
@@ -276,6 +278,10 @@ export function spawnWorker(
     }
   }
 
+  if (options.chargeCost) {
+    deductAcrossVaults(getOwnerVaults(next, ownerId), player, WORKER_DEFINITIONS[workerType].hireCost?.resources ?? {});
+  }
+
   const workerId = createId("worker");
   next.workers[workerId] = {
     id: workerId,
@@ -295,7 +301,7 @@ export function spawnWorker(
   if (homeBuildingId) {
     try {
       // Delegate assignment and validations to the proper flow
-      return assignWorkerToBuilding(next, workerId, homeBuildingId);
+      return syncStockFromVaults(assignWorkerToBuilding(next, workerId, homeBuildingId));
     } catch (err) {
       // Rollback on failure
       delete next.workers[workerId];
@@ -304,7 +310,20 @@ export function spawnWorker(
     }
   }
 
-  return next;
+  return syncStockFromVaults(next);
+}
+
+export function syncPopulationLimitsFromVaults(state: EconomySimulationState): EconomySimulationState {
+  for (const player of Object.values(state.players)) {
+    let bonus = 0;
+    for (const buildingId of player.buildings) {
+      const building = state.buildings[buildingId];
+      if (building?.type !== "vaultOfDigestiveStone" || !isConstructed(building)) continue;
+      bonus += Math.max(0, building.level - 1) * 10;
+    }
+    player.populationLimit = Math.max(player.populationLimit ?? 20, 20 + bonus);
+  }
+  return state;
 }
 
 export function placeBuilding(
@@ -351,7 +370,7 @@ export function placeBuilding(
   tile.buildingId = buildingId;
   player.buildings.push(buildingId);
 
-  return syncStockFromVaults(next);
+  return syncPopulationLimitsFromVaults(syncStockFromVaults(next));
 }
 
 export function connectBuildingToRoad(
@@ -414,7 +433,78 @@ export function upgradeBuilding(
   building.level += 1;
   building.integrity = Math.min(100, building.integrity + 10);
 
-  return syncStockFromVaults(next);
+  return syncPopulationLimitsFromVaults(syncStockFromVaults(next));
+}
+
+export function setBuildingRecipe(
+  state: EconomySimulationState,
+  ownerId: string,
+  buildingId: BuildingId,
+  recipeId: string
+): EconomySimulationState {
+  const next = cloneState(state);
+  const building = next.buildings[buildingId];
+  if (!building) throw new Error(`Unknown building: ${buildingId}`);
+  if (building.ownerId !== ownerId) throw new Error(`Building ${buildingId} belongs to another regime`);
+
+  const def = BUILDING_DEFINITIONS[building.type];
+  if (!def.recipeIds?.includes(recipeId)) {
+    throw new Error(`${building.type} cannot use recipe ${recipeId}`);
+  }
+
+  building.currentRecipeId = recipeId;
+  building.progressSec = 0;
+  return next;
+}
+
+export function toggleBuildingAutoHire(
+  state: EconomySimulationState,
+  ownerId: string,
+  buildingId: BuildingId,
+  workerType: WorkerType
+): EconomySimulationState {
+  const next = cloneState(state);
+  const building = next.buildings[buildingId];
+  if (!building) throw new Error(`Unknown building: ${buildingId}`);
+  if (building.ownerId !== ownerId) throw new Error(`Building ${buildingId} belongs to another regime`);
+  const def = BUILDING_DEFINITIONS[building.type];
+  if ((def.workerSlots[workerType] ?? 0) <= 0) throw new Error(`${building.type} has no ${workerType} slot`);
+  building.autoHire = { ...building.autoHire, [workerType]: !(building.autoHire?.[workerType] ?? false) };
+  return next;
+}
+
+export function processAutoHireWorkers(state: EconomySimulationState): EconomySimulationState {
+  let next = state;
+
+  for (const building of Object.values(next.buildings)) {
+    if (!building.isActive || !building.autoHire) continue;
+    const player = next.players[building.ownerId];
+    if (!player) continue;
+
+    const def = BUILDING_DEFINITIONS[building.type];
+    for (const [type, enabled] of Object.entries(building.autoHire)) {
+      if (!enabled) continue;
+      const workerType = type as WorkerType;
+      const maxCount = def.workerSlots[workerType] ?? 0;
+      if (maxCount <= 0) continue;
+
+      const current = building.assignedWorkers.reduce((count, workerId) => {
+        return next.workers[workerId]?.type === workerType ? count + 1 : count;
+      }, 0);
+
+      const vacancies = maxCount - current;
+      for (let i = 0; i < vacancies; i++) {
+        if (next.players[building.ownerId].workers.length >= next.players[building.ownerId].populationLimit) break;
+        try {
+          next = spawnWorker(next, building.ownerId, workerType, building.position, building.id, { chargeCost: true });
+        } catch {
+          break;
+        }
+      }
+    }
+  }
+
+  return next;
 }
 
 export function assignWorkerToBuilding(
@@ -547,6 +637,7 @@ export function simulateTick(
 
   next = processConstruction(next, deltaSec);
   next = autoSpawnConstructionWorkers(next);
+  next = processAutoHireWorkers(next);
   next = updateWorkersAI(next, deltaSec, config);
   next = updateWorkersPassiveState(next, deltaSec, config);
   next = processExtraction(next, deltaSec, config);
@@ -557,7 +648,9 @@ export function simulateTick(
   next = decayFootfall(next, config);
   next = updateTransportMetrics(next, config);
   next = updateWorldPulse(next);
+  next = expandTerritoryFromInfluence(next);
   next = syncStockFromVaults(next);
+  next = syncPopulationLimitsFromVaults(next);
 
   return next;
 }

@@ -1,5 +1,9 @@
 import {
   placeBuilding,
+  setBuildingRecipe,
+  spawnWorker,
+  syncPopulationLimitsFromVaults,
+  toggleBuildingAutoHire,
   upgradeBuilding,
   syncStockFromVaults,
   simulateTick,
@@ -382,5 +386,257 @@ describe("upgradeBuilding vault deduction", () => {
     expect(vault.outputBuffer.toothPlanks).toBe(19);
     expect(vault.outputBuffer.sepulcherStone).toBe(9);
     expect(result.buildings.b1.level).toBe(2);
+  });
+});
+
+describe("spawnWorker hiring cost", () => {
+  it("deducts explicit hire cost from vault outputBuffer when charged", () => {
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: { funeralLoaf: 3 },
+          buildings: ["v1"],
+          workers: [],
+          populationLimit: 10,
+        } as any,
+      },
+      buildings: {
+        v1: {
+          id: "v1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          outputBuffer: { funeralLoaf: 3 },
+          inputBuffer: {},
+          internalStorage: {},
+          level: 1,
+          integrity: 100,
+          position: { x: 5, y: 5 },
+          connectedToRoad: true,
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+    });
+
+    const result = spawnWorker(state, "p1", "burdenThrall", { x: 5, y: 5 }, undefined, { chargeCost: true });
+
+    expect(Object.values(result.workers)).toHaveLength(1);
+    expect(result.buildings.v1.outputBuffer.funeralLoaf).toBe(2);
+    expect(result.players.p1.stock).toEqual({ funeralLoaf: 2 });
+  });
+
+  it("does not charge cost for construction auto-spawn style worker creation", () => {
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: { funeralLoaf: 0 },
+          buildings: ["v1"],
+          workers: [],
+          populationLimit: 10,
+        } as any,
+      },
+      buildings: {
+        v1: {
+          id: "v1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          level: 1,
+          integrity: 100,
+          position: { x: 5, y: 5 },
+          connectedToRoad: true,
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+    });
+
+    const result = spawnWorker(state, "p1", "burdenThrall", { x: 5, y: 5 });
+
+    expect(Object.values(result.workers)).toHaveLength(1);
+    expect(result.buildings.v1.outputBuffer).toEqual({});
+  });
+
+  it("raises population limit when upgrading a vault", () => {
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: { toothPlanks: 20, sepulcherStone: 10 },
+          buildings: ["v1"],
+          workers: [],
+          populationLimit: 20,
+        } as any,
+      },
+      buildings: {
+        v1: {
+          id: "v1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          outputBuffer: { toothPlanks: 20, sepulcherStone: 10 },
+          inputBuffer: {},
+          internalStorage: {},
+          level: 1,
+          integrity: 100,
+          position: { x: 5, y: 5 },
+          connectedToRoad: true,
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+      territory: { tiles: {}, tileIndex: {} } as any,
+    });
+
+    const result = upgradeBuilding(state, "p1", "v1");
+
+    expect(result.buildings.v1.level).toBe(2);
+    expect(result.players.p1.populationLimit).toBe(30);
+  });
+});
+
+describe("syncPopulationLimitsFromVaults", () => {
+  it("keeps existing higher caps while applying vault bonuses", () => {
+    const state = makeState({
+      players: {
+        p1: { id: "p1", stock: {}, buildings: ["v1"], workers: [], populationLimit: 40 } as any,
+      },
+      buildings: {
+        v1: { id: "v1", ownerId: "p1", type: "vaultOfDigestiveStone", level: 2, constructionProgress: undefined } as any,
+      },
+    });
+
+    const result = syncPopulationLimitsFromVaults(state);
+
+    expect(result.players.p1.populationLimit).toBe(40);
+  });
+});
+
+describe("setBuildingRecipe", () => {
+  it("persists a selected recipe and resets in-progress work", () => {
+    const state = makeState({
+      players: {
+        p1: { id: "p1", stock: {}, buildings: ["b1"], workers: [] } as any,
+      },
+      buildings: {
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "instrumentCrucible",
+          level: 1,
+          integrity: 100,
+          position: { x: 0, y: 0 },
+          connectedToRoad: true,
+          inputBuffer: {},
+          outputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: [],
+          currentRecipeId: "forgeTormentInstrument",
+          progressSec: 7,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+    });
+
+    const result = setBuildingRecipe(state, "p1", "b1", "forgeRibBlade");
+
+    expect(result.buildings.b1.currentRecipeId).toBe("forgeRibBlade");
+    expect(result.buildings.b1.progressSec).toBe(0);
+  });
+
+  it("rejects recipes not supported by the building", () => {
+    const state = makeState({
+      players: {
+        p1: { id: "p1", stock: {}, buildings: ["b1"], workers: [] } as any,
+      },
+      buildings: {
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "millOfGnashing",
+          level: 1,
+          integrity: 100,
+          position: { x: 0, y: 0 },
+          connectedToRoad: true,
+          inputBuffer: {},
+          outputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+    });
+
+    expect(() => setBuildingRecipe(state, "p1", "b1", "forgeRibBlade")).toThrow(/cannot use recipe/);
+  });
+});
+
+describe("auto-hire workers", () => {
+  it("toggles auto-hire and fills vacant slots on the next tick when affordable", () => {
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: { funeralLoaf: 3 },
+          buildings: ["v1", "b1"],
+          workers: [],
+          populationLimit: 10,
+        } as any,
+      },
+      buildings: {
+        v1: {
+          id: "v1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          outputBuffer: { funeralLoaf: 3 },
+          inputBuffer: {},
+          internalStorage: {},
+          level: 1,
+          integrity: 100,
+          position: { x: 5, y: 5 },
+          connectedToRoad: true,
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "organHarvester",
+          level: 1,
+          integrity: 100,
+          position: { x: 0, y: 0 },
+          connectedToRoad: true,
+          inputBuffer: {},
+          outputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+    });
+
+    const enabled = toggleBuildingAutoHire(state, "p1", "b1", "timberExecutioner");
+    const result = simulateTick(enabled, 1);
+
+    expect(result.buildings.b1.autoHire?.timberExecutioner).toBe(true);
+    expect(result.buildings.b1.assignedWorkers).toHaveLength(1);
+    expect(Object.values(result.workers)[0].type).toBe("timberExecutioner");
+    expect(result.buildings.v1.outputBuffer.funeralLoaf).toBe(2);
   });
 });

@@ -1654,12 +1654,27 @@
           674,
           1967
         ]
+      },
+      "fatBoiler": {
+        "file": "workers/fatBoiler.svg",
+        "box": [
+          0,
+          0,
+          128,
+          160
+        ]
+      },
+      "ashCollector": {
+        "file": "workers/ashCollector.svg",
+        "box": [
+          0,
+          0,
+          128,
+          160
+        ]
       }
     },
-    "missing": [
-      "fatBoiler",
-      "ashCollector"
-    ],
+    "missing": [],
     "extras": []
   },
   "notes": [
