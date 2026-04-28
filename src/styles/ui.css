@@ -81,12 +81,13 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   top: 0;
   left: 0;
   right: 0;
+  z-index: 4;
 }
 
 .hud-layout__left {
   left: 24px;
-  top: 148px;
-  transform: none;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .hud-layout__right {
@@ -94,12 +95,14 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   top: 116px;
   transform: none;
   max-width: min(360px, calc(100vw - 48px));
+  z-index: 3;
 }
 
 .hud-layout__bottom {
   left: 24px;
   right: 24px;
   bottom: 24px;
+  z-index: 2;
 }
 
 .hud-layout--mobile .hud-layout__left,
@@ -661,10 +664,40 @@ body.ui--guide-open .content-codex {
 
 /* ── Tactical Map ─────────────────────────────────────────────── */
 .tactical-map {
+  position: fixed;
+  z-index: 130;
+  left: 24px;
+  top: 148px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: auto;
+  pointer-events: auto;
+}
+
+.tactical-map__toggle {
+  min-width: 86px;
+  min-height: 48px;
+  padding: 10px 16px;
+  color: var(--bone);
+  font-family: var(--font-display);
+  font-size: 18px;
+  cursor: pointer;
+  border: 1px solid var(--coagulated-blood);
+  background: rgba(10, 5, 6, 0.88);
+}
+
+.tactical-map__toggle:hover,
+.tactical-map__toggle.active {
+  border-color: var(--fresh-blood);
+  background: var(--void-shadow);
+  box-shadow: 0 0 16px rgba(158, 20, 35, 0.28);
+}
+
+.tactical-map__panel {
   box-sizing: border-box;
   width: 190px;
   padding: 9px;
-  pointer-events: auto;
   background: rgba(12, 8, 10, 0.9);
   border: 1.5px solid rgba(158, 20, 35, 0.55);
   box-shadow:
@@ -776,6 +809,58 @@ body.ui--guide-open .content-codex {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 800;
+}
+
+.tactical-map__next {
+  display: grid;
+  gap: 3px;
+  margin-top: 7px;
+  padding: 6px;
+  border: 1px solid var(--econ-success-border);
+  background: var(--econ-success-bg);
+}
+
+.tactical-map__next span {
+  color: var(--econ-success);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tactical-map__next strong {
+  color: var(--bone);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.tactical-map__next small {
+  color: var(--marrow);
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+@media (max-width: 760px) {
+  .tactical-map {
+    top: 92px;
+    left: 12px;
+    right: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    max-width: calc(100vw - 24px);
+  }
+
+  .tactical-map__toggle {
+    min-width: 70px;
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 16px;
+  }
+
+  .tactical-map__panel {
+    width: min(220px, calc(100vw - 106px));
+  }
 }
 
 /* ── Resource Bar ──────────────────────────────────────────────── */

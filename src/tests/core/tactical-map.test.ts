@@ -1,4 +1,4 @@
-import { createTacticalMapSummary, projectTacticalPoint } from '../../game/map/tactical-map';
+import { createTacticalMapBrief, createTacticalMapSummary, projectTacticalPoint } from '../../game/map/tactical-map';
 import type { WorldState } from '../../game/world/world.types';
 
 function stateFixture(): WorldState {
@@ -77,5 +77,12 @@ describe('tactical map summary', () => {
 
     expect(projectTacticalPoint(0, 0, summary, 100, 80)).toEqual({ x: 0, y: 0 });
     expect(projectTacticalPoint(1, 1, summary, 100, 80)).toEqual({ x: 50, y: 40 });
+  });
+
+  it('creates compact next-chain copy from map markers and economy recommendations', () => {
+    const brief = createTacticalMapBrief(stateFixture(), 'player_one');
+
+    expect(brief.nextLabel).toMatch(/Build|Store|Campaign/);
+    expect(brief.markerCopy).toBe('1 buildings, 1 roads, 1 active carriers');
   });
 });

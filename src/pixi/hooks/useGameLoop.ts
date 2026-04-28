@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/game.store';
 import { useDebugStore } from '../../store/debug.store';
 
+// 0.2s is intentional for the performance branch: simulation advances at the
+// same game-time rate through an accumulator, but runs fewer fixed steps per
+// rendered frame than the original 0.1s loop under load.
 export const SIMULATION_STEP_SEC = 0.2;
 export const BASE_MAX_STEPS_PER_FRAME = 5;
 const MAX_CARRYOVER_SEC = SIMULATION_STEP_SEC * 2;

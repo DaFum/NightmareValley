@@ -208,6 +208,8 @@ export async function loadSpritesheets(): Promise<void> {
           key = `resource_${logicalName}`;
         } else if (topKey === "workers") {
           key = `worker_${logicalName}`;
+        } else if (topKey === "ui") {
+          key = logicalName;
         } else {
           key = `${topKey}_${logicalName}`;
         }

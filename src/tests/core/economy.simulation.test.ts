@@ -639,4 +639,124 @@ describe("auto-hire workers", () => {
     expect(Object.values(result.workers)[0].type).toBe("timberExecutioner");
     expect(result.buildings.v1.outputBuffer.funeralLoaf).toBe(2);
   });
+
+  it("auto-hires only affordable vacancies and stops without overdrawing vault stock", () => {
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: { funeralLoaf: 1 },
+          buildings: ["v1", "b1"],
+          workers: [],
+          populationLimit: 10,
+        } as any,
+      },
+      buildings: {
+        v1: {
+          id: "v1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          outputBuffer: { funeralLoaf: 1 },
+          inputBuffer: {},
+          internalStorage: {},
+          level: 1,
+          integrity: 100,
+          position: { x: 5, y: 5 },
+          connectedToRoad: true,
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          level: 1,
+          integrity: 100,
+          position: { x: 0, y: 0 },
+          connectedToRoad: true,
+          inputBuffer: {},
+          outputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+          autoHire: { burdenThrall: true },
+        } as any,
+      },
+    });
+
+    const result = simulateTick(state, 1);
+
+    expect(result.buildings.b1.assignedWorkers).toHaveLength(1);
+    expect(result.players.p1.workers).toHaveLength(1);
+    expect(result.buildings.v1.outputBuffer.funeralLoaf).toBe(0);
+  });
+
+  it("does not charge hire cost when the requested home building has no free worker slot", () => {
+    const state = makeState({
+      players: {
+        p1: {
+          id: "p1",
+          stock: { funeralLoaf: 2 },
+          buildings: ["v1", "b1"],
+          workers: ["w1"],
+          populationLimit: 10,
+        } as any,
+      },
+      buildings: {
+        v1: {
+          id: "v1",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          outputBuffer: { funeralLoaf: 2 },
+          inputBuffer: {},
+          internalStorage: {},
+          level: 1,
+          integrity: 100,
+          position: { x: 5, y: 5 },
+          connectedToRoad: true,
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+        b1: {
+          id: "b1",
+          ownerId: "p1",
+          type: "organHarvester",
+          level: 1,
+          integrity: 100,
+          position: { x: 0, y: 0 },
+          connectedToRoad: true,
+          inputBuffer: {},
+          outputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          corruption: 0,
+        } as any,
+      },
+      workers: {
+        w1: {
+          id: "w1",
+          ownerId: "p1",
+          type: "timberExecutioner",
+          position: { x: 0, y: 0 },
+          currentBuildingId: "b1",
+          isIdle: false,
+          morale: 100,
+          infection: 0,
+          scars: 0,
+        } as any,
+      },
+    });
+
+    expect(() => spawnWorker(state, "p1", "timberExecutioner", { x: 0, y: 0 }, "b1", { chargeCost: true }))
+      .toThrow(/no free slot/);
+    expect(state.buildings.v1.outputBuffer.funeralLoaf).toBe(2);
+  });
 });

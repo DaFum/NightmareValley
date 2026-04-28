@@ -249,6 +249,51 @@ function deductAcrossVaults(
   }
 }
 
+function canAffordFromVaults(
+  vaults: BuildingInstance[],
+  player: PlayerState,
+  costs: Partial<Record<ResourceType, number>>
+): boolean {
+  if (vaults.length === 0) {
+    return hasEnoughResources(player.stock, costs);
+  }
+
+  const affordabilitySource: ResourceInventory = {};
+  for (const vault of vaults) {
+    mergeInventoryInto(affordabilitySource, vault.outputBuffer);
+  }
+  return hasEnoughResources(affordabilitySource, costs);
+}
+
+function assertHomeBuildingCanAcceptWorker(
+  state: EconomySimulationState,
+  ownerId: string,
+  workerType: WorkerType,
+  homeBuildingId: BuildingId
+): void {
+  const home = state.buildings[homeBuildingId];
+  if (!home) {
+    throw new Error(`Unknown home building: ${homeBuildingId}`);
+  }
+  if (home.ownerId !== ownerId) {
+    throw new Error(`Building ${homeBuildingId} belongs to another player`);
+  }
+
+  const def = BUILDING_DEFINITIONS[home.type];
+  const allowedSlots = def.workerSlots[workerType] ?? 0;
+  if (allowedSlots <= 0) {
+    throw new Error(`${home.type} has no free slot for ${workerType}`);
+  }
+
+  let assignedSameType = 0;
+  for (const workerId of home.assignedWorkers) {
+    if (state.workers[workerId]?.type === workerType) assignedSameType += 1;
+  }
+  if (assignedSameType >= allowedSlots) {
+    throw new Error(`${home.type} has no free slot for ${workerType}`);
+  }
+}
+
 export function spawnWorker(
   state: EconomySimulationState,
   ownerId: string,
@@ -269,13 +314,7 @@ export function spawnWorker(
   }
 
   if (homeBuildingId) {
-    const home = next.buildings[homeBuildingId];
-    if (!home) {
-      throw new Error(`Unknown home building: ${homeBuildingId}`);
-    }
-    if (home.ownerId !== ownerId) {
-      throw new Error(`Building ${homeBuildingId} belongs to another player`);
-    }
+    assertHomeBuildingCanAcceptWorker(next, ownerId, workerType, homeBuildingId);
   }
 
   if (options.chargeCost) {
@@ -494,7 +533,13 @@ export function processAutoHireWorkers(state: EconomySimulationState): EconomySi
 
       const vacancies = maxCount - current;
       for (let i = 0; i < vacancies; i++) {
-        if (next.players[building.ownerId].workers.length >= next.players[building.ownerId].populationLimit) break;
+        const currentPlayer = next.players[building.ownerId];
+        if (currentPlayer.workers.length >= currentPlayer.populationLimit) break;
+
+        const vaults = getOwnerVaults(next, building.ownerId);
+        const hireCost = WORKER_DEFINITIONS[workerType].hireCost?.resources ?? {};
+        if (!canAffordFromVaults(vaults, currentPlayer, hireCost)) break;
+
         try {
           next = spawnWorker(next, building.ownerId, workerType, building.position, building.id, { chargeCost: true });
         } catch {

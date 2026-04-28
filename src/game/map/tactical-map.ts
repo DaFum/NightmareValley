@@ -1,4 +1,5 @@
 import type { TerrainType } from '../core/economy.types';
+import { getEconomyPlanSnapshot } from '../economy/economy.planner';
 import type { WorldState } from '../world/world.types';
 
 export type TacticalMapPointKind = 'building' | 'road' | 'worker';
@@ -38,6 +39,12 @@ export type TacticalMapSummary = {
     workers: number;
     activeCarriers: number;
   };
+};
+
+export type TacticalMapBrief = {
+  nextLabel: string;
+  nextReason: string;
+  markerCopy: string;
 };
 
 const EMPTY_BOUNDS = { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 1, height: 1 };
@@ -151,5 +158,15 @@ export function projectTacticalPoint(
   return {
     x: ((x - summary.bounds.minX) / summary.bounds.width) * usableWidth,
     y: ((y - summary.bounds.minY) / summary.bounds.height) * usableHeight,
+  };
+}
+
+export function createTacticalMapBrief(state: WorldState, ownerId: string): TacticalMapBrief {
+  const summary = createTacticalMapSummary(state, ownerId);
+  const plan = getEconomyPlanSnapshot(state, ownerId);
+  return {
+    nextLabel: plan.recommendation.label,
+    nextReason: plan.recommendation.reason,
+    markerCopy: `${summary.counts.buildings} buildings, ${summary.counts.roads} roads, ${summary.counts.activeCarriers} active carriers`,
   };
 }

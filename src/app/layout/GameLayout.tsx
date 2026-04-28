@@ -242,7 +242,8 @@ export function GameLayout({
       </section>
       <SvgAnimationIntegrator />
       <Particles />
-      <HudLayout top={resolvedHud} left={<TacticalMapPanel />} right={inspector} bottom={panels} isMobile={isMobile} />
+      <HudLayout top={resolvedHud} right={inspector} bottom={panels} isMobile={isMobile} />
+      <TacticalMapPanel />
       <ResumeRunPrompt
         visible={showResumePrompt}
         onResume={handleResumeSavedRun}

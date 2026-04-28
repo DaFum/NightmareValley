@@ -1725,5 +1725,12 @@
       "weepingForest_3": { "file": "terrain/weepingForest_3.png", "box": [0,0,64,32] },
       "weepingForest_4": { "file": "terrain/weepingForest_4.png", "box": [0,0,64,32] }
     }
+  },
+  "ui": {
+    "assigned": {
+      "generic_building_shadow": { "file": "ui/generic_building_shadow.png", "box": [0,0,128,64] },
+      "selection_ellipse_building": { "file": "ui/selection_ellipse_building.png", "box": [0,0,128,64] },
+      "hover_ellipse_building": { "file": "ui/hover_ellipse_building.png", "box": [0,0,128,64] }
+    }
   }
 }
