@@ -45,13 +45,14 @@ describe("Emergent Road Feedback Loop", () => {
       id: hqId, type: "vaultOfDigestiveStone", ownerId: "p1", position: { x: 5, y: 5 },
       level: 1, integrity: 100, connectedToRoad: true, progressSec: 0, isActive: true,
       internalStorage: { sinewTimber: 1000 }, outputBuffer: { sinewTimber: 1000 }, inputBuffer: {},
-      assignedWorkers: [],
+      assignedWorkers: [], constructionProgress: undefined,
     };
     const destBuilding: BuildingInstance = {
-      id: destId, type: "vaultOfDigestiveStone", ownerId: "p1", position: { x: 25, y: 25 },
+      // Changed to a production building so it accepts deliveries from the vault
+      id: destId, type: "millOfGnashing", ownerId: "p1", position: { x: 25, y: 25 },
       level: 1, integrity: 100, connectedToRoad: true, progressSec: 0, isActive: true,
       internalStorage: {}, outputBuffer: {}, inputBuffer: {},
-      assignedWorkers: [],
+      assignedWorkers: [], constructionProgress: undefined,
     };
     state.buildings[hqId] = hqBuilding;
     state.buildings[destId] = destBuilding;
@@ -71,7 +72,10 @@ describe("Emergent Road Feedback Loop", () => {
     let currentState = state;
     const config = { ...DEFAULT_SIMULATION_CONFIG };
 
-    // Queue 50 deliveries
+    // Set warehouseStorageLimit sufficiently high for 50 deliveries
+    config.warehouseStorageLimit = 100;
+
+    // Queue 50 deliveries manually (they will be executed bypassing the creation checks)
     for (let i = 0; i < 50; i++) {
       const jobId = createId("job");
       currentState.transport.jobs[jobId] = {

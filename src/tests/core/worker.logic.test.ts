@@ -72,9 +72,22 @@ describe("updateWorkersAI", () => {
     expect(worker.isIdle).toBe(false);
   });
 
+  it("transitions burdenThrall back to idle when building finishes construction", () => {
+    const state = makeState({ type: "burdenThrall", isIdle: false });
+    state.buildings["b1"].constructionProgress = undefined; // Fully constructed
+    state.buildings["b1"].level = 1;
+
+    const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
+    const worker = next.workers["w1"];
+    expect(worker.isIdle).toBe(true);
+    expect(worker.currentBuildingId).toBeUndefined();
+    expect(worker.position).toEqual({ x: 0, y: 0 });
+  });
+
   it("does not move burdenThrall workers assigned to constructed buildings", () => {
     const state = makeState({ type: "burdenThrall" });
     state.buildings["b1"].constructionProgress = undefined; // Fully constructed
+    state.buildings["b1"].level = 1;
     const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
     expect(next.workers["w1"].position).toEqual({ x: 0, y: 0 });
   });

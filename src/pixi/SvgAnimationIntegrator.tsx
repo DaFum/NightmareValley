@@ -31,7 +31,6 @@ export default function SvgAnimationIntegrator(): null {
 
     let mounted = true;
     const replacedKeys = new Set<string>();
-    const trackedTextures: PIXI.Texture[] = [];
     const drawFns: (() => void)[] = [];
     let rafId: number | null = null;
     let lastTime = 0;
@@ -76,11 +75,8 @@ export default function SvgAnimationIntegrator(): null {
             img.crossOrigin = 'anonymous';
             img.src = url;
 
-            let isDirty = false;
-
             img.onload = () => {
               if (!mounted) return;
-              isDirty = true;
               const w = img.naturalWidth || TILE_W;
               const h = img.naturalHeight || TILE_H;
               const canvas = document.createElement('canvas');
@@ -91,11 +87,9 @@ export default function SvgAnimationIntegrator(): null {
 
               // Create texture once
               let baseTex: PIXI.BaseTexture | null = null;
-              let tex: PIXI.Texture | null = null;
               try {
                 baseTex = new PIXI.BaseTexture(canvas);
-                tex = new PIXI.Texture(baseTex);
-                trackedTextures.push(tex);
+                const tex = new PIXI.Texture(baseTex);
                 try { delete (PIXI.utils as any).TextureCache[key]; } catch (e) { /* ignore */ }
                 PIXI.Texture.addToCache(tex, key);
               } catch (e) {
@@ -106,15 +100,9 @@ export default function SvgAnimationIntegrator(): null {
               drawFns.push(() => {
                 if (!mounted) return;
                 try {
-                  // Mark dirty implicitly each frame to capture SVG internal ticking.
-                  isDirty = true;
-
-                  if (isDirty) {
-                    ctx.clearRect(0, 0, w, h);
-                    ctx.drawImage(img, 0, 0, w, h);
-                    if (baseTex) baseTex.update();
-                    isDirty = false;
-                  }
+                  ctx.clearRect(0, 0, w, h);
+                  ctx.drawImage(img, 0, 0, w, h);
+                  if (baseTex) baseTex.update();
                 } catch (err) {
                   // ignore draw errors
                 }
@@ -138,8 +126,8 @@ export default function SvgAnimationIntegrator(): null {
     return () => {
       mounted = false;
       if (rafId !== null) window.cancelAnimationFrame(rafId);
-      trackedTextures.forEach(tex => {
-        try { tex.destroy(true); } catch (e) { /* ignore */ }
+      replacedKeys.forEach(key => {
+        try { PIXI.Texture.removeFromCache(key); } catch (e) { /* ignore */ }
       });
     };
   }, [ready]);

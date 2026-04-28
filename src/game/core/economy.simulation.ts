@@ -13,7 +13,6 @@ import { BUILDING_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
-import { createGridFromTerritory } from "../pathing/path.grid";
 import { isConstructed } from "../entities/buildings/building.types";
 
 // Exported from original but using relative imports
