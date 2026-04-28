@@ -38,27 +38,26 @@ describe("Emergent Road Feedback Loop", () => {
       }
     }
 
-    const hqId = createId("bld");
-    const destId = createId("bld");
+    const sourceId = createId("bld");
+    const vaultId = createId("bld");
 
-    const hqBuilding: BuildingInstance = {
-      id: hqId, type: "vaultOfDigestiveStone", ownerId: "p1", position: { x: 5, y: 5 },
+    const sourceBuilding: BuildingInstance = {
+      id: sourceId, type: "organHarvester", ownerId: "p1", position: { x: 5, y: 5 },
       level: 1, integrity: 100, connectedToRoad: true, progressSec: 0, isActive: true,
       internalStorage: { sinewTimber: 1000 }, outputBuffer: { sinewTimber: 1000 }, inputBuffer: {},
       assignedWorkers: [], constructionProgress: undefined,
     };
-    const destBuilding: BuildingInstance = {
-      // Changed to a production building so it accepts deliveries from the vault
-      id: destId, type: "millOfGnashing", ownerId: "p1", position: { x: 25, y: 25 },
+    const vaultBuilding: BuildingInstance = {
+      id: vaultId, type: "vaultOfDigestiveStone", ownerId: "p1", position: { x: 25, y: 25 },
       level: 1, integrity: 100, connectedToRoad: true, progressSec: 0, isActive: true,
       internalStorage: {}, outputBuffer: {}, inputBuffer: {},
       assignedWorkers: [], constructionProgress: undefined,
     };
-    state.buildings[hqId] = hqBuilding;
-    state.buildings[destId] = destBuilding;
-    state.players["p1"].buildings.push(hqId, destId);
+    state.buildings[sourceId] = sourceBuilding;
+    state.buildings[vaultId] = vaultBuilding;
+    state.players["p1"].buildings.push(sourceId, vaultId);
 
-    // 5 carriers starting at the HQ position
+    // 5 carriers starting at the source position
     for (let i = 0; i < 5; i++) {
       const wId = createId("wrk");
       const carrier: WorkerInstance = {
@@ -75,11 +74,13 @@ describe("Emergent Road Feedback Loop", () => {
     // Set warehouseStorageLimit sufficiently high for 50 deliveries
     config.warehouseStorageLimit = 100;
 
-    // Queue 50 deliveries manually (they will be executed bypassing the creation checks)
+    // Queue 50 deliveries manually. The production source and vault target keep the
+    // route capacity high enough for repeated trips without production-buffer caps
+    // masking the road feedback behavior.
     for (let i = 0; i < 50; i++) {
       const jobId = createId("job");
       currentState.transport.jobs[jobId] = {
-        id: jobId, fromBuildingId: hqId, toBuildingId: destId, resourceType: "sinewTimber", amount: 1, priority: 10, reserved: 0, delivered: 0, status: "queued"
+        id: jobId, fromBuildingId: sourceId, toBuildingId: vaultId, resourceType: "sinewTimber", amount: 1, priority: 10, reserved: 0, delivered: 0, status: "queued"
       };
     }
 

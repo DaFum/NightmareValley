@@ -19,7 +19,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
   if (!worker) return null;
 
   const def = WORKER_DEFINITIONS[worker.type] || { name: 'Unknown Worker', description: 'No definition found.' };
-  const portraitSrc = imageMap[`workers/${worker.type}.png`];
+  const portraitSrc = imageMap[`workers/${worker.type}.png`] ?? imageMap[`workers/${worker.type}.svg`];
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Worker inspector">

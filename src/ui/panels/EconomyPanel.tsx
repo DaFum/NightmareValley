@@ -3,8 +3,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
-import { RECIPES } from '../../game/economy/recipes.data';
 import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
+import { getBottleneckAction, getEconomyPlanSnapshot } from '../../game/economy/economy.planner';
+import { getProductionStatus } from '../../game/entities/buildings/building.status';
 
 const fmt1 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const fmtPct = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
@@ -15,6 +16,7 @@ type BuildingRow = {
   name: string;
   level: number;
   status: string;
+  statusDetail: string;
   inputFill: number;
   outputFill: number;
   workers: number;
@@ -32,11 +34,13 @@ type ResourceFlow = {
 function statusLabel(status: string): { label: string; color: string } {
   switch (status) {
     case 'working':         return { label: 'Working', color: 'var(--econ-success)' };
-    case 'blocked':         return { label: 'Blocked', color: 'var(--econ-warn)' };
+    case 'outputFull':      return { label: 'Blocked', color: 'var(--econ-warn)' };
+    case 'roadDisconnected':return { label: 'No road', color: 'var(--econ-warn)' };
     case 'idle':            return { label: 'Idle',    color: 'var(--econ-idle)' };
-    case 'waitingForInput': return { label: 'Starved', color: 'var(--econ-warn)' };
-    case 'disabled':        return { label: 'Paused',  color: 'var(--econ-disabled)' };
-    case 'damaged':         return { label: 'Damaged', color: 'var(--econ-damaged)' };
+    case 'missingInput':    return { label: 'Starved', color: 'var(--econ-warn)' };
+    case 'missingWorker':   return { label: 'No worker', color: 'var(--econ-warn)' };
+    case 'underConstruction': return { label: 'Building', color: 'var(--econ-idle)' };
+    case 'paused':          return { label: 'Paused',  color: 'var(--econ-disabled)' };
     default:                return { label: status,    color: 'var(--econ-default)' };
   }
 }
@@ -52,6 +56,7 @@ export default function EconomyPanel(): JSX.Element | null {
   );
 
   const buildingRows = useMemo((): BuildingRow[] => {
+    const economyState = { buildings, workers, transport } as any;
     return Object.values(buildings)
       .filter((b) => b.ownerId === player1Id)
       .map((b) => {
@@ -62,30 +67,7 @@ export default function EconomyPanel(): JSX.Element | null {
       const outputLimit = isVault
         ? DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit
         : DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit;
-      const outputFull = Object.values(b.outputBuffer).some((v) => (v ?? 0) >= outputLimit);
-
-      let status = 'idle';
-      if (!b.isActive) {
-        status = 'disabled';
-      } else if (b.progressSec > 0 && outputFull) {
-        status = 'blocked';
-      } else if (b.progressSec > 0) {
-        status = 'working';
-      } else if ((b.corruption ?? 0) > 50) {
-        status = 'damaged';
-      } else if (def.recipeIds && def.recipeIds.length > 0) {
-        // Check if the active recipe's inputs are satisfied
-        const activeRecipeId = b.currentRecipeId || def.recipeIds[0];
-        const recipe = activeRecipeId ? RECIPES[activeRecipeId] : undefined;
-        if (recipe) {
-          const hasAllInputs = Object.entries(recipe.inputs).every(
-            ([resource, required]) => (b.inputBuffer[resource as ResourceType] ?? 0) >= required
-          );
-          if (!hasAllInputs) {
-            status = 'waitingForInput';
-          }
-        }
-      }
+      const productionStatus = getProductionStatus(economyState, b, DEFAULT_SIMULATION_CONFIG);
 
       const inputVals = Object.values(b.inputBuffer).map(v => v ?? 0);
       const outputVals = Object.values(b.outputBuffer).map(v => v ?? 0);
@@ -97,7 +79,8 @@ export default function EconomyPanel(): JSX.Element | null {
         type: b.type,
         name: def.name,
         level: b.level,
-        status,
+        status: productionStatus.kind,
+        statusDetail: productionStatus.detail,
         inputFill: Math.min(1, inputFill),
         outputFill: Math.min(1, outputFill),
         workers: b.assignedWorkers.length,
@@ -105,7 +88,7 @@ export default function EconomyPanel(): JSX.Element | null {
         corruption: b.corruption ?? 0,
       };
     });
-  }, [buildings]);
+  }, [buildings, transport, workers]);
 
   const resourceFlows = useMemo((): ResourceFlow[] => {
     const inBuffer: Partial<Record<ResourceType, number>> = {};
@@ -150,6 +133,11 @@ export default function EconomyPanel(): JSX.Element | null {
       .slice(0, 8);
   }, [buildings, transport.activeCarrierTasks]);
 
+  const plannerSnapshot = useMemo(
+    () => getEconomyPlanSnapshot({ buildings, workers, transport } as any, player1Id),
+    [buildings, transport, workers]
+  );
+
   const carriers = Object.values(workers).filter(
     (w) => w.type === 'burdenThrall' && w.ownerId === player1Id
   );
@@ -162,8 +150,9 @@ export default function EconomyPanel(): JSX.Element | null {
   const ageStr = fmt1.format(ageOfTeeth);
 
   const workingCount = buildingRows.filter((r) => r.status === 'working').length;
-  const waitingCount = buildingRows.filter((r) => r.status === 'waitingForInput').length;
+  const waitingCount = buildingRows.filter((r) => r.status === 'missingInput').length;
   const idleBldCount = buildingRows.filter((r) => r.status === 'idle').length;
+  const topBottleneck = plannerSnapshot.bottlenecks[0];
 
   return (
     <div className="economy-panel macabre-panel" aria-label="Economy overview">
@@ -196,7 +185,7 @@ export default function EconomyPanel(): JSX.Element | null {
                     <span className="econ-building-row__lvl">L{row.level}</span>
                   </div>
                   <div className="econ-building-row__meta">
-                    <span style={{ color }}>{label}</span>
+                    <span style={{ color }} title={row.statusDetail}>{label}</span>
                     <span className="econ-building-row__workers" title="Workers assigned / required">
                       {row.workers}/{row.workerSlots}w
                     </span>
@@ -248,8 +237,31 @@ export default function EconomyPanel(): JSX.Element | null {
               )}
             </div>
           </section>
+
+          <section className="economy-panel__section" aria-label="Bottlenecks">
+            <h3 className="economy-panel__section-title">Bottlenecks</h3>
+            <div className="econ-bottleneck-list">
+              {plannerSnapshot.bottlenecks.length === 0 ? (
+                <p className="inspector-note">No critical bottlenecks.</p>
+              ) : (
+                plannerSnapshot.bottlenecks.slice(0, 4).map((bottleneck) => (
+                  <div key={`${bottleneck.buildingId}-${bottleneck.kind}`} className={`econ-bottleneck econ-bottleneck--${bottleneck.kind}`}>
+                    <span>{bottleneck.buildingName}</span>
+                    <small>{bottleneck.label}</small>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         </div>
       </div>
+
+      {topBottleneck && (
+        <div className={`economy-panel__action economy-panel__action--${topBottleneck.kind}`}>
+          <strong>{topBottleneck.label}</strong>
+          <span>{getBottleneckAction(topBottleneck)}</span>
+        </div>
+      )}
     </div>
   );
 }

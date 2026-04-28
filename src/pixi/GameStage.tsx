@@ -9,6 +9,7 @@ import IsoFootfallLayer from './layers/IsoFootfallLayer';
 import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 import IsoGhostPlacementLayer from './layers/IsoGhostPlacementLayer';
+import IsoRoadGhostLayer from './layers/IsoRoadGhostLayer';
 
 import { useGameStore, player1Id } from '../store/game.store';
 import { useUIStore } from '../store/ui.store';
@@ -21,6 +22,7 @@ import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
 import { screenToIsoTile } from '../game/iso/iso.inverse';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
+import { isRemovableRoadTile } from '../game/entities/roads/road.validation';
 
 const CHUNK_SCREEN_SIZE = 512;
 // Starting buildings are placed at tile (7,7); center on (7,7).
@@ -38,6 +40,8 @@ export function GameStage() {
   const showFootfallHeatmap = useUIStore((state) => state.showFootfallHeatmap);
   const setRenderStats = useRenderStore((state) => state.setRenderStats);
   const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
+  const roadPlacementMode = useUIStore((state) => state.roadPlacementMode);
+  const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
   const territory = useGameStore((state) => state.gameState.territory);
 
   const { spacePressedRef } = useIsoCamera();
@@ -145,7 +149,7 @@ export function GameStage() {
   ), [cameraX, cameraY, centerX, centerY, viewportHeight, viewportWidth, zoom]);
 
   const handlePointerMove = useCallback((event: PIXI.FederatedPointerEvent) => {
-    if (!selectedBuildingToPlace) {
+    if (!selectedBuildingToPlace && !roadPlacementMode && !roadRemovalMode) {
       setGhostTile(null);
       return;
     }
@@ -158,7 +162,7 @@ export function GameStage() {
       if (prev?.x === tileX && prev?.y === tileY) return prev;
       return { x: tileX, y: tileY };
     });
-  }, [selectedBuildingToPlace, centerX, cameraX, centerY, cameraY, zoom]);
+  }, [selectedBuildingToPlace, roadPlacementMode, roadRemovalMode, centerX, cameraX, centerY, cameraY, zoom]);
 
   const isGhostValid = useMemo(() => {
     if (!ghostTile || !selectedBuildingToPlace) return false;
@@ -169,6 +173,16 @@ export function GameStage() {
     const def = BUILDING_DEFINITIONS[selectedBuildingToPlace];
     return def.allowedTerrain.includes(tile.terrain);
   }, [ghostTile, selectedBuildingToPlace, territory]);
+
+  const isRoadGhostValid = useMemo(() => {
+    if (!ghostTile || (!roadPlacementMode && !roadRemovalMode)) return false;
+    const tileKey = `${ghostTile.x},${ghostTile.y}`;
+    const tileId = territory.tileIndex?.[tileKey];
+    const tile = tileId ? territory.tiles[tileId] : undefined;
+    if (!tile || tile.buildingId || tile.ownerId !== player1Id) return false;
+    if (roadRemovalMode) return isRemovableRoadTile(tile);
+    return ['scarredEarth', 'weepingForest', 'ashBog'].includes(tile.terrain) && tile.tier === 'grass';
+  }, [ghostTile, roadPlacementMode, roadRemovalMode, territory]);
 
   const handlePointerDown = useSelectionInput({
     world,
@@ -191,8 +205,8 @@ export function GameStage() {
 
   return (
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown} pointermove={handlePointerMove}>
-      <IsoTerrainLayer tiles={visibleTiles} />
-      <IsoResourceLayer tiles={visibleTiles} />
+      <IsoTerrainLayer tiles={world.tiles} />
+      <IsoResourceLayer tiles={world.tiles} />
       <IsoFootfallLayer tiles={visibleTiles} />
       {drawHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />
@@ -203,6 +217,14 @@ export function GameStage() {
           hoveredTileX={ghostTile.x}
           hoveredTileY={ghostTile.y}
           isValid={isGhostValid}
+        />
+      )}
+      {(roadPlacementMode || roadRemovalMode) && ghostTile && (
+        <IsoRoadGhostLayer
+          hoveredTileX={ghostTile.x}
+          hoveredTileY={ghostTile.y}
+          isValid={isRoadGhostValid}
+          mode={roadRemovalMode ? 'remove' : 'place'}
         />
       )}
     </Container>

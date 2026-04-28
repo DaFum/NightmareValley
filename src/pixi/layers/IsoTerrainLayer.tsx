@@ -1,68 +1,180 @@
-import React from 'react';
-import { Container, Sprite } from '@pixi/react';
-import { useTextures } from '../utils/textureRegistry';
+import React, { useEffect, useMemo } from 'react';
+import { Sprite } from '@pixi/react';
+import * as PIXI from 'pixi.js';
 import { IsoRenderWorld } from '../../game/render/render.types';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, TERRAIN_Z_INDEX_BIAS } from '../../game/iso/iso.constants';
+import imageMap from '../utils/vite-asset-loader';
 
 interface IsoTerrainLayerProps {
   tiles: IsoRenderWorld['tiles'];
 }
 
-const warnedMissingTerrainTextures = new Set<string>();
+const TERRAIN_COLORS: Record<string, string> = {
+  scarredEarth: '#4b2d1a',
+  weepingForest: '#20391f',
+  ribMountain: '#303247',
+  placentaLake: '#102a4f',
+  scarPath: '#352313',
+  occupiedScar: '#2c1010',
+  ashBog: '#20232c',
+  cathedralRock: '#222238',
+};
+
+const TERRAIN_STROKES: Record<string, string> = {
+  placentaLake: 'rgba(130, 180, 220, 0.18)',
+  scarPath: 'rgba(210, 160, 95, 0.16)',
+};
+
+const terrainImageCache = new Map<string, HTMLImageElement>();
+const terrainImagePromises = new Map<string, Promise<void>>();
+const warnedMissingTerrainAssets = new Set<string>();
+
+function terrainFromTextureKey(textureKey: string): string {
+  return textureKey.replace(/^terrain_/, '').replace(/_[0-9]+$/, '');
+}
+
+function terrainAssetPath(textureKey: string): string {
+  return `terrain/${textureKey.replace(/^terrain_/, '')}.png`;
+}
+
+function getLoadedTerrainImage(textureKey: string): HTMLImageElement | null {
+  const cached = terrainImageCache.get(textureKey);
+  return cached?.complete && cached.naturalWidth > 0 ? cached : null;
+}
+
+function loadTerrainImage(textureKey: string): Promise<void> {
+  if (typeof Image === 'undefined') return Promise.resolve();
+  if (getLoadedTerrainImage(textureKey)) return Promise.resolve();
+
+  const pending = terrainImagePromises.get(textureKey);
+  if (pending) return pending;
+
+  const path = terrainAssetPath(textureKey);
+  const src = imageMap[path];
+  if (!src) {
+    if (!warnedMissingTerrainAssets.has(path)) {
+      warnedMissingTerrainAssets.add(path);
+      console.warn(`Missing terrain asset: ${path}`);
+    }
+    return Promise.resolve();
+  }
+
+  const promise = new Promise<void>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      terrainImageCache.set(textureKey, img);
+      resolve();
+    };
+    img.onerror = () => {
+      if (!warnedMissingTerrainAssets.has(path)) {
+        warnedMissingTerrainAssets.add(path);
+        console.warn(`Failed to load terrain asset: ${path}`);
+      }
+      resolve();
+    };
+    img.src = src;
+  });
+  terrainImagePromises.set(textureKey, promise);
+  return promise;
+}
+
+function uniqueTerrainKeys(tiles: IsoRenderWorld['tiles']): string[] {
+  return Array.from(new Set(tiles.map((tile) => tile.textureKey)));
+}
+
+function createTerrainTexture(tiles: IsoRenderWorld['tiles']) {
+  if (typeof document === 'undefined' || tiles.length === 0) return null;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const tile of tiles) {
+    minX = Math.min(minX, tile.screenX - ISO_TILE_WIDTH / 2);
+    minY = Math.min(minY, tile.screenY - ISO_TILE_HEIGHT / 2);
+    maxX = Math.max(maxX, tile.screenX + ISO_TILE_WIDTH / 2);
+    maxY = Math.max(maxY, tile.screenY + ISO_TILE_HEIGHT / 2);
+  }
+
+  const width = Math.ceil(maxX - minX);
+  const height = Math.ceil(maxY - minY);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  for (const tile of tiles) {
+    const terrain = terrainFromTextureKey(tile.textureKey);
+    const x = tile.screenX - minX;
+    const y = tile.screenY - minY;
+    const img = getLoadedTerrainImage(tile.textureKey);
+
+    if (img) {
+      ctx.drawImage(
+        img,
+        x - ISO_TILE_WIDTH / 2,
+        y - ISO_TILE_HEIGHT / 2,
+        ISO_TILE_WIDTH,
+        ISO_TILE_HEIGHT
+      );
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x, y - ISO_TILE_HEIGHT / 2);
+      ctx.lineTo(x + ISO_TILE_WIDTH / 2, y);
+      ctx.lineTo(x, y + ISO_TILE_HEIGHT / 2);
+      ctx.lineTo(x - ISO_TILE_WIDTH / 2, y);
+      ctx.closePath();
+      ctx.fillStyle = TERRAIN_COLORS[terrain] ?? TERRAIN_COLORS.scarredEarth;
+      ctx.fill();
+      ctx.strokeStyle = TERRAIN_STROKES[terrain] ?? 'rgba(8, 6, 6, 0.20)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  return {
+    texture: PIXI.Texture.from(canvas),
+    x: minX,
+    y: minY,
+  };
+}
 
 export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: IsoTerrainLayerProps) {
-  const { registry } = useTextures();
+  const [assetRevision, setAssetRevision] = React.useState(0);
+  const terrainSignature = useMemo(
+    () => tiles.map((tile) => `${tile.id}:${tile.textureKey}`).join('|'),
+    [tiles]
+  );
+  const terrainTexture = useMemo(() => createTerrainTexture(tiles), [assetRevision, terrainSignature]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(uniqueTerrainKeys(tiles).map(loadTerrainImage)).then(() => {
+      if (!cancelled) setAssetRevision((value) => value + 1);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [terrainSignature, tiles]);
+
+  useEffect(() => {
+    return () => {
+      terrainTexture?.texture.destroy(true);
+    };
+  }, [terrainTexture]);
+
+  if (!terrainTexture) return null;
 
   return (
-    // cacheAsBitmap is intentionally absent: `tiles` is the frustum-culled visibleTiles
-    // set which changes on every camera pan, so caching would re-rasterise every frame
-    // and hurt performance rather than help. React.memo handles prop-level memoisation.
-    <Container eventMode="none" sortableChildren={true}>
-      {tiles.map((tile) => {
-        // Fallback for missing textures based on terrain type
-        let textureKey = tile.textureKey;
-        if (!registry.hasTexture(textureKey)) {
-           if (!warnedMissingTerrainTextures.has(textureKey)) {
-             warnedMissingTerrainTextures.add(textureKey);
-             console.warn(`Missing terrain texture: ${textureKey}`);
-           }
-           // Provide basic colored fallback textures or just first frame if available
-           if (textureKey.includes("placentaLake")) {
-               textureKey = "terrain_placentaLake";
-           } else if (textureKey.includes("weepingForest")) {
-               textureKey = "terrain_weepingForest";
-           } else {
-               textureKey = "terrain_scarredEarth"; // Default
-           }
-        }
-
-        const texture = registry.getTexture(textureKey);
-
-        if (!texture) return null;
-
-        // For SVG terrain textures we want to display the full SVG
-        // scaled to the tile width while preserving aspect ratio and
-        // anchoring the sprite at its bottom-center so it sits on the
-        // tile correctly.
-        if (textureKey.startsWith('terrain_')) {
-          const texW = texture.width || ISO_TILE_WIDTH;
-          const scale = texW > 0 ? ISO_TILE_WIDTH / texW : 1;
-          return (
-            <Sprite
-              key={tile.id}
-              texture={texture}
-              x={tile.screenX}
-              y={tile.screenY}
-              anchor={{ x: 0.5, y: 1 }}
-              scale={scale}
-              zIndex={tile.screenY + TERRAIN_Z_INDEX_BIAS}
-              eventMode="none"
-            />
-          );
-        }
-
-        return null;
-      })}
-    </Container>
+    <Sprite
+      texture={terrainTexture.texture}
+      x={terrainTexture.x}
+      y={terrainTexture.y}
+      zIndex={TERRAIN_Z_INDEX_BIAS}
+      eventMode="none"
+    />
   );
 });

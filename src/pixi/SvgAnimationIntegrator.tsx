@@ -25,9 +25,10 @@ function looksAnimated(svgText: string) {
 
 export default function SvgAnimationIntegrator(): null {
   const { ready } = useTextures();
+  const enabled = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('animated-terrain');
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !enabled) return;
 
     let mounted = true;
     const replacedKeys = new Set<string>();
@@ -130,7 +131,7 @@ export default function SvgAnimationIntegrator(): null {
         try { PIXI.Texture.removeFromCache(key); } catch (e) { /* ignore */ }
       });
     };
-  }, [ready]);
+  }, [enabled, ready]);
 
   return null;
 }

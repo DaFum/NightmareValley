@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useGameStore } from "../../store/game.store";
 import {
   mapBuildingsToIsoBuildings,
@@ -6,6 +6,7 @@ import {
   mapWorkersToIsoWorkers,
 } from "../../game/render/render.adapter";
 import { IsoRenderWorld } from "../../game/render/render.types";
+import { createTerrainRenderCacheKey } from "../../game/render/render-cache";
 import { useSelectionStore } from "../../store/selection.store";
 
 export function useRenderWorld(): IsoRenderWorld {
@@ -16,7 +17,16 @@ export function useRenderWorld(): IsoRenderWorld {
   const selectedBuildingId = useSelectionStore((state) => state.selectedBuildingId);
   const selectedWorkerId = useSelectionStore((state) => state.selectedWorkerId);
 
-  const tiles = useMemo(() => mapTerrainToIsoTiles({ territory }), [territory]);
+  const terrainCacheRef = useRef<{ cacheKey: string; tiles: IsoRenderWorld['tiles'] } | null>(null);
+  const terrainCacheKey = useMemo(() => createTerrainRenderCacheKey(territory), [territory]);
+  const tiles = useMemo(() => {
+    const cached = terrainCacheRef.current;
+    if (cached && cached.cacheKey === terrainCacheKey) return cached.tiles;
+
+    const mappedTiles = mapTerrainToIsoTiles({ territory });
+    terrainCacheRef.current = { cacheKey: terrainCacheKey, tiles: mappedTiles };
+    return mappedTiles;
+  }, [terrainCacheKey, territory]);
   const mappedBuildings = useMemo(() => (
     mapBuildingsToIsoBuildings({ buildings }).map((building) => ({
       ...building,

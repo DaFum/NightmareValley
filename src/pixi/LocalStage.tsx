@@ -31,8 +31,9 @@ export function LocalStage({
 
   // create application and root once
   useEffect(() => {
-    const opts = { width, height, ...options } as ApplicationOptions;
+    const opts = { width, height, autoStart: false, ...options } as ApplicationOptions;
     const app = new Application(opts as any);
+    app.stop();
 
     const container = containerRef.current;
     if (!container) {

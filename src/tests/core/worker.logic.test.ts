@@ -84,6 +84,28 @@ describe("updateWorkersAI", () => {
     expect(worker.position).toEqual({ x: 0, y: 0 });
   });
 
+  it("does not mark burdenThrall idle while it has an active transport task", () => {
+    const state = makeState({ type: "burdenThrall", isIdle: false, currentBuildingId: undefined });
+    state.transport.activeCarrierTasks["w1"] = {
+      workerId: "w1",
+      jobId: "job1",
+      pickupBuildingId: "b1",
+      dropoffBuildingId: "b2",
+      resourceType: "sinewTimber",
+      amount: 1,
+      phase: "toDropoff",
+      path: [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+      pathIndex: 0,
+      stepProgress: 0.25,
+    };
+
+    const next = updateWorkersAI(state, 1, DEFAULT_SIMULATION_CONFIG);
+    const worker = next.workers["w1"];
+    expect(worker.isIdle).toBe(false);
+    expect(worker.currentBuildingId).toBeUndefined();
+    expect(state.transport.activeCarrierTasks["w1"]).toBeDefined();
+  });
+
   it("does not move burdenThrall workers assigned to constructed buildings", () => {
     const state = makeState({ type: "burdenThrall" });
     state.buildings["b1"].constructionProgress = undefined; // Fully constructed
