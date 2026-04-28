@@ -16,6 +16,9 @@ import { useResponsiveLayout } from './useResponsiveLayout';
 import { evaluateGameOutcome } from '../../game/core/victory.rules';
 import { player1Id, useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
+import { useSelectionStore } from '../../store/selection.store';
+import ShortcutHelpDialog from '../../ui/dialogs/ShortcutHelpDialog';
+import { getGameHotkeyAction } from '../../ui/hotkeys/gameHotkeys';
 
 const IS_DEV = __DEV__;
 const ContentCodexPanel = React.lazy(() => import('../../ui/panels/ContentCodexPanel'));
@@ -63,18 +66,34 @@ export function GameLayout({
   const isMobile = useResponsiveLayout(mobileBreakpoint);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
   const [dismissedVictory, setDismissedVictory] = React.useState(false);
   const gameState = useGameStore((state) => state.gameState);
   const isRunning = useGameStore((state) => state.isRunning);
   const activeScenario = useGameStore((state) => state.activeScenario);
   const setRunning = useGameStore((state) => state.setRunning);
+  const togglePlayPause = useGameStore((state) => state.togglePlayPause);
   const resetGame = useGameStore((state) => state.resetGame);
+  const saveGame = useGameStore((state) => state.saveGame);
+  const loadSavedGame = useGameStore((state) => state.loadSavedGame);
+  const clearSavedGame = useGameStore((state) => state.clearSavedGame);
+  const hasSavedGame = useGameStore((state) => state.hasSavedGame);
   const setScenarioProfile = useGameStore((state) => state.setScenarioProfile);
   const focusMode = useUIStore((state) => state.focusMode);
   const minimalHud = useUIStore((state) => state.minimalHud);
   const guideOpen = useUIStore((state) => state.guideOpen);
+  const togglePanel = useUIStore((state) => state.togglePanel);
+  const toggleRoadPlacementMode = useUIStore((state) => state.toggleRoadPlacementMode);
+  const toggleRoadRemovalMode = useUIStore((state) => state.toggleRoadRemovalMode);
+  const toggleGuideOpen = useUIStore((state) => state.toggleGuideOpen);
+  const toggleMinimalHud = useUIStore((state) => state.toggleMinimalHud);
+  const selectBuildingToPlace = useUIStore((state) => state.selectBuildingToPlace);
+  const setRoadPlacementMode = useUIStore((state) => state.setRoadPlacementMode);
+  const setRoadRemovalMode = useUIStore((state) => state.setRoadRemovalMode);
+  const clearSelection = useSelectionStore((state) => state.clearSelection);
   const outcome = React.useMemo(() => evaluateGameOutcome(gameState, player1Id), [gameState]);
   const visibleOutcome = outcome.kind === 'victory' && dismissedVictory ? { ...outcome, kind: 'in-progress' as const } : outcome;
+  const savedGameAvailable = hasSavedGame();
 
   React.useEffect(() => {
     if (outcome.kind !== 'in-progress') {
@@ -91,9 +110,82 @@ export function GameLayout({
     };
   }, [focusMode, guideOpen, minimalHud]);
 
+  React.useEffect(() => {
+    const saveCurrentRun = () => {
+      useGameStore.getState().saveGame();
+    };
+    const intervalId = window.setInterval(saveCurrentRun, 15_000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveCurrentRun();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', saveCurrentRun);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', saveCurrentRun);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const action = getGameHotkeyAction(event);
+      if (!action) return;
+      event.preventDefault();
+
+      if (action === 'togglePlayPause') {
+        togglePlayPause();
+      } else if (action === 'toggleBuildMenu') {
+        togglePanel('buildingMenu');
+      } else if (action === 'toggleRoadBuild') {
+        toggleRoadPlacementMode();
+      } else if (action === 'toggleRoadRemove') {
+        toggleRoadRemovalMode();
+      } else if (action === 'toggleGuide') {
+        toggleGuideOpen();
+      } else if (action === 'toggleMinimalHud') {
+        toggleMinimalHud();
+      } else if (action === 'openShortcutHelp') {
+        setShortcutsOpen(true);
+      } else if (action === 'cancelOrClose') {
+        if (shortcutsOpen) {
+          setShortcutsOpen(false);
+        } else if (settingsOpen) {
+          setSettingsOpen(false);
+        } else if (menuOpen) {
+          setMenuOpen(false);
+        } else {
+          selectBuildingToPlace(null);
+          setRoadPlacementMode(false);
+          setRoadRemovalMode(false);
+          clearSelection();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [
+    clearSelection,
+    menuOpen,
+    selectBuildingToPlace,
+    setRoadPlacementMode,
+    setRoadRemovalMode,
+    settingsOpen,
+    shortcutsOpen,
+    toggleGuideOpen,
+    toggleMinimalHud,
+    togglePanel,
+    togglePlayPause,
+    toggleRoadPlacementMode,
+    toggleRoadRemovalMode,
+  ]);
+
   const handleRestart = React.useCallback(() => {
     setMenuOpen(false);
     setSettingsOpen(false);
+    setShortcutsOpen(false);
     setDismissedVictory(false);
     resetGame();
   }, [resetGame]);
@@ -107,6 +199,7 @@ export function GameLayout({
     <TopHud
       onOpenMenu={() => setMenuOpen(true)}
       onOpenSettings={() => setSettingsOpen(true)}
+      onOpenShortcuts={() => setShortcutsOpen(true)}
     />
   );
 
@@ -141,13 +234,32 @@ export function GameLayout({
             setMenuOpen(false);
             setSettingsOpen(true);
           }}
+          onSave={() => {
+            saveGame();
+            setMenuOpen(false);
+          }}
+          onLoad={() => {
+            if (loadSavedGame()) {
+              setDismissedVictory(false);
+              setMenuOpen(false);
+            }
+          }}
+          onClearSave={() => {
+            clearSavedGame();
+            setMenuOpen(false);
+          }}
           onClose={() => setMenuOpen(false)}
+          hasSavedGame={savedGameAvailable}
         />
         <SettingsDialog
           open={settingsOpen}
           activeScenario={activeScenario}
           onScenarioChange={handleScenarioChange}
           onClose={() => setSettingsOpen(false)}
+        />
+        <ShortcutHelpDialog
+          open={shortcutsOpen}
+          onClose={() => setShortcutsOpen(false)}
         />
         <VictoryDialog
           outcome={visibleOutcome}

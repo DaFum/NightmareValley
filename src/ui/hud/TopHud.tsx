@@ -9,9 +9,10 @@ import { useUIStore } from '../../store/ui.store';
 export type TopHudProps = {
   onOpenMenu?: () => void;
   onOpenSettings?: () => void;
+  onOpenShortcuts?: () => void;
 };
 
-export function TopHud({ onOpenMenu, onOpenSettings }: TopHudProps) {
+export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudProps) {
   const isRunning = useGameStore(state => state.isRunning);
   const tickRate = useGameStore(state => state.tickRate);
   const togglePlayPause = useGameStore(state => state.togglePlayPause);
@@ -44,6 +45,7 @@ export function TopHud({ onOpenMenu, onOpenSettings }: TopHudProps) {
           <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={toggleFocusMode} title="Increase world contrast">Focus</button>
           <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} onClick={toggleMinimalHud} title={minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels'}>{minimalHud ? 'Full HUD' : 'Minimal'}</button>
           <button className={`hud-button ${guideOpen ? 'active' : ''}`} aria-pressed={guideOpen} onClick={toggleGuideOpen} title={guideOpen ? 'Hide game guide' : 'Show game guide'}>Guide</button>
+          <button className="hud-button" onClick={onOpenShortcuts} title="Show keyboard controls">Keys</button>
           <button className="hud-button" onClick={onOpenSettings}>Settings</button>
           <button className="hud-button" onClick={onOpenMenu}>Menu</button>
           <FpsCounter />

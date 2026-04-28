@@ -5,7 +5,11 @@ type PauseMenuDialogProps = {
   onResume: () => void;
   onRestart: () => void;
   onOpenSettings: () => void;
+  onSave: () => void;
+  onLoad: () => void;
+  onClearSave: () => void;
   onClose: () => void;
+  hasSavedGame: boolean;
 };
 
 export default function PauseMenuDialog({
@@ -14,7 +18,11 @@ export default function PauseMenuDialog({
   onResume,
   onRestart,
   onOpenSettings,
+  onSave,
+  onLoad,
+  onClearSave,
   onClose,
+  hasSavedGame,
 }: PauseMenuDialogProps): JSX.Element | null {
   if (!open) return null;
 
@@ -24,8 +32,15 @@ export default function PauseMenuDialog({
         <span className="game-dialog__eyebrow">Menu</span>
         <h2 id="pause-dialog-title">{isRunning ? 'Simulation Running' : 'Simulation Paused'}</h2>
         <p>Manage the current run without leaving the valley.</p>
+        <div className="save-status" role="status">
+          <strong>{hasSavedGame ? 'Saved run available' : 'No saved run yet'}</strong>
+          <span>{hasSavedGame ? 'Load returns paused so you can inspect before resuming.' : 'Manual save and autosave use this browser.'}</span>
+        </div>
         <div className="game-dialog__actions game-dialog__actions--stacked">
           <button className="hud-button hud-button--primary" onClick={onResume}>{isRunning ? 'Return' : 'Resume'}</button>
+          <button className="hud-button" onClick={onSave}>Save Run</button>
+          <button className="hud-button" onClick={onLoad} disabled={!hasSavedGame}>Load Saved Run</button>
+          <button className="hud-button" onClick={onClearSave} disabled={!hasSavedGame}>Delete Save</button>
           <button className="hud-button" onClick={onOpenSettings}>Settings</button>
           <button className="hud-button" onClick={onRestart}>Restart Run</button>
           <button className="hud-button" onClick={onClose}>Close</button>

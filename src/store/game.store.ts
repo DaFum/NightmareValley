@@ -24,6 +24,13 @@ import {
 } from './game-simulation.utils';
 import { RuntimeIssue, toRuntimeIssue } from './runtime-issue';
 import { placeRoadTile, removeRoadTile } from '../game/entities/roads/road.logic';
+import {
+  createGameSaveSnapshot,
+  deleteGameSave,
+  hasGameSave,
+  readGameSave,
+  writeGameSave,
+} from './game-save';
 
 export type GameScenarioProfile = 'sandbox' | 'challenging' | 'hardcore';
 
@@ -40,6 +47,10 @@ export interface GameStore {
   activeScenario: GameScenarioProfile;
   setGameState: (state: WorldState) => void;
   resetGame: (profile?: GameScenarioProfile) => void;
+  saveGame: () => boolean;
+  loadSavedGame: () => boolean;
+  clearSavedGame: () => boolean;
+  hasSavedGame: () => boolean;
   setRunning: (running: boolean) => void;
   togglePlayPause: () => void;
   setTickRate: (rate: number) => void;
@@ -327,6 +338,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       lastError: undefined,
     });
   },
+  saveGame: () => {
+    const { gameState, activeScenario, tickRate } = get();
+    return writeGameSave(createGameSaveSnapshot(gameState, activeScenario, tickRate));
+  },
+  loadSavedGame: () => {
+    const snapshot = readGameSave();
+    if (!snapshot) return false;
+
+    set({
+      gameState: snapshot.gameState,
+      activeScenario: snapshot.scenario,
+      tickRate: clampTickRate(snapshot.tickRate),
+      isRunning: false,
+      lastError: undefined,
+    });
+    return true;
+  },
+  clearSavedGame: () => deleteGameSave(),
+  hasSavedGame: () => hasGameSave(),
   setRunning: (running) => set({ isRunning: running }),
   togglePlayPause: () => set((state) => ({ isRunning: !state.isRunning })),
   setTickRate: (rate) => {

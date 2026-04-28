@@ -524,6 +524,29 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   flex-direction: column;
 }
 
+.save-status {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.9rem 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: rgba(8, 10, 14, 0.42);
+}
+
+.save-status strong {
+  color: var(--text-strong);
+  font: 700 0.78rem var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.save-status span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .settings-option {
   display: grid;
   gap: 4px;
@@ -2421,4 +2444,54 @@ body.ui--guide-open .content-codex {
   opacity: 0.48;
   text-decoration: line-through;
   border-color: rgba(255, 100, 100, 0.3);
+}
+
+.shortcut-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+}
+
+.shortcut-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 1rem 0 0;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: rgba(8, 10, 14, 0.42);
+}
+
+.shortcut-row kbd {
+  display: inline-flex;
+  min-width: 3.25rem;
+  justify-content: center;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid var(--button-border);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-strong);
+  font: 700 0.78rem var(--font-ui);
+}
+
+.shortcut-row dd {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+@media (max-width: 520px) {
+  .shortcut-row {
+    grid-template-columns: 3.75rem minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+
+  .shortcut-row kbd {
+    min-width: 2.75rem;
+  }
 }
