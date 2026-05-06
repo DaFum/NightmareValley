@@ -1,8 +1,32 @@
 import { DEFAULT_SIMULATION_CONFIG } from "../../game/economy/balancing.constants";
-import { findBestJobForCarrier, findTargetBuildingsForResource, generateTransportJobs, gridManhattanDistance, updateTransportMetrics } from "../../game/economy/transport.logic";
+import { advanceCarrierMovement, canTransportBetweenBuildings, findBestJobForCarrier, findTargetBuildingsForResource, generateTransportJobs, gridManhattanDistance, updateTransportMetrics } from "../../game/economy/transport.logic";
 import { EconomySimulationState } from "../../game/core/economy.simulation";
 
 describe("transport.logic", () => {
+  it("requires road-required buildings to share a connected road component", () => {
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: {},
+      buildings: {
+        source: { id: "source", ownerId: "p1", type: "organHarvester", position: { x: -1, y: 0 }, connectedToRoad: true } as any,
+        target: { id: "target", ownerId: "p1", type: "vaultOfDigestiveStone", position: { x: 5, y: 0 }, connectedToRoad: true } as any,
+      },
+      workers: {},
+      territory: {
+        tiles: {
+          r1: { id: "r1", position: { x: 0, y: 0 }, terrain: "scarPath", ownerId: "p1", footfall: 0, tier: "dirt" },
+          r2: { id: "r2", position: { x: 4, y: 0 }, terrain: "scarPath", ownerId: "p1", footfall: 0, tier: "dirt" },
+        },
+        tileIndex: { "0,0": "r1", "4,0": "r2" },
+      } as any,
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    };
+
+    expect(canTransportBetweenBuildings(state, state.buildings.source as any, state.buildings.target as any)).toBe(false);
+  });
+
   it("uses Manhattan distance as tiebreaker for equal-need targets", () => {
     const state: EconomySimulationState = {
       tick: 0,
@@ -241,6 +265,152 @@ describe("transport.logic", () => {
     expect(totalQueuedAmount).toBeLessThanOrEqual(2);
   });
 
+  it("does not queue more inbound deliveries than a target input buffer can hold", () => {
+    const state: EconomySimulationState = {
+      tick: 1,
+      ageOfTeeth: 0,
+      players: {},
+      buildings: {
+        srcA: {
+          id: "srcA",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 0, y: 0 },
+          outputBuffer: { sinewTimber: 4 },
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+          connectedToRoad: true,
+        } as any,
+        srcB: {
+          id: "srcB",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 0, y: 2 },
+          outputBuffer: { sinewTimber: 4 },
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+          connectedToRoad: true,
+        } as any,
+        mill: {
+          id: "mill",
+          ownerId: "p1",
+          type: "millOfGnashing",
+          position: { x: 2, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: 2 },
+          internalStorage: {},
+          isActive: true,
+          connectedToRoad: true,
+        } as any,
+      },
+      workers: {},
+      territory: { tiles: {}, tileIndex: {} } as any,
+      transport: {
+        jobs: {},
+        activeCarrierTasks: {},
+        networkStress: 0,
+        averageLatencySec: 0,
+        queuedJobCount: 0,
+      },
+      worldPulse: 0,
+    };
+
+    generateTransportJobs(state, { ...DEFAULT_SIMULATION_CONFIG, maxJobBatchSize: 4, maxJobsPerTick: 10 });
+
+    const inboundToMill = Object.values(state.transport.jobs)
+      .filter((job) => job.toBuildingId === "mill" && job.resourceType === "sinewTimber" && job.status === "queued")
+      .reduce((sum, job) => sum + job.amount, 0);
+
+    expect(inboundToMill).toBe(1);
+  });
+
+  it("spills a delivery instead of overfilling a target whose capacity vanished in transit", () => {
+    const state: EconomySimulationState = {
+      tick: 1,
+      ageOfTeeth: 0,
+      players: {},
+      buildings: {
+        src: {
+          id: "src",
+          ownerId: "p1",
+          type: "vaultOfDigestiveStone",
+          position: { x: 0, y: 0 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          isActive: true,
+        } as any,
+        mill: {
+          id: "mill",
+          ownerId: "p1",
+          type: "millOfGnashing",
+          position: { x: 1, y: 0 },
+          outputBuffer: {},
+          inputBuffer: { sinewTimber: DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit },
+          internalStorage: {},
+          isActive: true,
+        } as any,
+      },
+      workers: {
+        carrier: {
+          id: "carrier",
+          ownerId: "p1",
+          type: "burdenThrall",
+          position: { x: 1, y: 0 },
+          isIdle: false,
+        } as any,
+      },
+      territory: {
+        tiles: {
+          tile_1_0: { id: "tile_1_0", position: { x: 1, y: 0 }, terrain: "scarredEarth", tier: "grass", footfall: 0 },
+        },
+        tileIndex: { "1,0": "tile_1_0" },
+      } as any,
+      transport: {
+        jobs: {
+          job: {
+            id: "job",
+            fromBuildingId: "src",
+            toBuildingId: "mill",
+            resourceType: "sinewTimber",
+            amount: 1,
+            priority: 1,
+            reserved: 0,
+            delivered: 0,
+            status: "claimed",
+          } as any,
+        },
+        activeCarrierTasks: {
+          carrier: {
+            workerId: "carrier",
+            jobId: "job",
+            pickupBuildingId: "src",
+            dropoffBuildingId: "mill",
+            resourceType: "sinewTimber",
+            amount: 1,
+            phase: "toDropoff",
+            path: [{ x: 1, y: 0 }],
+            pathIndex: 0,
+            stepProgress: 0,
+          } as any,
+        },
+        networkStress: 0,
+        averageLatencySec: 0,
+        queuedJobCount: 0,
+      },
+      worldPulse: 0,
+    };
+
+    advanceCarrierMovement(state, 1, DEFAULT_SIMULATION_CONFIG);
+
+    expect(state.buildings.mill.inputBuffer.sinewTimber).toBe(DEFAULT_SIMULATION_CONFIG.buildingInputBufferLimit);
+    expect(state.transport.jobs.job.status).toBe("spilled");
+    expect(state.workers.carrier.isIdle).toBe(true);
+    expect(state.transport.activeCarrierTasks.carrier).toBeUndefined();
+  });
+
   it("prunes terminal jobs periodically when transport history grows large", () => {
     const jobs: Record<string, any> = {
       keptQueued: { id: "keptQueued", fromBuildingId: "a", toBuildingId: "b", resourceType: "sinewTimber", amount: 1, priority: 1, reserved: 0, delivered: 0, status: "queued" },
@@ -462,5 +632,52 @@ describe("warehouse-first routing (vault-first)", () => {
     // Vault should not route to another vault
     expect(sorted.map(b => b.id)).not.toContain("dstVault");
     expect(sorted.map(b => b.id)).toContain("mill");
+  });
+
+  it("caps transport job generation under many buildings", () => {
+    const buildings: EconomySimulationState['buildings'] = {
+      src: {
+        id: "src",
+        ownerId: "p1",
+        type: "organHarvester",
+        position: { x: 0, y: 0 },
+        outputBuffer: { sinewTimber: 500 },
+        inputBuffer: {},
+        internalStorage: {},
+        connectedToRoad: true,
+        level: 1,
+        isActive: true,
+      } as any,
+    };
+    for (let i = 0; i < 120; i++) {
+      buildings[`mill_${i}`] = {
+        id: `mill_${i}`,
+        ownerId: "p1",
+        type: "millOfGnashing",
+        position: { x: i + 1, y: 0 },
+        outputBuffer: {},
+        inputBuffer: {},
+        internalStorage: {},
+        connectedToRoad: true,
+        level: 1,
+        isActive: true,
+      } as any;
+    }
+
+    const state: EconomySimulationState = {
+      tick: 1,
+      ageOfTeeth: 0,
+      players: {},
+      buildings,
+      workers: {},
+      territory: { tiles: {}, tileIndex: {} } as any,
+      transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+      worldPulse: 0,
+    };
+
+    const next = generateTransportJobs(state, { ...DEFAULT_SIMULATION_CONFIG, maxJobsPerTick: 12 });
+
+    expect(Object.values(next.transport.jobs)).toHaveLength(12);
+    expect(next.transport.queuedJobCount).toBe(12);
   });
 });

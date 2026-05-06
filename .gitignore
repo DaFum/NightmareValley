@@ -143,7 +143,6 @@ vite.config.ts.timestamp-*
 .claude/
 
 # Generated spritesheet assets and build output
-src/assets/spritesheets/**/*.png
 src/assets/spritesheets/**/*.jpg
 public/build/
 screenshots/

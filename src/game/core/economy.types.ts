@@ -123,5 +123,6 @@ export interface WorkerDefinition {
   moveSpeed: number;
   canCarry: boolean;
   carryCapacity: number;
+  hireCost?: BuildingCost;
   description: string;
 }

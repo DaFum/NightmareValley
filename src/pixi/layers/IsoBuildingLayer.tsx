@@ -15,6 +15,7 @@ const CENTER_ANCHOR = { x: 0.5, y: 0.5 } as const;
 const shadowProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 0, alpha: 0.3, scale: 0.8 };
 const selectionProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 1 };
 const hoverProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 1, alpha: 0.5 };
+const warnedMissingBuildingTextures = new Set<string>();
 
 export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings }) => {
   const { registry } = useTextures();
@@ -37,6 +38,10 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
         const shadowTex = registry.getTexture("generic_building_shadow");
         const selectionTex = registry.getTexture("selection_ellipse_building");
         const hoverTex = registry.getTexture("hover_ellipse_building");
+        if (!mainTex && !warnedMissingBuildingTextures.has(spriteKey)) {
+          warnedMissingBuildingTextures.add(spriteKey);
+          console.warn(`Missing building texture: ${spriteKey}`);
+        }
 
         // buildingProps depends on state so stays local
         const buildingProps = { anchor: BUILDING_ANCHOR, y: 16, scale: BUILDING_SCALE, zIndex: 2, tint: state === "damaged" ? 0xddaaaa : 0xffffff };
@@ -50,33 +55,17 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
             sortableChildren={true}
             eventMode="none"
           >
-            {shadowTex ? (
-              <Sprite texture={shadowTex} {...shadowProps} />
-            ) : (
-              <Sprite image="generic_building_shadow" {...shadowProps} />
-            )}
+            {shadowTex ? <Sprite texture={shadowTex} {...shadowProps} /> : null}
 
             {selected && (
-              selectionTex ? (
-                <Sprite texture={selectionTex} {...selectionProps} />
-              ) : (
-                <Sprite image="selection_ellipse_building" {...selectionProps} />
-              )
+              selectionTex ? <Sprite texture={selectionTex} {...selectionProps} /> : null
             )}
 
             {hovered && !selected && (
-              hoverTex ? (
-                <Sprite texture={hoverTex} {...hoverProps} />
-              ) : (
-                <Sprite image="hover_ellipse_building" {...hoverProps} />
-              )
+              hoverTex ? <Sprite texture={hoverTex} {...hoverProps} /> : null
             )}
 
-            {mainTex ? (
-              <Sprite texture={mainTex} {...buildingProps} />
-            ) : (
-              <Sprite image={spriteKey} {...buildingProps} />
-            )}
+            {mainTex ? <Sprite texture={mainTex} {...buildingProps} /> : null}
           </Container>
         );
       })}

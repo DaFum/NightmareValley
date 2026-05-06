@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="160" viewBox="0 0 128 160" role="img" aria-label="Fat Boiler">
+  <defs>
+    <linearGradient id="fatBoilerBody" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#d7b46a"/>
+      <stop offset="1" stop-color="#6f2f24"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="64" cy="142" rx="38" ry="10" fill="#090607" opacity="0.55"/>
+  <path d="M38 54c5-20 45-22 53-2 6 15 3 43-7 59-8 13-33 13-42 1-11-15-10-42-4-58z" fill="url(#fatBoilerBody)" stroke="#2a1110" stroke-width="5"/>
+  <path d="M41 83c-13 4-18 16-16 32 9 2 17-1 24-8" fill="none" stroke="#b98549" stroke-width="8" stroke-linecap="round"/>
+  <path d="M88 83c13 4 18 16 16 32-9 2-17-1-24-8" fill="none" stroke="#b98549" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="64" cy="39" r="23" fill="#c08b55" stroke="#2a1110" stroke-width="5"/>
+  <path d="M49 36c6-11 24-13 32-1-5 6-25 8-32 1z" fill="#4b1715"/>
+  <circle cx="56" cy="43" r="3" fill="#160908"/>
+  <circle cx="72" cy="43" r="3" fill="#160908"/>
+  <path d="M54 55c8 5 15 5 22 0" fill="none" stroke="#2a1110" stroke-width="4" stroke-linecap="round"/>
+  <path d="M46 118l-7 24M82 118l8 24" stroke="#3b1715" stroke-width="9" stroke-linecap="round"/>
+  <path d="M29 112h24l-3 14H32z" fill="#7b4630" stroke="#1f0c0b" stroke-width="4"/>
+  <path d="M29 106c7-12 19-12 25 0" fill="#f0a500" opacity="0.7"/>
+</svg>

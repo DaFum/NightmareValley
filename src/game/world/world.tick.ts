@@ -1,6 +1,7 @@
 import { WorldState } from './world.types';
 import { simulateTick } from '../core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG, SimulationConfig } from '../economy/balancing.constants';
+import { applyScheduledWorldEvents } from '../events/events.logic';
 
 export function tickWorld(
 	world: WorldState,
@@ -14,29 +15,19 @@ export function tickWorld(
 	const temporaryProductionBoost = world.temporaryModifiers?.productionBoost ?? 1;
 	const effectiveDelta = safeDelta * scenarioMultiplier * biomeModifier * temporaryProductionBoost;
 	const next = simulateTick(world, effectiveDelta, config);
-	const eventDue = Math.floor(world.ageOfTeeth / 120) < Math.floor(next.ageOfTeeth / 120);
 	const expiredTemporary = world.temporaryModifiers?.expiresAtAge
 		? next.ageOfTeeth >= world.temporaryModifiers.expiresAtAge
 		: false;
 
-	return {
+	const merged: WorldState = {
 		...next,
 		seed: world.seed,
 		lastDeltaSec: safeDelta,
 		scenarioProfile: world.scenarioProfile,
 		biomeModifier: world.biomeModifier,
-		temporaryModifiers: expiredTemporary
-			? eventDue
-				? {
-						productionBoost: 1.08,
-						expiresAtAge: next.ageOfTeeth + 30,
-					}
-				: undefined
-			: eventDue
-				? {
-						productionBoost: 1.08,
-						expiresAtAge: next.ageOfTeeth + 30,
-					}
-				: world.temporaryModifiers,
+		events: world.events,
+		temporaryModifiers: expiredTemporary ? undefined : world.temporaryModifiers,
 	};
+
+	return applyScheduledWorldEvents(merged);
 }

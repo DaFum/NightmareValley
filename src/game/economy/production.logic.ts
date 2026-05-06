@@ -1,7 +1,7 @@
 import { BuildingInstance } from "../core/game.types";
 import { isConstructed } from '../entities/buildings/building.types';
-import { BuildingType, BuildingCost, ResourceType, ResourceInventory, BuildingDefinition } from "../core/economy.types";
-import { BUILDING_DEFINITIONS } from "../core/economy.data";
+import { BuildingType, BuildingCost, ResourceType, ResourceInventory, BuildingDefinition, WorkerType } from "../core/economy.types";
+import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "../core/economy.data";
 import { hasEnoughResources, removeResource, getResourceAmount, addResource } from "./stockpile.logic";
 import { EconomySimulationState, clamp, requiresRoad, hasAssignedWorkersForBuilding } from "../core/economy.simulation";
 import { SimulationConfig } from "./balancing.constants";
@@ -14,6 +14,17 @@ export function canAffordBuilding(
 ): boolean {
   const def = BUILDING_DEFINITIONS[buildingType];
   return hasEnoughResources(inventory, def.buildCost.resources);
+}
+
+export function getWorkerHireCost(workerType: WorkerType): BuildingCost {
+  return WORKER_DEFINITIONS[workerType]?.hireCost ?? { resources: {} };
+}
+
+export function canAffordWorker(
+  inventory: ResourceInventory,
+  workerType: WorkerType
+): boolean {
+  return hasEnoughResources(inventory, getWorkerHireCost(workerType).resources);
 }
 
 export function canUpgradeBuilding(building: BuildingInstance): boolean {

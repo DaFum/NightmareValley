@@ -28,6 +28,9 @@ export function updateWorkersAI(
       : undefined;
 
     if (worker.type === "burdenThrall") {
+      if (state.transport.activeCarrierTasks[id]) {
+        continue;
+      }
       if (!building || isConstructed(building)) {
         workers[id] = { ...worker, isIdle: true, currentBuildingId: undefined, path: [] };
         continue;

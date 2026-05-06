@@ -336,12 +336,12 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       { resources: { toothPlanks: 3, sepulcherStone: 2 } },
     ],
     workerSlots: { painArtisan: 1 },
-    recipeIds: ["forgeTormentInstrument"],
+    recipeIds: ["forgeTormentInstrument", "forgeRibBlade"],
     allowedTerrain: ["scarredEarth"],
     requiresRoadConnection: true,
     inputPriority: ["veinIronBar"],
-    outputPriority: ["tormentInstrument"],
-    description: "Produces civilizational leverage.",
+    outputPriority: ["tormentInstrument", "ribBlade"],
+    description: "Produces civilizational leverage or persuasive metal when ordered.",
     constructionTime: 150,
   },
 
@@ -389,7 +389,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     maxLevel: 2,
     buildCost: { resources: { toothPlanks: 5, sepulcherStone: 4 } },
     upgradeCosts: [{ resources: { toothPlanks: 3, sepulcherStone: 3 } }],
-    workerSlots: { burdenThrall: 2 },
+    workerSlots: { burdenThrall: 2, fleshMason: 1 },
     allowedTerrain: ["scarredEarth"],
     requiresRoadConnection: true,
     description: "A warehouse pretending to be a stomach.",
@@ -494,6 +494,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: true,
     carryCapacity: 1,
+    hireCost: { resources: { funeralLoaf: 1 } },
     description: "The spine of logistics and the first to collapse.",
   },
   fleshMason: {
@@ -502,6 +503,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: true,
     carryCapacity: 1,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Builds durable shapes from regrettable parts.",
   },
   timberExecutioner: {
@@ -510,6 +512,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { funeralLoaf: 1 } },
     description: "Arboreal death specialist.",
   },
   rootCantor: {
@@ -518,6 +521,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { funeralLoaf: 1 } },
     description: "Sings reforestation into traumatized ground.",
   },
   gnashSawyer: {
@@ -526,6 +530,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Splits structure from scream.",
   },
   graveToothBreaker: {
@@ -534,6 +539,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Miner of stone and dental metaphors.",
   },
   wellSupplicant: {
@@ -542,6 +548,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { funeralLoaf: 1 } },
     description: "Draws fluid from sacred geology.",
   },
   hookFisher: {
@@ -550,6 +557,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Collects protein from blind water.",
   },
   mouthFarmer: {
@@ -558,6 +566,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { funeralLoaf: 1 } },
     description: "Tends crops that ask to be fed back.",
   },
   dustMiller: {
@@ -566,6 +575,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Turns field into powder.",
   },
   ovenAcolyte: {
@@ -574,6 +584,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Bakes state-issued grief.",
   },
   styKeeper: {
@@ -582,6 +593,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { funeralLoaf: 1 } },
     description: "Feeds the biomass with discipline.",
   },
   flenser: {
@@ -590,6 +602,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, funeralLoaf: 1 } },
     description: "Distinguishes edible from devotional.",
   },
   deepVeinMiner: {
@@ -598,6 +611,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, sepulcherStone: 1, funeralLoaf: 1 } },
     description: "Works inside the body of the world.",
   },
   smelterMonk: {
@@ -606,6 +620,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, sepulcherStone: 1, funeralLoaf: 1 } },
     description: "Heat, ore, repetition, doctrine.",
   },
   painArtisan: {
@@ -614,6 +629,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { toothPlanks: 1, veinIronBar: 1, funeralLoaf: 1 } },
     description: "Specializes in useful cruelty.",
   },
   warInfant: {
@@ -622,6 +638,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { funeralLoaf: 1, ribBlade: 1 } },
     description: "Freshly instructed in borders.",
   },
   saltPriest: {
@@ -630,6 +647,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { eyelessFish: 1, funeralLoaf: 1 } },
     description: "Preserves memory by reducing it to mineral.",
   },
   fatBoiler: {
@@ -638,6 +656,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { saintFat: 1, funeralLoaf: 1 } },
     description: "Manages the slick side of the economy.",
   },
   ashCollector: {
@@ -646,6 +665,7 @@ export const WORKER_DEFINITIONS: Record<WorkerType, WorkerDefinition> = {
     moveSpeed: 1,
     canCarry: false,
     carryCapacity: 0,
+    hireCost: { resources: { lungAsh: 1, funeralLoaf: 1 } },
     description: "Recovers failure as fuel.",
   },
 };

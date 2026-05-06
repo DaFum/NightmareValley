@@ -10,6 +10,7 @@ import { RECIPES } from "./recipes.data";
 import { getResourceAmount, addResource, removeResource } from "./stockpile.logic";
 import { findPath, tierTileCost } from "../pathing/path.a-star";
 import { MapTile, TerritoryState } from "../core/game.types";
+import { areBuildingsRoadConnected, getRoadConnectionDiagnostic } from "../entities/roads/road.logic";
 
 export interface TransportJob {
   id: string;
@@ -46,8 +47,10 @@ export interface TransportState {
 }
 
 const TERMINAL_JOB_STATUSES: ReadonlySet<TransportJob["status"]> = new Set(["delivered", "lost", "spilled"]);
+const ACTIVE_JOB_STATUSES: ReadonlySet<TransportJob["status"]> = new Set(["queued", "claimed"]);
 const TRANSPORT_TERMINAL_PRUNE_INTERVAL_TICKS = 50;
 const TRANSPORT_TERMINAL_PRUNE_MIN_JOBS = 200;
+type SourceResourceKey = `${BuildingId}:${ResourceType}`;
 
 export function gridManhattanDistance(a: Position, b: Position): number {
   return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
@@ -93,11 +96,17 @@ export function generateTransportJobs(
   }
 
   let created = 0;
-  const existingJobSignatures = new Set(
-    Object.values(state.transport.jobs)
-      .filter((j) => !TERMINAL_JOB_STATUSES.has(j.status))
-      .map(makeTransportSignature)
-  );
+  const existingJobSignatures = new Set<string>();
+  const reservedBySourceResource = new Map<SourceResourceKey, number>();
+  const activeJobs = Object.values(state.transport.jobs).filter((job) => !TERMINAL_JOB_STATUSES.has(job.status));
+
+  for (const job of activeJobs) {
+    existingJobSignatures.add(makeTransportSignature(job));
+
+    const key = makeSourceResourceKey(job.fromBuildingId, job.resourceType);
+    const reservedAmount = job.status === "queued" ? job.amount : job.reserved;
+    reservedBySourceResource.set(key, (reservedBySourceResource.get(key) ?? 0) + reservedAmount);
+  }
 
   const buildings = Object.values(state.buildings);
 
@@ -107,13 +116,8 @@ export function generateTransportJobs(
     if (!source.connectedToRoad && requiresRoad(source.type)) continue;
 
     for (const resourceType of getNonZeroResources(source.outputBuffer)) {
-      let totalReserved = 0;
-      for (const j of Object.values(state.transport.jobs)) {
-        if (j.fromBuildingId === source.id && j.resourceType === resourceType && j.status !== "delivered" && j.status !== "lost" && j.status !== "spilled") {
-          // Queued jobs have reserved=0 but their amount represents pending demand on the source.
-          totalReserved += j.status === "queued" ? j.amount : j.reserved;
-        }
-      }
+      const sourceResourceKey = makeSourceResourceKey(source.id, resourceType);
+      let totalReserved = reservedBySourceResource.get(sourceResourceKey) ?? 0;
       let amountAvailable = getResourceAmount(source.outputBuffer, resourceType) - totalReserved;
       if (amountAvailable <= 0) continue;
 
@@ -123,8 +127,9 @@ export function generateTransportJobs(
         if (created >= config.maxJobsPerTick) break;
         if (amountAvailable <= 0) break;
 
-        const neededAmount = getBuildingResourceNeed(target, resourceType, config);
+        const neededAmount = getEffectiveBuildingResourceNeed(state, target, resourceType, config);
         if (neededAmount <= 0) continue;
+        if (!canTransportBetweenBuildings(state, source, target)) continue;
 
         const carrierCapacity = getWorkerDefinition("burdenThrall").carryCapacity;
         const amountToMove = Math.min(config.maxJobBatchSize ?? carrierCapacity, carrierCapacity, amountAvailable, neededAmount);
@@ -146,6 +151,8 @@ export function generateTransportJobs(
         state.transport.queuedJobCount = (state.transport.queuedJobCount || 0) + 1;
 
         existingJobSignatures.add(signature);
+        totalReserved += amountToMove;
+        reservedBySourceResource.set(sourceResourceKey, totalReserved);
         created += 1;
         amountAvailable -= amountToMove;
       }
@@ -228,6 +235,10 @@ export function getBuildingResourceNeed(
   config: SimulationConfig
 ): number {
   const def = BUILDING_DEFINITIONS[building.type];
+  if (!def) {
+    const current = getResourceAmount(building.inputBuffer ?? {}, resourceType);
+    return Math.max(0, config.buildingInputBufferLimit - current);
+  }
 
   if (def.type === "vaultOfDigestiveStone") {
     const current = getResourceAmount(building.outputBuffer ?? {}, resourceType);
@@ -255,6 +266,59 @@ export function getBuildingResourceNeed(
   }
 
   return Math.min(needed, config.buildingInputBufferLimit);
+}
+
+function makeSourceResourceKey(buildingId: BuildingId, resourceType: ResourceType): SourceResourceKey {
+  return `${buildingId}:${resourceType}`;
+}
+
+export function canTransportBetweenBuildings(
+  state: EconomySimulationState,
+  source: BuildingInstance,
+  target: BuildingInstance
+): boolean {
+  if (!requiresRoad(source.type) && !requiresRoad(target.type)) return true;
+  return areBuildingsRoadConnected(state, source, target);
+}
+
+export function getTransportRouteDiagnostic(
+  state: EconomySimulationState,
+  source: BuildingInstance,
+  target: BuildingInstance
+): string | null {
+  if (!requiresRoad(source.type) && !requiresRoad(target.type)) return null;
+  return getRoadConnectionDiagnostic(state, source, target);
+}
+
+export function getPendingInboundAmount(
+  state: EconomySimulationState,
+  targetBuildingId: BuildingId,
+  resourceType: ResourceType,
+  excludeJobId?: string
+): number {
+  let pending = 0;
+  for (const job of Object.values(state.transport.jobs)) {
+    if (job.id === excludeJobId) continue;
+    if (job.toBuildingId !== targetBuildingId) continue;
+    if (job.resourceType !== resourceType) continue;
+    if (!ACTIVE_JOB_STATUSES.has(job.status)) continue;
+
+    pending += job.status === "claimed" ? Math.max(0, job.amount - job.delivered) : job.amount;
+  }
+  return pending;
+}
+
+export function getEffectiveBuildingResourceNeed(
+  state: EconomySimulationState,
+  building: BuildingInstance,
+  resourceType: ResourceType,
+  config: SimulationConfig,
+  excludeJobId?: string
+): number {
+  const rawNeed = getBuildingResourceNeed(building, resourceType, config);
+  if (rawNeed <= 0) return 0;
+  const inbound = getPendingInboundAmount(state, building.id, resourceType, excludeJobId);
+  return Math.max(0, rawNeed - inbound);
 }
 
 export function getTransportPriority(
@@ -298,7 +362,8 @@ export function assignCarrierTasks(
 
   const carriers = Object.values(state.workers)
     .filter((w) => w.type === "burdenThrall")
-    .filter((w) => w.isIdle);
+    .filter((w) => w.isIdle)
+    .filter((w) => !state.transport.activeCarrierTasks[w.id]);
 
   for (const carrier of carriers) {
     // Only allow carriers to pick jobs owned by their player
@@ -351,6 +416,14 @@ export function findBestJobForCarrier(
 ): TransportJob | null {
   let best: TransportJob | null = null;
   let bestScore = -Infinity;
+  const reservedBySourceResource = new Map<SourceResourceKey, number>();
+
+  for (const job of Object.values(state.transport.jobs)) {
+    if (TERMINAL_JOB_STATUSES.has(job.status)) continue;
+    const key = makeSourceResourceKey(job.fromBuildingId, job.resourceType);
+    const reservedAmount = job.status === "queued" ? job.amount : job.reserved;
+    reservedBySourceResource.set(key, (reservedBySourceResource.get(key) ?? 0) + reservedAmount);
+  }
 
   for (const job of jobs) {
     if (job.status !== "queued") continue;
@@ -359,17 +432,15 @@ export function findBestJobForCarrier(
     const target = state.buildings[job.toBuildingId];
     if (!source || !target) continue;
 
-    const targetNeed = getBuildingResourceNeed(target, job.resourceType, config);
+    const targetNeed = getEffectiveBuildingResourceNeed(state, target, job.resourceType, config, job.id);
     if (targetNeed <= 0) continue;
 
-    let totalReserved = 0;
-    for (const otherJob of Object.values(state.transport.jobs)) {
-      if (otherJob === job) continue;
-      if (otherJob.fromBuildingId === source.id && otherJob.resourceType === job.resourceType) {
-        // Queued jobs use amount as pending demand; claimed jobs use reserved.
-        totalReserved += otherJob.status === "queued" ? otherJob.amount : otherJob.reserved;
-      }
-    }
+    const sourceResourceKey = makeSourceResourceKey(source.id, job.resourceType);
+    const candidateIsTracked = state.transport.jobs[job.id] === job;
+    const totalReserved = Math.max(
+      0,
+      (reservedBySourceResource.get(sourceResourceKey) ?? 0) - (candidateIsTracked ? job.amount : 0)
+    );
 
     const sourceAmount = getResourceAmount(source.outputBuffer, job.resourceType);
     const available = sourceAmount - totalReserved;
@@ -568,14 +639,27 @@ export function advanceCarrierMovement(
         task.pathIndex = 0;
         task.stepProgress = 0;
       } else if (task.phase === "toDropoff") {
-        if (target.type === "vaultOfDigestiveStone") {
-          target.outputBuffer = addResource(target.outputBuffer, task.resourceType, task.amount);
-        } else {
-          target.inputBuffer = addResource(target.inputBuffer, task.resourceType, task.amount);
+        const deliverableAmount = Math.min(
+          task.amount,
+          getBuildingResourceNeed(target, task.resourceType, config)
+        );
+
+        if (deliverableAmount <= 0) {
+          job.status = "spilled";
+          job.reserved = 0;
+          carrier.isIdle = true;
+          delete state.transport.activeCarrierTasks[workerId];
+          continue;
         }
 
-        job.delivered += task.amount;
-        job.status = "delivered";
+        if (target.type === "vaultOfDigestiveStone") {
+          target.outputBuffer = addResource(target.outputBuffer, task.resourceType, deliverableAmount);
+        } else {
+          target.inputBuffer = addResource(target.inputBuffer, task.resourceType, deliverableAmount);
+        }
+
+        job.delivered += deliverableAmount;
+        job.status = deliverableAmount === task.amount ? "delivered" : "spilled";
 
         carrier.isIdle = true;
         delete state.transport.activeCarrierTasks[workerId];

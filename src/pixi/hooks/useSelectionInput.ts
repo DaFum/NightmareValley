@@ -27,8 +27,12 @@ export function useSelectionInput({
   spacePressedRef,
 }: SelectionInputOptions) {
   const placeBuildingAt = useGameStore((state) => state.placeBuildingAt);
+  const placeRoadAt = useGameStore((state) => state.placeRoadAt);
+  const removeRoadAt = useGameStore((state) => state.removeRoadAt);
   const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
   const selectBuildingToPlace = useUIStore((state) => state.selectBuildingToPlace);
+  const roadPlacementMode = useUIStore((state) => state.roadPlacementMode);
+  const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
   const isDebugSpawningWarehouse = useUIStore((state) => state.isDebugSpawningWarehouse);
   const setDebugSpawningWarehouse = useUIStore((state) => state.setDebugSpawningWarehouse);
   const selectBuilding = useSelectionStore((state) => state.selectBuilding);
@@ -53,11 +57,21 @@ export function useSelectionInput({
     if (spacePressedRef.current) return;
 
     const hit = resolveIsoHitRef.current(event.global.x, event.global.y);
-    const placementModeActive = isDebugSpawningWarehouse || !!selectedBuildingToPlace;
+    const placementModeActive = isDebugSpawningWarehouse || !!selectedBuildingToPlace || roadPlacementMode || roadRemovalMode;
     const placementBlocked = !!hit.tileId && (!!hit.buildingId || !!hit.workerId);
     if (placementModeActive && placementBlocked) {
       if (isDebugSpawningWarehouse) setDebugSpawningWarehouse(false);
       if (selectedBuildingToPlace) selectBuildingToPlace(null);
+      return;
+    }
+
+    if (roadPlacementMode && hit.tileId && !hit.buildingId && !hit.workerId) {
+      placeRoadAt(player1Id, hit.tileId);
+      return;
+    }
+
+    if (roadRemovalMode && hit.tileId && !hit.buildingId && !hit.workerId) {
+      removeRoadAt(player1Id, hit.tileId);
       return;
     }
 
@@ -83,6 +97,10 @@ export function useSelectionInput({
   }, [
     isDebugSpawningWarehouse,
     placeBuildingAt,
+    placeRoadAt,
+    removeRoadAt,
+    roadPlacementMode,
+    roadRemovalMode,
     selectBuilding,
     selectBuildingToPlace,
     selectTile,

@@ -1,9 +1,11 @@
-import { useRef } from 'react';
-import { useTick } from '@pixi/react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/game.store';
 import { useDebugStore } from '../../store/debug.store';
 
-export const SIMULATION_STEP_SEC = 0.1;
+// 0.2s is intentional for the performance branch: simulation advances at the
+// same game-time rate through an accumulator, but runs fewer fixed steps per
+// rendered frame than the original 0.1s loop under load.
+export const SIMULATION_STEP_SEC = 0.2;
 export const BASE_MAX_STEPS_PER_FRAME = 5;
 const MAX_CARRYOVER_SEC = SIMULATION_STEP_SEC * 2;
 const MAX_ADAPTIVE_STEPS = 8;
@@ -30,68 +32,92 @@ export function useGameLoop() {
   const setLoopStats = useDebugStore((state) => state.setLoopStats);
   const accumulatorRef = useRef(0);
   const debtStreakRef = useRef(0);
+  const lastStatsUpdateRef = useRef(0);
+  const pausedStatsReportedRef = useRef(false);
 
-  useTick((deltaFrames) => {
-    // @pixi/react v7 useTick callback receives frame delta (1 ~= 60fps frame).
-    const deltaSec = Math.min(deltaFrames / 60, 0.25);
-    if (!Number.isFinite(deltaSec) || deltaSec <= 0) {
-      return;
-    }
+  useEffect(() => {
+    let frameId: number | null = null;
+    let lastFrameAt = performance.now();
 
-    if (!isRunning) {
-      accumulatorRef.current = 0;
-      debtStreakRef.current = 0;
-      setLoopStats({
-        stepsProcessed: 0,
-        carryoverSec: 0,
-        deltaSec,
-        droppedFrameDebt: false,
-        maxStepsBudget: BASE_MAX_STEPS_PER_FRAME,
-        sustainedDebtFrames: 0,
-        throttled: false,
-      });
-      return;
-    }
+    const frame = (now: number) => {
+      const deltaSec = Math.min((now - lastFrameAt) / 1000, 0.25);
+      lastFrameAt = now;
 
-    accumulatorRef.current += deltaSec;
-    const maxStepsThisFrame = getAdaptiveStepBudget(deltaSec);
-    const stepProfile = [
-      { subsystem: 'economy' as const, multiplier: economyStepMultiplier(accumulatorRef.current) },
-    ];
-
-    const {
-      stepsProcessed,
-      carryoverSec,
-      droppedFrameDebt,
-    } = runSimulationSteps(
-      accumulatorRef.current,
-      SIMULATION_STEP_SEC,
-      maxStepsThisFrame,
-      stepProfile
-    );
-
-    accumulatorRef.current = carryoverSec;
-    debtStreakRef.current = droppedFrameDebt ? debtStreakRef.current + 1 : 0;
-    const throttled = debtStreakRef.current >= DEBT_STREAK_THROTTLE_FRAMES;
-
-    // Keep a bounded carry-over budget instead of zeroing completely,
-    // so the simulation catches up smoothly under frame spikes.
-    if (stepsProcessed === maxStepsThisFrame && accumulatorRef.current > MAX_CARRYOVER_SEC) {
-      if (throttled) {
-        accumulatorRef.current = Math.min(accumulatorRef.current, SIMULATION_STEP_SEC);
-      } else {
-        accumulatorRef.current = MAX_CARRYOVER_SEC;
+      if (!Number.isFinite(deltaSec) || deltaSec <= 0) {
+        frameId = window.requestAnimationFrame(frame);
+        return;
       }
-    }
 
-    setLoopStats({
-      stepsProcessed,
-      carryoverSec: accumulatorRef.current,
-      deltaSec,
-      droppedFrameDebt,
-      maxStepsBudget: maxStepsThisFrame,
-      sustainedDebtFrames: debtStreakRef.current,
-      throttled,
-    });
-  });
+      if (!isRunning) {
+        accumulatorRef.current = 0;
+        debtStreakRef.current = 0;
+        if (!pausedStatsReportedRef.current) {
+          setLoopStats({
+            stepsProcessed: 0,
+            carryoverSec: 0,
+            deltaSec,
+            droppedFrameDebt: false,
+            maxStepsBudget: BASE_MAX_STEPS_PER_FRAME,
+            sustainedDebtFrames: 0,
+            throttled: false,
+          });
+          pausedStatsReportedRef.current = true;
+        }
+        frameId = window.requestAnimationFrame(frame);
+        return;
+      }
+      pausedStatsReportedRef.current = false;
+
+      accumulatorRef.current += deltaSec;
+      const maxStepsThisFrame = getAdaptiveStepBudget(deltaSec);
+      const stepProfile = [
+        { subsystem: 'economy' as const, multiplier: economyStepMultiplier(accumulatorRef.current) },
+      ];
+
+      const {
+        stepsProcessed,
+        carryoverSec,
+        droppedFrameDebt,
+      } = runSimulationSteps(
+        accumulatorRef.current,
+        SIMULATION_STEP_SEC,
+        maxStepsThisFrame,
+        stepProfile
+      );
+
+      accumulatorRef.current = carryoverSec;
+      debtStreakRef.current = droppedFrameDebt ? debtStreakRef.current + 1 : 0;
+      const throttled = debtStreakRef.current >= DEBT_STREAK_THROTTLE_FRAMES;
+
+      // Keep a bounded carry-over budget instead of zeroing completely,
+      // so the simulation catches up smoothly under frame spikes.
+      if (stepsProcessed === maxStepsThisFrame && accumulatorRef.current > MAX_CARRYOVER_SEC) {
+        if (throttled) {
+          accumulatorRef.current = Math.min(accumulatorRef.current, SIMULATION_STEP_SEC);
+        } else {
+          accumulatorRef.current = MAX_CARRYOVER_SEC;
+        }
+      }
+
+      if (stepsProcessed > 0 || droppedFrameDebt || now - lastStatsUpdateRef.current > 250) {
+        lastStatsUpdateRef.current = now;
+        setLoopStats({
+          stepsProcessed,
+          carryoverSec: accumulatorRef.current,
+          deltaSec,
+          droppedFrameDebt,
+          maxStepsBudget: maxStepsThisFrame,
+          sustainedDebtFrames: debtStreakRef.current,
+          throttled,
+        });
+      }
+
+      frameId = window.requestAnimationFrame(frame);
+    };
+
+    frameId = window.requestAnimationFrame(frame);
+    return () => {
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
+  }, [isRunning, runSimulationSteps, setLoopStats]);
 }
