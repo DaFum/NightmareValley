@@ -54,10 +54,14 @@ function getRoadDisconnectedDetail(
   productionStatus: ReturnType<typeof getProductionStatus>
 ): string {
   if (productionStatus.kind === 'roadDisconnected') {
-    const source = Object.values(state.buildings).find(
-      (candidate) => candidate.id !== building.id && candidate.ownerId === building.ownerId
-    );
-    const routeDiagnostic = source ? getTransportRouteDiagnostic(state, source, building) : null;
+    const ownerBuildings = Object.values(state.buildings).filter((candidate) => candidate.ownerId === building.ownerId && candidate.id !== building.id);
+    const source = ownerBuildings.find((candidate) => candidate.type === 'vaultOfDigestiveStone')
+      ?? ownerBuildings.find((candidate) => (candidate.inputPriority?.length ?? 0) > 0)
+      ?? null;
+
+    if (!source) return productionStatus.detail;
+
+    const routeDiagnostic = getTransportRouteDiagnostic(state, source, building);
     return routeDiagnostic ?? productionStatus.detail;
   }
 

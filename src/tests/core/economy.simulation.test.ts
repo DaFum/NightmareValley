@@ -1,3 +1,4 @@
+import { BUILDING_DEFINITIONS } from "../../game/core/economy.data";
 import {
   placeBuilding,
   setBuildingRecipe,
@@ -365,8 +366,10 @@ describe("building and worker economy integration", () => {
     });
 
     const next = simulateTick(state, 30);
+    const resource = BUILDING_DEFINITIONS.seedOfTheHowlingRoot.extraction!.resource;
 
-    expect(next.buildings.b1.outputBuffer.sinewTimber).toBeGreaterThan(0);
+    expect(next.buildings.b1.outputBuffer[resource] ?? 0).toBeGreaterThan(0);
+    expect(next.buildings.b1.progressSec).toBeLessThan(state.buildings.b1.progressSec + 30);
   });
 });
 

@@ -1661,13 +1661,13 @@ body.ui--tool-active .game-layout__debug-panel {
 
 @media (max-width: 760px) {
   .top-hud-inner {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 8px;
     padding: 12px;
   }
 
   .top-hud__economy {
-    display: grid;
+    display: block;
   }
 
   .hud-panel {
@@ -1703,11 +1703,11 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .debug-route dl {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .settings-grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .settlement-brief,
@@ -1751,7 +1751,7 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .building-list {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .game-layout__bottom-dock {
@@ -2236,7 +2236,7 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .production-chain__list {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .settlement-brief__header {

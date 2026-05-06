@@ -77,11 +77,15 @@ describe('game-save', () => {
     expect(readGameSave(storage)).toBeNull();
   });
 
-  it('does not report corrupt or incompatible save data as available', () => {
+  it('does not report corrupt save data as available', () => {
     const storage = createMemoryStorage();
 
     storage.setItem(GAME_SAVE_STORAGE_KEY, '{broken');
     expect(hasGameSave(storage)).toBe(false);
+  });
+
+  it('does not report incompatible save versions as available', () => {
+    const storage = createMemoryStorage();
 
     storage.setItem(GAME_SAVE_STORAGE_KEY, JSON.stringify({ version: 999 }));
     expect(hasGameSave(storage)).toBe(false);

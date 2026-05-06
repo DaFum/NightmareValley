@@ -1,5 +1,6 @@
 import { Graphics } from '@pixi/react';
 import { ISO_TILE_HEIGHT, ISO_TILE_WIDTH } from '../../../game/iso/iso.constants';
+import { ROAD_HORIZ_INSET_FRAC, ROAD_VERT_INSET_FRAC } from './road.constants';
 import type { IsoRenderWorld } from '../../../game/render/render.types';
 
 type IsoRoadSegmentProps = {
@@ -18,12 +19,12 @@ export default function IsoRoadSegment({ tile }: IsoRoadSegmentProps): JSX.Eleme
         graphics.beginFill(0x5f3520, 0.72);
         graphics.drawPolygon([
           0,
-          -ISO_TILE_HEIGHT * 0.22,
-          ISO_TILE_WIDTH * 0.34,
+          -ISO_TILE_HEIGHT * ROAD_VERT_INSET_FRAC,
+          ISO_TILE_WIDTH * ROAD_HORIZ_INSET_FRAC,
           0,
           0,
-          ISO_TILE_HEIGHT * 0.22,
-          -ISO_TILE_WIDTH * 0.34,
+          ISO_TILE_HEIGHT * ROAD_VERT_INSET_FRAC,
+          -ISO_TILE_WIDTH * ROAD_HORIZ_INSET_FRAC,
           0,
         ]);
         graphics.endFill();

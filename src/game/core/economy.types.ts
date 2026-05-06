@@ -95,6 +95,7 @@ export interface ExtractionRule {
   resource: ResourceType;
   amountPerCycle: number;
   cycleTimeSec: number;
+  renewable?: boolean;
 }
 
 export interface BuildingDefinition {

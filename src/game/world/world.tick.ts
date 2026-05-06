@@ -1,5 +1,6 @@
+import { player1Id } from '../../store/game.store';
 import { WorldState } from './world.types';
-import { placeBuilding, simulateTick } from '../core/economy.simulation';
+import { placeBuilding, simulateTick, syncStockFromVaults } from '../core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG, SimulationConfig } from '../economy/balancing.constants';
 import { applyScheduledWorldEvents } from '../events/events.logic';
 import { AiAction } from '../ai/ai.types';
@@ -13,7 +14,7 @@ const AI_BUILDING_ALIASES: Record<string, BuildingType> = {
 };
 
 function getPrimaryPlayer(state: WorldState): PlayerState | undefined {
-	return Object.values(state.players)[0];
+	return state.players[player1Id];
 }
 
 function adjacentPositions(position: { x: number; y: number }) {
@@ -103,7 +104,7 @@ function applyAiActions(state: WorldState, ownerId: string | undefined, actions:
 
 			try {
 				const placed = placeBuilding(next, ownerId, buildingType, tileId);
-				next = { ...next, ...placed };
+				next = syncStockFromVaults({ ...next, ...placed } as WorldState) as WorldState;
 				appliedActions.push(action);
 			} catch {
 				continue;
