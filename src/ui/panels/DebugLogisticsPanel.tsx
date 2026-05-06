@@ -28,9 +28,9 @@ export default function DebugLogisticsPanel() {
       };
     }),
   );
-  const snapshot = useMemo(() => profileSync('debug.snapshot', () => createEconomySnapshot(gameState)), [gameState]);
+  const snapshot = useMemo(() => profileSync('debug.snapshot', () => createEconomySnapshot(gameState), { log: false }), [gameState]);
   const totalFootfall = useMemo(
-    () => profileSync('debug.footfall', () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0)),
+    () => profileSync('debug.footfall', () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0), { log: false }),
     [gameState.territory.tiles],
   );
   const totalStoredResources = Object.values(snapshot.totalStoredResources).reduce((sum, amount) => sum + (amount ?? 0), 0);
