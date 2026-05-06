@@ -82,7 +82,7 @@ export function GameLayout({
   const saveGame = useGameStore((state) => state.saveGame);
   const loadSavedGame = useGameStore((state) => state.loadSavedGame);
   const clearSavedGame = useGameStore((state) => state.clearSavedGame);
-  const hasSavedGame = useGameStore((state) => state.hasSavedGame);
+  const savedGameAvailable = useGameStore((state) => state.savedGameAvailable);
   const setScenarioProfile = useGameStore((state) => state.setScenarioProfile);
   const focusMode = useUIStore((state) => state.focusMode);
   const minimalHud = useUIStore((state) => state.minimalHud);
@@ -104,7 +104,6 @@ export function GameLayout({
     [outcomeCheckBucket]
   );
   const visibleOutcome = outcome.kind === 'victory' && dismissedVictory ? { ...outcome, kind: 'in-progress' as const } : outcome;
-  const savedGameAvailable = hasSavedGame();
   const showResumePrompt = savedGameAvailable && isFreshRun && !resumePromptDismissed && !menuOpen && !settingsOpen && !shortcutsOpen;
 
   React.useEffect(() => {

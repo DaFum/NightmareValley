@@ -517,6 +517,7 @@ describe("syncPopulationLimitsFromVaults", () => {
 
     const result = syncPopulationLimitsFromVaults(state);
 
+    expect(result).toBe(state);
     expect(result.players.p1.populationLimit).toBe(40);
   });
 });

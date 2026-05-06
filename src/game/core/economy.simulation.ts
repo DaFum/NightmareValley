@@ -353,17 +353,17 @@ export function spawnWorker(
 }
 
 export function syncPopulationLimitsFromVaults(state: EconomySimulationState): EconomySimulationState {
-  const next = cloneState(state);
-  for (const player of Object.values(next.players)) {
+  // Mirrors syncStockFromVaults: callers pass an already-cloned state.
+  for (const player of Object.values(state.players)) {
     let bonus = 0;
     for (const buildingId of player.buildings) {
-      const building = next.buildings[buildingId];
+      const building = state.buildings[buildingId];
       if (building?.type !== "vaultOfDigestiveStone" || !isConstructed(building)) continue;
       bonus += Math.max(0, building.level - 1) * 10;
     }
     player.populationLimit = Math.max(player.populationLimit ?? 20, 20 + bonus);
   }
-  return next;
+  return state;
 }
 
 export function placeBuilding(
@@ -517,25 +517,27 @@ export function processAutoHireWorkers(state: EconomySimulationState): EconomySi
   let next = state;
 
   for (const buildingId of Object.keys(next.buildings)) {
-    const building = next.buildings[buildingId];
+    let building = next.buildings[buildingId];
     if (!building || !building.isActive || !building.autoHire) continue;
-    const player = next.players[building.ownerId];
-    if (!player) continue;
 
     const def = BUILDING_DEFINITIONS[building.type];
-    for (const [type, enabled] of Object.entries(building.autoHire)) {
+    const autoHireEntries = Object.entries(building.autoHire);
+    for (const [type, enabled] of autoHireEntries) {
       if (!enabled) continue;
       const workerType = type as WorkerType;
       const maxCount = def.workerSlots[workerType] ?? 0;
       if (maxCount <= 0) continue;
 
-      const current = building.assignedWorkers.reduce((count, workerId) => {
-        return next.workers[workerId]?.type === workerType ? count + 1 : count;
-      }, 0);
-
-      const vacancies = maxCount - current;
-      for (let i = 0; i < vacancies; i++) {
+      while (true) {
+        building = next.buildings[buildingId];
+        if (!building || !building.isActive) break;
         const currentPlayer = next.players[building.ownerId];
+        if (!currentPlayer) break;
+
+        const current = building.assignedWorkers.reduce((count, workerId) => {
+          return next.workers[workerId]?.type === workerType ? count + 1 : count;
+        }, 0);
+        if (current >= maxCount) break;
         if (currentPlayer.workers.length >= currentPlayer.populationLimit) break;
 
         const vaults = getOwnerVaults(next, building.ownerId);

@@ -111,10 +111,5 @@ export function deleteGameSave(storage: StorageLike | null = getStorage()): bool
 }
 
 export function hasGameSave(storage: StorageLike | null = getStorage()): boolean {
-  if (!storage) return false;
-  try {
-    return storage.getItem(GAME_SAVE_STORAGE_KEY) !== null;
-  } catch {
-    return false;
-  }
+  return readGameSave(storage) !== null;
 }

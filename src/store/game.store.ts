@@ -45,6 +45,7 @@ export interface GameStore {
   tickRate: number;
   lastError?: RuntimeIssue;
   activeScenario: GameScenarioProfile;
+  savedGameAvailable: boolean;
   setGameState: (state: WorldState) => void;
   resetGame: (profile?: GameScenarioProfile) => void;
   saveGame: () => boolean;
@@ -325,6 +326,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   tickRate: 1,
   lastError: undefined,
   activeScenario: 'challenging',
+  savedGameAvailable: hasGameSave(),
 
   setGameState: (state) => set({ gameState: state }),
   resetGame: (profile) => {
@@ -340,11 +342,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   saveGame: () => {
     const { gameState, activeScenario, tickRate } = get();
-    return writeGameSave(createGameSaveSnapshot(gameState, activeScenario, tickRate));
+    const saved = writeGameSave(createGameSaveSnapshot(gameState, activeScenario, tickRate));
+    if (saved) set({ savedGameAvailable: true });
+    return saved;
   },
   loadSavedGame: () => {
     const snapshot = readGameSave();
-    if (!snapshot) return false;
+    if (!snapshot) {
+      set({ savedGameAvailable: false });
+      return false;
+    }
 
     set({
       gameState: snapshot.gameState,
@@ -352,11 +359,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       tickRate: clampTickRate(snapshot.tickRate),
       isRunning: false,
       lastError: undefined,
+      savedGameAvailable: true,
     });
     return true;
   },
-  clearSavedGame: () => deleteGameSave(),
-  hasSavedGame: () => hasGameSave(),
+  clearSavedGame: () => {
+    const deleted = deleteGameSave();
+    if (deleted) set({ savedGameAvailable: false });
+    return deleted;
+  },
+  hasSavedGame: () => get().savedGameAvailable,
   setRunning: (running) => set({ isRunning: running }),
   togglePlayPause: () => set((state) => ({ isRunning: !state.isRunning })),
   setTickRate: (rate) => {
