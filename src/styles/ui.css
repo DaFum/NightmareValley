@@ -1661,13 +1661,13 @@ body.ui--tool-active .game-layout__debug-panel {
 
 @media (max-width: 760px) {
   .top-hud-inner {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 8px;
     padding: 12px;
   }
 
   .top-hud__economy {
-    display: grid;
+    display: block;
   }
 
   .hud-panel {

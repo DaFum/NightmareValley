@@ -12,8 +12,8 @@ import { getTileAt } from "../map/map.query";
 const RENEWABLE_EXTRACTIONS = new Set<ResourceType>(["pigFleshMass"]);
 const EXTRACTION_SEARCH_RADIUS = 2;
 
-function isRenewableExtraction(building: BuildingInstance, resource: ResourceType): boolean {
-  return RENEWABLE_EXTRACTIONS.has(resource) || building.type === "seedOfTheHowlingRoot";
+function isRenewableExtraction(def: BuildingDefinition, resource: ResourceType): boolean {
+  return Boolean(def.extraction?.renewable) || RENEWABLE_EXTRACTIONS.has(resource);
 }
 
 export function processExtraction(
@@ -57,7 +57,7 @@ export function processExtraction(
         depositTile = findExtractionDepositTile(state, building, def.extraction.resource);
       }
       const depositAmount = depositTile?.resourceDeposit?.[def.extraction.resource] ?? 0;
-      const isRenewable = isRenewableExtraction(building, def.extraction.resource);
+      const isRenewable = isRenewableExtraction(def, def.extraction.resource);
 
       if (!isRenewable && depositAmount <= 0) {
         building.progressSec = Math.min(building.progressSec, cycleTime);

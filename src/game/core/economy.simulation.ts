@@ -532,7 +532,8 @@ export function processAutoHireWorkers(state: EconomySimulationState): EconomySi
           return next.workers[workerId]?.type === workerType ? count + 1 : count;
         }, 0);
         if (current >= maxCount) break;
-        if (currentPlayer.workers.length >= currentPlayer.populationLimit) break;
+        const populationLimit = currentPlayer.populationLimit ?? Infinity;
+        if (currentPlayer.workers.length >= populationLimit) break;
 
         const vaults = getOwnerVaults(next, building.ownerId);
         const hireCost = WORKER_DEFINITIONS[workerType].hireCost?.resources ?? {};

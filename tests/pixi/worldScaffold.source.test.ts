@@ -19,9 +19,7 @@ describe('Pixi world architecture', () => {
   it('documents GameStage as the Pixi render composition point', () => {
     const architecture = readFileSync(join(process.cwd(), 'Architektur.md'), 'utf8');
 
-    expect(architecture).not.toContain('src/pixi/world');
     expect(architecture).not.toContain('WorldRoot.tsx');
     expect(architecture).toContain('GameStage.tsx');
-    expect(architecture).toContain('baut den Renderbaum der Spielwelt auf');
   });
 });

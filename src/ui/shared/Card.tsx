@@ -1,15 +1,18 @@
 import React from 'react';
 
-export type CardProps = React.HTMLAttributes<HTMLDivElement> & {
+export type CardProps = React.HTMLAttributes<HTMLElement> & {
   title?: string;
 };
 
-export const Card: React.FC<CardProps> = ({ title, children, className, ...rest }) => {
+export const Card: React.FC<CardProps> = ({ title, children, className, id, ...rest }) => {
   const classes = ['hud-panel', className].filter(Boolean).join(' ');
+  const baseId = React.useId();
+  const sectionId = id ?? baseId;
+  const headingId = title ? `${sectionId}-title` : undefined;
 
   return (
-    <section className={classes} aria-label={title ?? 'Card'} {...rest}>
-      {title ? <h3>{title}</h3> : null}
+    <section {...rest} className={classes} id={sectionId} aria-labelledby={headingId}>
+      {title ? <h3 id={headingId}>{title}</h3> : null}
       {children}
     </section>
   );

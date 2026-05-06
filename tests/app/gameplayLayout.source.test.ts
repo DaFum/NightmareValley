@@ -34,7 +34,8 @@ describe('gameplay layout CSS', () => {
     expect(source).toContain('body.ui--tool-active .settlement-brief');
     expect(source).toContain('body.ui--tool-active .build-menu-panel');
     expect(source).toContain('body.ui--tool-active .game-layout__debug-panel');
-    expect(source).toContain('display: none');
+    const hiddenOverlayBlock = source.match(/body\.ui--tool-active \.game-guide[\s\S]*?body\.ui--tool-active \.game-layout__debug-panel\s*\{[\s\S]*?\}/)?.[0] ?? '';
+    expect(hiddenOverlayBlock).toContain('display: none');
   });
 
   it('keeps the build catalog above passive panels on mobile', () => {

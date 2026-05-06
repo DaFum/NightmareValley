@@ -21,8 +21,8 @@ describe('shared UI and helper ownership', () => {
   it('uses lib helpers instead of economy.simulation-local duplicates', () => {
     const source = readFileSync(join(process.cwd(), 'src/game/core/economy.simulation.ts'), 'utf8');
 
-    expect(source).toContain('import { deepClone } from "../../lib/deep-clone"');
-    expect(source).toContain('import { clamp } from "../../lib/math"');
+    expect(source).toMatch(/import\s+\{\s*deepClone\s*\}\s+from\s+["']\.\.\/\.\.\/lib\/deep-clone["']/);
+    expect(source).toMatch(/import\s+\{\s*clamp\s*\}\s+from\s+["']\.\.\/\.\.\/lib\/math["']/);
     expect(source).not.toContain('export function deepClone');
     expect(source).not.toContain('export function clamp');
   });
@@ -36,7 +36,7 @@ describe('shared UI and helper ownership', () => {
 
     for (const file of economyFiles) {
       const source = readFileSync(join(process.cwd(), file), 'utf8');
-      expect(source).toContain('import { clamp } from "../../lib/math"');
+      expect(source).toMatch(/import\s+\{\s*clamp\s*\}\s+from\s+["']\.\.\/\.\.\/lib\/math["']/);
       expect(source).not.toMatch(/import\s+\{[^}]*clamp[^}]*\}\s+from ["']\.\.\/core\/economy\.simulation["']/);
     }
   });
