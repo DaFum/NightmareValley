@@ -19,6 +19,7 @@ export function getInventoryForCostChecks(state: WorldState, ownerId: string): R
     }
   }
 
+  // Warehouse-first contract: when vaults exist, affordability must use vault buffers only.
   return hasVault ? (merged as ResourceInventory) : player.stock;
 }
 

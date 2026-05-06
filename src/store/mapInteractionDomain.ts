@@ -38,7 +38,8 @@ export function getMapFootprint(width: number, height: number, originX: number, 
 }
 
 export function getIsoWorldBoundsForTerritory(state: WorldState) {
-  const width = Math.max(...Object.values(state.territory.tiles).map((tile) => tile.position.x)) + 1;
-  const height = Math.max(...Object.values(state.territory.tiles).map((tile) => tile.position.y)) + 1;
+  const tiles = Object.values(state.territory.tiles);
+  const width = tiles.reduce((max, tile) => Math.max(max, tile.position.x), 0) + 1;
+  const height = tiles.reduce((max, tile) => Math.max(max, tile.position.y), 0) + 1;
   return computeIsoWorldBounds(width, height, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
 }

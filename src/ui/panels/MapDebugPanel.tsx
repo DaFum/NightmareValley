@@ -32,8 +32,8 @@ export default function MapDebugPanel(): JSX.Element | null {
     const goal = tiles[Math.min(tiles.length - 1, 30)].position;
     const path = findPath(start, goal, gameState);
     debugPath(path);
-    const maxX = Math.max(...tiles.map((tile) => tile.position.x)) + 1;
-    const maxY = Math.max(...tiles.map((tile) => tile.position.y)) + 1;
+    const maxX = tiles.reduce((max, tile) => Math.max(max, tile.position.x), 0) + 1;
+    const maxY = tiles.reduce((max, tile) => Math.max(max, tile.position.y), 0) + 1;
     const flow = buildFlowfield(goal, createGridFromTerritory(gameState.territory, maxX, maxY));
 
     return {
