@@ -52,16 +52,11 @@ function getRoadDisconnectedDetail(
   state: EconomySimulationState,
   building: BuildingInstance,
   productionStatus: ReturnType<typeof getProductionStatus>,
-  ownerBuildings: BuildingInstance[],
+  roadSource: BuildingInstance | null,
 ): string {
   if (productionStatus.kind === 'roadDisconnected') {
-    const source = ownerBuildings.find((candidate) => candidate.id !== building.id && candidate.type === 'vaultOfDigestiveStone')
-      ?? ownerBuildings.find((candidate) => candidate.id !== building.id && (BUILDING_DEFINITIONS[candidate.type]?.inputPriority?.length ?? 0) > 0)
-      ?? null;
-
-    if (!source) return productionStatus.detail;
-
-    const routeDiagnostic = getTransportRouteDiagnostic(state, source, building);
+    if (!roadSource || roadSource.id === building.id) return productionStatus.detail;
+    const routeDiagnostic = getTransportRouteDiagnostic(state, roadSource, building);
     return routeDiagnostic ?? productionStatus.detail;
   }
 
@@ -85,6 +80,9 @@ export default function EconomyPanel(): JSX.Element | null {
   const buildingRows = useMemo((): BuildingRow[] => {
     const economyState = { tick, ageOfTeeth, players, buildings, workers, territory, transport, worldPulse };
     const ownerBuildings = Object.values(buildings).filter((b) => b.ownerId === player1Id);
+    const roadSource = ownerBuildings.find((candidate) => candidate.type === 'vaultOfDigestiveStone')
+      ?? ownerBuildings.find((candidate) => (BUILDING_DEFINITIONS[candidate.type]?.inputPriority?.length ?? 0) > 0)
+      ?? null;
     return ownerBuildings
       .map((b) => {
       const def = BUILDING_DEFINITIONS[b.type];
@@ -107,7 +105,7 @@ export default function EconomyPanel(): JSX.Element | null {
         name: def.name,
         level: b.level,
         status: productionStatus.kind,
-        statusDetail: getRoadDisconnectedDetail(economyState, b, productionStatus, ownerBuildings),
+        statusDetail: getRoadDisconnectedDetail(economyState, b, productionStatus, roadSource),
         inputFill: Math.min(1, inputFill),
         outputFill: Math.min(1, outputFill),
         workers: b.assignedWorkers.length,

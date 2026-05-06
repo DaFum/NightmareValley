@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { createEconomySnapshot } from '../../game/economy/economy.snapshot';
 import { useGameStore } from '../../store/game.store';
+import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '../../store/ui.store';
 import type { ResourceType } from '../../game/core/economy.types';
 
@@ -12,7 +13,20 @@ export default function DebugLogisticsPanel() {
   const showFootfallHeatmap = useUIStore(state => state.showFootfallHeatmap);
   const toggleFootfallHeatmap = useUIStore(state => state.toggleFootfallHeatmap);
 
-  const gameState = useGameStore(state => state.gameState);
+  const gameState = useGameStore(
+    useShallow((state) => {
+      return {
+        tick: state.gameState.tick,
+        ageOfTeeth: state.gameState.ageOfTeeth,
+        players: state.gameState.players,
+        buildings: state.gameState.buildings,
+        workers: state.gameState.workers,
+        territory: state.gameState.territory,
+        transport: state.gameState.transport,
+        worldPulse: state.gameState.worldPulse,
+      };
+    }),
+  );
   const snapshot = useMemo(() => createEconomySnapshot(gameState), [gameState]);
   const totalFootfall = useMemo(
     () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0),
