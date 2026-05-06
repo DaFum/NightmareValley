@@ -1,7 +1,7 @@
-import { WORKER_DEFINITIONS } from '../../game/core/economy.data';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
+import { getWorkerInspectorModel } from '../../store/workerDomain';
 
 type WorkerInspectorProps = {
   workerId: string;
@@ -18,7 +18,8 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
 
   if (!worker) return null;
 
-  const def = WORKER_DEFINITIONS[worker.type] || { name: 'Unknown Worker', description: 'No definition found.' };
+  const workerModel = getWorkerInspectorModel(worker);
+  const def = workerModel?.definition || { name: 'Unknown Worker', description: 'No definition found.' };
   const portraitSrc = imageMap[`workers/${worker.type}.png`] ?? imageMap[`workers/${worker.type}.svg`];
 
   return (
@@ -44,7 +45,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
       <p className="inspector-panel__description">{def.description}</p>
 
       <dl className="inspector-stats">
-        <div><dt>Status</dt><dd>{worker.isIdle ? 'idle' : 'working'}</dd></div>
+        <div><dt>Status</dt><dd>{workerModel?.status ?? 'missing'}</dd></div>
         <div><dt>Morale</dt><dd>{Math.round(worker.morale)}%</dd></div>
         <div><dt>Infection</dt><dd>{Math.round(worker.infection)}%</dd></div>
         <div><dt>Scars</dt><dd>{worker.scars}</dd></div>

@@ -1,7 +1,7 @@
 import { Container, Sprite } from '@pixi/react';
 import { useTextures } from '../utils/textureRegistry';
-import { tileToScreen } from '../../game/iso/iso.project';
-import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT, HALF_TILE_HEIGHT } from '../../game/iso/iso.constants';
+import { HALF_TILE_HEIGHT } from '../../game/iso/iso.constants';
+import { isoTileToScreen } from '../iso/iso.adapter';
 import { BuildingType } from '../../game/core/economy.types';
 
 const BUILDING_SCALE = 0.28;
@@ -35,7 +35,7 @@ export default function IsoGhostPlacementLayer({
     return null;
   }
 
-  const { x: sx, y: sy } = tileToScreen(hoveredTileX, hoveredTileY, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+  const { x: sx, y: sy } = isoTileToScreen(hoveredTileX, hoveredTileY);
 
   // Depth-sort: place ghost above terrain but below other entities
   const zIndex = (sx + sy) * 0.5 + GHOST_Z_INDEX_BIAS;

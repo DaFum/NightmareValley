@@ -21,8 +21,8 @@ import { useIsoCamera } from './hooks/useIsoCamera';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
-import { screenToIsoTile } from '../game/iso/iso.inverse';
-import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
+import { canPreviewPlaceBuilding } from '../store/buildingDomain';
+import { isoScreenToTile } from './iso/iso.adapter';
 import { isRemovableRoadTile } from '../game/entities/roads/road.validation';
 
 const CHUNK_SCREEN_SIZE = 512;
@@ -44,6 +44,7 @@ export function GameStage() {
   const roadPlacementMode = useUIStore((state) => state.roadPlacementMode);
   const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
   const territory = useGameStore((state) => state.gameState.territory);
+  const gameState = useGameStore((state) => state.gameState);
 
   const { spacePressedRef } = useIsoCamera();
   const world = useRenderWorld();
@@ -156,9 +157,7 @@ export function GameStage() {
     }
     const cx = centerX + cameraX;
     const cy = centerY + cameraY;
-    const { tileX, tileY } = screenToIsoTile(
-      event.global.x, event.global.y, cx, cy, zoom, ISO_TILE_WIDTH, ISO_TILE_HEIGHT
-    );
+    const { tileX, tileY } = isoScreenToTile(event.global.x, event.global.y, cx, cy, zoom);
     setGhostTile((prev) => {
       if (prev?.x === tileX && prev?.y === tileY) return prev;
       return { x: tileX, y: tileY };
@@ -167,13 +166,8 @@ export function GameStage() {
 
   const isGhostValid = useMemo(() => {
     if (!ghostTile || !selectedBuildingToPlace) return false;
-    const tileKey = `${ghostTile.x},${ghostTile.y}`;
-    const tileId = territory.tileIndex?.[tileKey];
-    const tile = tileId ? territory.tiles[tileId] : undefined;
-    if (!tile || tile.buildingId || tile.ownerId !== player1Id) return false;
-    const def = BUILDING_DEFINITIONS[selectedBuildingToPlace];
-    return def.allowedTerrain.includes(tile.terrain);
-  }, [ghostTile, selectedBuildingToPlace, territory]);
+    return canPreviewPlaceBuilding(gameState, player1Id, selectedBuildingToPlace, ghostTile.x, ghostTile.y);
+  }, [gameState, ghostTile, selectedBuildingToPlace]);
 
   const isRoadGhostValid = useMemo(() => {
     if (!ghostTile || (!roadPlacementMode && !roadRemovalMode)) return false;

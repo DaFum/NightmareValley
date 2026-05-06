@@ -3,6 +3,7 @@ import type * as PIXI from 'pixi.js';
 import type { MutableRefObject } from 'react';
 import type { IsoRenderWorld } from '../../game/render/render.types';
 import { useGameStore, player1Id } from '../../store/game.store';
+import { resolvePointerToTile } from '../../store/mapInteractionDomain';
 import { useSelectionStore } from '../../store/selection.store';
 import { useUIStore } from '../../store/ui.store';
 import { useIsoPointer } from './useIsoPointer';
@@ -26,6 +27,7 @@ export function useSelectionInput({
   zoom,
   spacePressedRef,
 }: SelectionInputOptions) {
+  const gameState = useGameStore((state) => state.gameState);
   const placeBuildingAt = useGameStore((state) => state.placeBuildingAt);
   const placeRoadAt = useGameStore((state) => state.placeRoadAt);
   const removeRoadAt = useGameStore((state) => state.removeRoadAt);
@@ -57,32 +59,34 @@ export function useSelectionInput({
     if (spacePressedRef.current) return;
 
     const hit = resolveIsoHitRef.current(event.global.x, event.global.y);
+    const tileRef = resolvePointerToTile(gameState, event.global.x, event.global.y, centerX + cameraX, centerY + cameraY, zoom);
     const placementModeActive = isDebugSpawningWarehouse || !!selectedBuildingToPlace || roadPlacementMode || roadRemovalMode;
-    const placementBlocked = !!hit.tileId && (!!hit.buildingId || !!hit.workerId);
+    const tileId = tileRef?.tile.id ?? hit.tileId;
+    const placementBlocked = !!tileId && (!!hit.buildingId || !!hit.workerId);
     if (placementModeActive && placementBlocked) {
       if (isDebugSpawningWarehouse) setDebugSpawningWarehouse(false);
       if (selectedBuildingToPlace) selectBuildingToPlace(null);
       return;
     }
 
-    if (roadPlacementMode && hit.tileId && !hit.buildingId && !hit.workerId) {
-      placeRoadAt(player1Id, hit.tileId);
+    if (roadPlacementMode && tileId && !hit.buildingId && !hit.workerId) {
+      placeRoadAt(player1Id, tileId);
       return;
     }
 
-    if (roadRemovalMode && hit.tileId && !hit.buildingId && !hit.workerId) {
-      removeRoadAt(player1Id, hit.tileId);
+    if (roadRemovalMode && tileId && !hit.buildingId && !hit.workerId) {
+      removeRoadAt(player1Id, tileId);
       return;
     }
 
-    if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const placed = placeBuildingAt(player1Id, 'vaultOfDigestiveStone', hit.tileId);
+    if (isDebugSpawningWarehouse && tileId && !hit.buildingId && !hit.workerId) {
+      const placed = placeBuildingAt(player1Id, 'vaultOfDigestiveStone', tileId);
       if (placed) setDebugSpawningWarehouse(false);
       return;
     }
 
-    if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
-      const placed = placeBuildingAt(player1Id, selectedBuildingToPlace, hit.tileId);
+    if (selectedBuildingToPlace && tileId && !hit.buildingId && !hit.workerId) {
+      const placed = placeBuildingAt(player1Id, selectedBuildingToPlace, tileId);
       if (placed) selectBuildingToPlace(null);
       return;
     }
@@ -92,7 +96,7 @@ export function useSelectionInput({
     } else if (hit.workerId) {
       selectWorker(hit.workerId);
     } else {
-      selectTile(hit.tileId ?? null);
+      selectTile(tileId ?? null);
     }
   }, [
     isDebugSpawningWarehouse,
@@ -108,6 +112,12 @@ export function useSelectionInput({
     selectedBuildingToPlace,
     setDebugSpawningWarehouse,
     spacePressedRef,
+    gameState,
+    centerX,
+    cameraX,
+    centerY,
+    cameraY,
+    zoom,
   ]);
 }
 

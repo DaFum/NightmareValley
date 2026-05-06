@@ -4,6 +4,7 @@ import { useGameStore } from '../../store/game.store';
 import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '../../store/ui.store';
 import type { ResourceType } from '../../game/core/economy.types';
+import { profileSync } from '../../lib/profiler';
 
 const DEBUG_RESOURCE: ResourceType = 'sinewTimber';
 
@@ -27,9 +28,9 @@ export default function DebugLogisticsPanel() {
       };
     }),
   );
-  const snapshot = useMemo(() => createEconomySnapshot(gameState), [gameState]);
+  const snapshot = useMemo(() => profileSync('debug.snapshot', () => createEconomySnapshot(gameState)), [gameState]);
   const totalFootfall = useMemo(
-    () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0),
+    () => profileSync('debug.footfall', () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0)),
     [gameState.territory.tiles],
   );
   const totalStoredResources = Object.values(snapshot.totalStoredResources).reduce((sum, amount) => sum + (amount ?? 0), 0);

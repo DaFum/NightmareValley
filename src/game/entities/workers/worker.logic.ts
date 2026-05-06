@@ -2,19 +2,9 @@ import { EconomySimulationState } from "../../core/economy.simulation";
 import { SimulationConfig } from "../../economy/balancing.constants";
 import { findPath } from "../../pathing/path.a-star";
 import { isConstructed } from "../buildings/building.types";
+import { isWorkerAtBuilding } from './worker.derived';
 
 const MOVE_SPEED = 1.0; // grid tiles per second
-const ARRIVAL_THRESHOLD = 0.5;
-
-export function isWorkerAtBuilding(
-  workerPos: { x: number; y: number },
-  buildingPos: { x: number; y: number }
-): boolean {
-  const dx = workerPos.x - buildingPos.x;
-  const dy = workerPos.y - buildingPos.y;
-  return Math.sqrt(dx * dx + dy * dy) < ARRIVAL_THRESHOLD;
-}
-
 export function updateWorkersAI(
   state: EconomySimulationState,
   deltaSec: number,

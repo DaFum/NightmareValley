@@ -1,6 +1,7 @@
 import { BuildingInstance } from '../../core/game.types';
 import { BUILDING_DEFINITIONS } from '../../core/economy.data';
 
+/** @deprecated Use production.logic#getUpgradeCost as the simulation source of truth. */
 export function getUpgradeCost(instance: BuildingInstance, toLevel: number) {
 	const def = BUILDING_DEFINITIONS[instance.type];
 	if (!def) return null;
