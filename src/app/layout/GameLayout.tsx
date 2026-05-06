@@ -73,7 +73,7 @@ export function GameLayout({
   const [resumePromptDismissed, setResumePromptDismissed] = React.useState(false);
   const [dismissedVictory, setDismissedVictory] = React.useState(false);
   const isFreshRun = useGameStore((state) => state.gameState.tick === 0);
-  const outcomeCheckBucket = useGameStore((state) => Math.floor(state.gameState.ageOfTeeth));
+  const outcomeCheckBucket = useGameStore((state) => Math.floor(state.gameState.ageOfTeeth / 5));
   const isRunning = useGameStore((state) => state.isRunning);
   const activeScenario = useGameStore((state) => state.activeScenario);
   const setRunning = useGameStore((state) => state.setRunning);

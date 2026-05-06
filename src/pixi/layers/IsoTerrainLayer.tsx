@@ -42,12 +42,12 @@ function getLoadedTerrainImage(textureKey: string): HTMLImageElement | null {
   return cached?.complete && cached.naturalWidth > 0 ? cached : null;
 }
 
-function loadTerrainImage(textureKey: string): Promise<void> {
-  if (typeof Image === 'undefined') return Promise.resolve();
-  if (getLoadedTerrainImage(textureKey)) return Promise.resolve();
+function loadTerrainImage(textureKey: string): Promise<boolean> {
+  if (typeof Image === 'undefined') return Promise.resolve(false);
+  if (getLoadedTerrainImage(textureKey)) return Promise.resolve(false);
 
   const pending = terrainImagePromises.get(textureKey);
-  if (pending) return pending;
+  if (pending) return pending.then(() => false);
 
   const path = terrainAssetPath(textureKey);
   const src = imageMap[path];
@@ -56,25 +56,25 @@ function loadTerrainImage(textureKey: string): Promise<void> {
       warnedMissingTerrainAssets.add(path);
       console.warn(`Missing terrain asset: ${path}`);
     }
-    return Promise.resolve();
+    return Promise.resolve(false);
   }
 
-  const promise = new Promise<void>((resolve) => {
+  const promise = new Promise<boolean>((resolve) => {
     const img = new Image();
     img.onload = () => {
       terrainImageCache.set(textureKey, img);
-      resolve();
+      resolve(true);
     };
     img.onerror = () => {
       if (!warnedMissingTerrainAssets.has(path)) {
         warnedMissingTerrainAssets.add(path);
         console.warn(`Failed to load terrain asset: ${path}`);
       }
-      resolve();
+      resolve(false);
     };
     img.src = src;
   });
-  terrainImagePromises.set(textureKey, promise);
+  terrainImagePromises.set(textureKey, promise.then(() => {}));
   return promise;
 }
 
@@ -152,8 +152,8 @@ export const IsoTerrainLayer = React.memo(function IsoTerrainLayer({ tiles }: Is
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all(uniqueTerrainKeys(tiles).map(loadTerrainImage)).then(() => {
-      if (!cancelled) setAssetRevision((value) => value + 1);
+    Promise.all(uniqueTerrainKeys(tiles).map(loadTerrainImage)).then((results) => {
+      if (!cancelled && results.some((loaded) => loaded)) setAssetRevision((value) => value + 1);
     });
     return () => {
       cancelled = true;

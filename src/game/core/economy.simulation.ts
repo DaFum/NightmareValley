@@ -353,16 +353,17 @@ export function spawnWorker(
 }
 
 export function syncPopulationLimitsFromVaults(state: EconomySimulationState): EconomySimulationState {
-  for (const player of Object.values(state.players)) {
+  const next = cloneState(state);
+  for (const player of Object.values(next.players)) {
     let bonus = 0;
     for (const buildingId of player.buildings) {
-      const building = state.buildings[buildingId];
+      const building = next.buildings[buildingId];
       if (building?.type !== "vaultOfDigestiveStone" || !isConstructed(building)) continue;
       bonus += Math.max(0, building.level - 1) * 10;
     }
     player.populationLimit = Math.max(player.populationLimit ?? 20, 20 + bonus);
   }
-  return state;
+  return next;
 }
 
 export function placeBuilding(
@@ -515,8 +516,9 @@ export function toggleBuildingAutoHire(
 export function processAutoHireWorkers(state: EconomySimulationState): EconomySimulationState {
   let next = state;
 
-  for (const building of Object.values(next.buildings)) {
-    if (!building.isActive || !building.autoHire) continue;
+  for (const buildingId of Object.keys(next.buildings)) {
+    const building = next.buildings[buildingId];
+    if (!building || !building.isActive || !building.autoHire) continue;
     const player = next.players[building.ownerId];
     if (!player) continue;
 
