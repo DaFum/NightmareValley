@@ -4,12 +4,17 @@ import { SimulationConfig } from "./balancing.constants";
 import { BuildingInstance, MapTile } from "../core/game.types";
 import { BuildingDefinition, ResourceType } from "../core/economy.types";
 import { BUILDING_DEFINITIONS } from "../core/economy.data";
-import { requiresRoad, hasAssignedWorkersForBuilding, clamp } from "../core/economy.simulation";
+import { requiresRoad, hasAssignedWorkersForBuilding } from "../core/economy.simulation";
+import { clamp } from "../../lib/math";
 import { getResourceAmount, addResource } from "./stockpile.logic";
 import { getTileAt } from "../map/map.query";
 
 const RENEWABLE_EXTRACTIONS = new Set<ResourceType>(["pigFleshMass"]);
 const EXTRACTION_SEARCH_RADIUS = 2;
+
+function isRenewableExtraction(building: BuildingInstance, resource: ResourceType): boolean {
+  return RENEWABLE_EXTRACTIONS.has(resource) || building.type === "seedOfTheHowlingRoot";
+}
 
 export function processExtraction(
   state: EconomySimulationState,
@@ -52,7 +57,7 @@ export function processExtraction(
         depositTile = findExtractionDepositTile(state, building, def.extraction.resource);
       }
       const depositAmount = depositTile?.resourceDeposit?.[def.extraction.resource] ?? 0;
-      const isRenewable = RENEWABLE_EXTRACTIONS.has(def.extraction.resource);
+      const isRenewable = isRenewableExtraction(building, def.extraction.resource);
 
       if (!isRenewable && depositAmount <= 0) {
         building.progressSec = Math.min(building.progressSec, cycleTime);

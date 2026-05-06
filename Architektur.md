@@ -481,7 +481,6 @@ src/pixi/
 ├── GameCanvas.tsx
 ├── GameStage.tsx
 ├── PixiAppProvider.tsx
-├── world/
 ├── layers/
 ├── entities/
 ├── hooks/
@@ -492,23 +491,6 @@ src/pixi/
 * `GameCanvas.tsx` — erstellt und mountet die Pixi-Oberfläche.
 * `GameStage.tsx` — baut den Renderbaum der Spielwelt auf.
 * `PixiAppProvider.tsx` — stellt Pixi-App-Kontext und globale Ressourcen bereit.
-
-## pixi/world
-
-```text
-src/pixi/world/
-├── WorldRoot.tsx
-├── WorldViewport.tsx
-├── WorldChunks.tsx
-├── ChunkContainer.tsx
-└── SortableWorldContainer.tsx
-```
-
-* `WorldRoot.tsx` — Wurzelcontainer der Welt.
-* `WorldViewport.tsx` — übernimmt Kamera-Transformationen.
-* `WorldChunks.tsx` — rendert nur sichtbare Chunks.
-* `ChunkContainer.tsx` — Container für einen Chunk.
-* `SortableWorldContainer.tsx` — Container mit Z-/Y-Sortierung.
 
 ## pixi/layers
 

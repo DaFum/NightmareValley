@@ -15,6 +15,8 @@ import { removeResource, hasEnoughResources, getResourceAmount } from "../econom
 import { getUpgradeCost } from "../economy/production.logic";
 import { isConstructed } from "../entities/buildings/building.types";
 import { expandTerritoryFromInfluence } from "../map/map.territory";
+import { deepClone } from "../../lib/deep-clone";
+import { clamp } from "../../lib/math";
 
 // Exported from original but using relative imports
 import { processConstruction, autoSpawnConstructionWorkers } from "../economy/construction.logic";
@@ -97,10 +99,6 @@ export function cloneState(state: EconomySimulationState): EconomySimulationStat
   };
 }
 
-export function deepClone<T>(value: T): T {
-  return JSON.parse(JSON.stringify(value));
-}
-
 export function requiresRoad(buildingType: BuildingType): boolean {
   return BUILDING_DEFINITIONS[buildingType].requiresRoadConnection;
 }
@@ -150,10 +148,6 @@ export function distance(a: Position, b: Position): number {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   return Math.sqrt(dx * dx + dy * dy);
-}
-
-export function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
 }
 
 export function mergeInventoryInto(

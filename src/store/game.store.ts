@@ -63,7 +63,7 @@ export interface GameStore {
     maxSteps: number,
     profile?: SimulationStepProfile[]
   ) => { stepsProcessed: number; carryoverSec: number; droppedFrameDebt: boolean };
-  placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => void;
+  placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => boolean;
   placeRoadAt: (ownerId: string, tileId: string) => void;
   removeRoadAt: (ownerId: string, tileId: string) => void;
   upgradeBuildingAt: (ownerId: string, buildingId: string) => void;
@@ -279,6 +279,11 @@ const initialGameState: WorldState = {
     averageLatencySec: 0,
     queuedJobCount: 0,
   },
+  ai: {
+    state: { seed: 1, tick: 0 },
+    lastActions: [],
+    appliedActions: [],
+  },
   worldPulse: 0,
 };
 
@@ -434,9 +439,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const { gameState } = get();
       const nextEconomy = placeBuilding(gameState, ownerId, buildingType, tileId);
       set({ gameState: { ...gameState, ...nextEconomy } });
+      return true;
     } catch (error) {
-      console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
+      return false;
     }
   },
 

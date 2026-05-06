@@ -8,6 +8,7 @@ import { IsoWorkerLayer } from './layers/IsoWorkerLayer';
 import IsoFootfallLayer from './layers/IsoFootfallLayer';
 import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
+import IsoRoadLayer from './layers/IsoRoadLayer';
 import IsoGhostPlacementLayer from './layers/IsoGhostPlacementLayer';
 import IsoRoadGhostLayer from './layers/IsoRoadGhostLayer';
 
@@ -207,6 +208,7 @@ export function GameStage() {
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown} pointermove={handlePointerMove}>
       <IsoTerrainLayer tiles={world.tiles} />
       <IsoResourceLayer tiles={world.tiles} />
+      <IsoRoadLayer tiles={world.tiles} />
       <IsoFootfallLayer tiles={visibleTiles} />
       {drawHeatmap && <IsoFootfallHeatmapLayer tiles={visibleTiles} />}
       <IsoBuildingLayer buildings={world.buildings} />

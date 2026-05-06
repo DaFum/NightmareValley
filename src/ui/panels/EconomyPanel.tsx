@@ -3,9 +3,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
+import { BuildingInstance } from '../../game/core/game.types';
 import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
 import { getBottleneckAction, getEconomyPlanSnapshot } from '../../game/economy/economy.planner';
+import { getTransportRouteDiagnostic } from '../../game/economy/transport.logic';
 import { getProductionStatus } from '../../game/entities/buildings/building.status';
+import type { EconomySimulationState } from '../../game/core/economy.simulation';
 
 const fmt1 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const fmtPct = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
@@ -45,18 +48,38 @@ function statusLabel(status: string): { label: string; color: string } {
   }
 }
 
+function getRoadDisconnectedDetail(
+  state: EconomySimulationState,
+  building: BuildingInstance,
+  productionStatus: ReturnType<typeof getProductionStatus>
+): string {
+  if (productionStatus.kind === 'roadDisconnected') {
+    const source = Object.values(state.buildings).find(
+      (candidate) => candidate.id !== building.id && candidate.ownerId === building.ownerId
+    );
+    const routeDiagnostic = source ? getTransportRouteDiagnostic(state, source, building) : null;
+    return routeDiagnostic ?? productionStatus.detail;
+  }
+
+  return productionStatus.detail;
+}
+
 export default function EconomyPanel(): JSX.Element | null {
-  const { buildings, workers, transport, ageOfTeeth } = useGameStore(
+  const { buildings, workers, transport, territory, players, ageOfTeeth, tick, worldPulse } = useGameStore(
     useShallow((s) => ({
       buildings: s.gameState.buildings,
       workers: s.gameState.workers,
       transport: s.gameState.transport,
+      territory: s.gameState.territory,
+      players: s.gameState.players,
       ageOfTeeth: s.gameState.ageOfTeeth,
+      tick: s.gameState.tick,
+      worldPulse: s.gameState.worldPulse,
     }))
   );
 
   const buildingRows = useMemo((): BuildingRow[] => {
-    const economyState = { buildings, workers, transport } as any;
+    const economyState = { tick, ageOfTeeth, players, buildings, workers, territory, transport, worldPulse };
     return Object.values(buildings)
       .filter((b) => b.ownerId === player1Id)
       .map((b) => {
@@ -80,7 +103,7 @@ export default function EconomyPanel(): JSX.Element | null {
         name: def.name,
         level: b.level,
         status: productionStatus.kind,
-        statusDetail: productionStatus.detail,
+        statusDetail: getRoadDisconnectedDetail(economyState, b, productionStatus),
         inputFill: Math.min(1, inputFill),
         outputFill: Math.min(1, outputFill),
         workers: b.assignedWorkers.length,
@@ -88,7 +111,7 @@ export default function EconomyPanel(): JSX.Element | null {
         corruption: b.corruption ?? 0,
       };
     });
-  }, [buildings, transport, workers]);
+  }, [ageOfTeeth, buildings, players, territory, tick, transport, workers, worldPulse]);
 
   const resourceFlows = useMemo((): ResourceFlow[] => {
     const inBuffer: Partial<Record<ResourceType, number>> = {};

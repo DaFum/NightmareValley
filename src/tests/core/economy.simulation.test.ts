@@ -311,6 +311,65 @@ describe("construction guards", () => {
   });
 });
 
+describe("building and worker economy integration", () => {
+  it("root cantor at Seed of the Howling Root produces renewable sinew timber", () => {
+    const state = makeState({
+      players: { p1: { id: "p1", stock: {}, buildings: ["b1"], workers: ["w1"] } as any },
+      buildings: {
+        b1: {
+          id: "b1",
+          type: "seedOfTheHowlingRoot",
+          ownerId: "p1",
+          level: 1,
+          constructionProgress: undefined,
+          position: { x: 0, y: 0 },
+          outputBuffer: {},
+          inputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: ["w1"],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: true,
+          integrity: 100,
+          corruption: 0,
+        } as any,
+      },
+      territory: {
+        tiles: {
+          "tile_0_0": {
+            id: "tile_0_0",
+            position: { x: 0, y: 0 },
+            terrain: "weepingForest",
+            ownerId: "p1",
+            footfall: 0,
+            tier: "grass",
+            resourceDeposit: {},
+          } as any,
+        },
+        tileIndex: { "0,0": "tile_0_0" },
+      } as any,
+      workers: {
+        w1: {
+          id: "w1",
+          type: "rootCantor",
+          ownerId: "p1",
+          currentBuildingId: "b1",
+          homeBuildingId: "b1",
+          position: { x: 0, y: 0 },
+          isIdle: false,
+          morale: 100,
+          infection: 0,
+          scars: 0,
+        } as any,
+      },
+    });
+
+    const next = simulateTick(state, 30);
+
+    expect(next.buildings.b1.outputBuffer.sinewTimber).toBeGreaterThan(0);
+  });
+});
+
 describe("upgradeBuilding vault deduction", () => {
   it("throws error when trying to upgrade a building still under construction", () => {
     const state = makeState({
