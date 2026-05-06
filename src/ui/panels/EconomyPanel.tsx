@@ -56,7 +56,7 @@ function getRoadDisconnectedDetail(
   if (productionStatus.kind === 'roadDisconnected') {
     const ownerBuildings = Object.values(state.buildings).filter((candidate) => candidate.ownerId === building.ownerId && candidate.id !== building.id);
     const source = ownerBuildings.find((candidate) => candidate.type === 'vaultOfDigestiveStone')
-      ?? ownerBuildings.find((candidate) => (candidate.inputPriority?.length ?? 0) > 0)
+      ?? ownerBuildings.find((candidate) => (BUILDING_DEFINITIONS[candidate.type]?.inputPriority?.length ?? 0) > 0)
       ?? null;
 
     if (!source) return productionStatus.detail;

@@ -1703,11 +1703,11 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .debug-route dl {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .settings-grid {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .settlement-brief,
@@ -1751,7 +1751,7 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .building-list {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .game-layout__bottom-dock {
@@ -2236,7 +2236,7 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .production-chain__list {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .settlement-brief__header {
