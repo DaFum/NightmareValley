@@ -1,4 +1,3 @@
-import { player1Id } from '../../store/game.store';
 import { WorldState } from './world.types';
 import { placeBuilding, simulateTick, syncStockFromVaults } from '../core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG, SimulationConfig } from '../economy/balancing.constants';
@@ -14,7 +13,10 @@ const AI_BUILDING_ALIASES: Record<string, BuildingType> = {
 };
 
 function getPrimaryPlayer(state: WorldState): PlayerState | undefined {
-	return state.players[player1Id];
+	const playerIds = Object.keys(state.players);
+	if (playerIds.length === 0) return undefined;
+	const prioritized = playerIds.find((id) => state.players[id]?.buildings?.length);
+	return state.players[prioritized ?? playerIds[0]];
 }
 
 function adjacentPositions(position: { x: number; y: number }) {
