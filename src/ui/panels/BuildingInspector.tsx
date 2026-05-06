@@ -6,7 +6,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { WorkerType, ResourceType, ResourceInventory } from '../../game/core/economy.types';
 import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
-import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
 import { getInventoryForCostChecks, canAffordUpgradeForBuilding } from '../../store/simulation.selectors';
 import { getBuildingPanelStatus } from '../../store/buildingDomain';
 
@@ -41,11 +40,19 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
   if (!building || !player) return null;
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
-  const panelStatus = getBuildingPanelStatus(useGameStore.getState().gameState, building.id);
-  const productionStatus = panelStatus?.productionStatus ?? { kind: 'idle', detail: 'No status available.' } as const;
-  const upgradeCost = panelStatus?.upgradeCost ?? null;
-  const inventory = getInventoryForCostChecks(useGameStore.getState().gameState, building.ownerId);
-  const canUpgrade = canAffordUpgradeForBuilding(useGameStore.getState().gameState, building.id);
+  const panelDerived = useGameStore((state) => {
+    if (!building) return null;
+    return {
+      panelStatus: getBuildingPanelStatus(state.gameState, building.id),
+      inventory: getInventoryForCostChecks(state.gameState, building.ownerId),
+      canUpgrade: canAffordUpgradeForBuilding(state.gameState, building.id),
+    };
+  });
+
+  const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', detail: 'No status available.' } as const;
+  const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
+  const inventory = panelDerived?.inventory ?? {};
+  const canUpgrade = panelDerived?.canUpgrade ?? false;
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">

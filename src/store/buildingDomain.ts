@@ -47,12 +47,11 @@ export function getBuildingPanelStatus(state: EconomySimulationState, buildingId
   };
 }
 
-export function getBuildingAffordability(
-  state: WorldState,
-  ownerId: string,
+
+export function getBuildingAffordabilityFromInventory(
+  inventory: ResourceInventory,
   buildingType: BuildingType,
-): { canAfford: boolean; inventory: ResourceInventory; missing: Array<{ resource: ResourceType; required: number; available: number }> } {
-  const inventory = getInventoryForCostChecks(state, ownerId);
+): { canAfford: boolean; missing: Array<{ resource: ResourceType; required: number; available: number }> } {
   const def = BUILDING_DEFINITIONS[buildingType];
   const missing = Object.entries(def.buildCost.resources)
     .filter(([resource, amount]) => (inventory[resource as ResourceType] ?? 0) < (amount ?? 0))
@@ -62,9 +61,20 @@ export function getBuildingAffordability(
       available: inventory[resource as ResourceType] ?? 0,
     }));
 
+  return { canAfford: canAffordBuilding(inventory, buildingType), missing };
+}
+
+export function getBuildingAffordability(
+  state: WorldState,
+  ownerId: string,
+  buildingType: BuildingType,
+): { canAfford: boolean; inventory: ResourceInventory; missing: Array<{ resource: ResourceType; required: number; available: number }> } {
+  const inventory = getInventoryForCostChecks(state, ownerId);
+  const affordability = getBuildingAffordabilityFromInventory(inventory, buildingType);
+
   return {
-    canAfford: canAffordBuilding(inventory, buildingType),
+    canAfford: affordability.canAfford,
     inventory,
-    missing,
+    missing: affordability.missing,
   };
 }

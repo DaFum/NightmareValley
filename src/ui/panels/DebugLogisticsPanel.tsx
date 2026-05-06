@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { createEconomySnapshot } from '../../game/economy/economy.snapshot';
 import { useGameStore } from '../../store/game.store';
 import { useShallow } from 'zustand/react/shallow';
@@ -28,12 +28,17 @@ export default function DebugLogisticsPanel() {
       };
     }),
   );
-  const snapshot = useMemo(() => profileSync('debug.snapshot', () => createEconomySnapshot(gameState), { log: false }), [gameState]);
+  const snapshot = useMemo(() => createEconomySnapshot(gameState), [gameState]);
   const totalFootfall = useMemo(
-    () => profileSync('debug.footfall', () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0), { log: false }),
+    () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0),
     [gameState.territory.tiles],
   );
   const totalStoredResources = Object.values(snapshot.totalStoredResources).reduce((sum, amount) => sum + (amount ?? 0), 0);
+
+  useEffect(() => {
+    profileSync('debug.snapshot', () => createEconomySnapshot(gameState), { log: false });
+    profileSync('debug.footfall', () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0), { log: false });
+  }, [gameState]);
 
   const dispatchDebugJobsFromHQ = useGameStore(state => state.dispatchDebugJobsFromHQ);
   const resetFootfall = useGameStore(state => state.resetFootfall);

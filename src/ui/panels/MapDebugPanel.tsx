@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useGameStore } from '../../store/game.store';
 import { getProfilerStats } from '../../lib/profiler';
 import { createRandom } from '../../game/core/random';
@@ -31,18 +31,23 @@ export default function MapDebugPanel(): JSX.Element | null {
     const start = tiles[0].position;
     const goal = tiles[Math.min(tiles.length - 1, 30)].position;
     const path = findPath(start, goal, gameState);
-    debugPath(path);
     const maxX = tiles.reduce((max, tile) => Math.max(max, tile.position.x), 0) + 1;
     const maxY = tiles.reduce((max, tile) => Math.max(max, tile.position.y), 0) + 1;
     const flow = buildFlowfield(goal, createGridFromTerritory(gameState.territory, maxX, maxY));
 
     return {
+      path,
       points: path.points.length,
       distance: calculatePathDistance(path),
       complete: path.isComplete,
       flowCostAtStart: flow.dist[start.y * flow.width + start.x] ?? null,
     };
   }, [gameState]);
+
+  useEffect(() => {
+    if (!pathDiagnostics?.path) return;
+    debugPath(pathDiagnostics.path);
+  }, [pathDiagnostics?.path]);
 
   if (!IS_DEV) return null;
 

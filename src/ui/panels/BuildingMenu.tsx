@@ -6,7 +6,7 @@ import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { BuildingType, ResourceInventory, ResourceType } from '../../game/core/economy.types';
 import { getInventoryForCostChecks } from '../../store/simulation.selectors';
-import { getBuildingAffordability, listBuildingDomainEntries } from '../../store/buildingDomain';
+import { getBuildingAffordabilityFromInventory, listBuildingDomainEntries } from '../../store/buildingDomain';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
 
 type BuildCategory = 'campaign' | 'foundations' | 'food' | 'industry' | 'advanced';
@@ -184,7 +184,7 @@ export function BuildingMenu() {
 
           <div className="building-list">
             {buildingsToRender.map(def => {
-              const affordability = getBuildingAffordability(useGameStore.getState().gameState, player1Id, def.type);
+              const affordability = getBuildingAffordabilityFromInventory(inventory, def.type);
               const canAfford = affordability.canAfford;
               const isSelected = selectedBuildingToPlace === def.type;
               const missingCosts = affordability.missing.map(({ resource, available, required }) => `${resource}: ${available}/${required}`);
