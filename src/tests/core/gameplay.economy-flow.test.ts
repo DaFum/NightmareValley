@@ -1,17 +1,20 @@
 import { player1Id, useGameStore } from "../../store/game.store";
 
 describe("complete gameplay economy flow", () => {
-  beforeEach(() => {
+  let state: ReturnType<typeof useGameStore.getState>["gameState"];
+  let lastError: ReturnType<typeof useGameStore.getState>["lastError"];
+
+  beforeAll(() => {
     useGameStore.getState().resetGame("challenging");
     useGameStore.setState({ isRunning: true, lastError: undefined });
-  });
-
-  it("keeps building buffers non-negative across 120 ticks", () => {
     for (let i = 0; i < 120; i++) {
       useGameStore.getState().runSimulationSteps(1, 0.2, 5);
     }
+    state = useGameStore.getState().gameState;
+    lastError = useGameStore.getState().lastError;
+  });
 
-    const state = useGameStore.getState().gameState;
+  it("keeps building buffers non-negative across 120 ticks", () => {
     const player = state.players[player1Id];
     expect(player.buildings.length).toBeGreaterThan(0);
 
@@ -26,11 +29,6 @@ describe("complete gameplay economy flow", () => {
   });
 
   it("keeps worker morale and position finite across 120 ticks", () => {
-    for (let i = 0; i < 120; i++) {
-      useGameStore.getState().runSimulationSteps(1, 0.2, 5);
-    }
-
-    const state = useGameStore.getState().gameState;
     const player = state.players[player1Id];
     expect(player.workers.length).toBeGreaterThan(0);
 
@@ -43,10 +41,6 @@ describe("complete gameplay economy flow", () => {
   });
 
   it("never reports lastError during steady-state simulation", () => {
-    for (let i = 0; i < 120; i++) {
-      useGameStore.getState().runSimulationSteps(1, 0.2, 5);
-    }
-
-    expect(useGameStore.getState().lastError).toBeUndefined();
+    expect(lastError).toBeUndefined();
   });
 });

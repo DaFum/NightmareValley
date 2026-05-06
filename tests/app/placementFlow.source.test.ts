@@ -7,7 +7,7 @@ describe('placement flow', () => {
     const store = readFileSync(join(process.cwd(), 'src/store/game.store.ts'), 'utf8');
 
     expect(store).toContain('placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => boolean');
-    expect(store).toMatch(/placeBuildingAt:\s*\(ownerId: string, buildingType: BuildingType, tileId: string\) => boolean[\s\S]*?try[\s\S]*?return true;[\s\S]*?catch[\s\S]*?return false;/);
+    expect(store).toMatch(/placeBuildingAt:\s*\(ownerId,\s*buildingType,\s*tileId\)\s*=>\s*{\s*try\s*{[\s\S]*?return true;\s*}\s*catch\s*\([^)]*\)\s*{[\s\S]*?return false;\s*}\s*},/);
     expect(hook).toContain('const placed = placeBuildingAt(player1Id, selectedBuildingToPlace, hit.tileId);');
     expect(hook).toContain('if (placed) selectBuildingToPlace(null);');
     expect(hook).not.toMatch(/placeBuildingAt\([^)]*\);\s*selectBuildingToPlace\(/);
