@@ -76,14 +76,14 @@ export function useSelectionInput({
     }
 
     if (isDebugSpawningWarehouse && hit.tileId && !hit.buildingId && !hit.workerId) {
-      placeBuildingAt(player1Id, 'vaultOfDigestiveStone', hit.tileId);
-      setDebugSpawningWarehouse(false);
+      const placed = placeBuildingAt(player1Id, 'vaultOfDigestiveStone', hit.tileId);
+      if (placed) setDebugSpawningWarehouse(false);
       return;
     }
 
     if (selectedBuildingToPlace && hit.tileId && !hit.buildingId && !hit.workerId) {
-      placeBuildingAt(player1Id, selectedBuildingToPlace, hit.tileId);
-      selectBuildingToPlace(null);
+      const placed = placeBuildingAt(player1Id, selectedBuildingToPlace, hit.tileId);
+      if (placed) selectBuildingToPlace(null);
       return;
     }
 

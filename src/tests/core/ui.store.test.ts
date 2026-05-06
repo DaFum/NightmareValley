@@ -59,4 +59,25 @@ describe('ui.store autosave preference', () => {
     const { useUIStore: reloadedStore } = await loadUIStore(storage);
     expect(reloadedStore.getState().guideOpen).toBe(false);
   });
+
+  it('closes the build panel when entering placement or road tools', async () => {
+    const { useUIStore } = await loadUIStore();
+
+    useUIStore.getState().togglePanel('buildingMenu');
+    expect(useUIStore.getState().activePanel).toBe('buildingMenu');
+
+    useUIStore.getState().selectBuildingToPlace('sepulcherQuarry');
+    expect(useUIStore.getState().selectedBuildingToPlace).toBe('sepulcherQuarry');
+    expect(useUIStore.getState().activePanel).toBeNull();
+
+    useUIStore.getState().togglePanel('buildingMenu');
+    useUIStore.getState().setRoadPlacementMode(true);
+    expect(useUIStore.getState().roadPlacementMode).toBe(true);
+    expect(useUIStore.getState().activePanel).toBeNull();
+
+    useUIStore.getState().togglePanel('buildingMenu');
+    useUIStore.getState().setRoadRemovalMode(true);
+    expect(useUIStore.getState().roadRemovalMode).toBe(true);
+    expect(useUIStore.getState().activePanel).toBeNull();
+  });
 });

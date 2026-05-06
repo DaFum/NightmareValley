@@ -69,11 +69,17 @@ export const useUIStore = create<UIStore>((set, get) => ({
   },
 
   selectBuildingToPlace: (type) => {
-    set({ selectedBuildingToPlace: type, roadPlacementMode: false, roadRemovalMode: false });
+    set({
+      activePanel: type ? null : get().activePanel,
+      selectedBuildingToPlace: type,
+      roadPlacementMode: false,
+      roadRemovalMode: false,
+    });
   },
 
   setRoadPlacementMode: (value) => {
     set({
+      activePanel: value ? null : get().activePanel,
       roadPlacementMode: value,
       roadRemovalMode: value ? false : get().roadRemovalMode,
       selectedBuildingToPlace: value ? null : get().selectedBuildingToPlace,
@@ -82,6 +88,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
 
   setRoadRemovalMode: (value) => {
     set({
+      activePanel: value ? null : get().activePanel,
       roadRemovalMode: value,
       roadPlacementMode: value ? false : get().roadPlacementMode,
       selectedBuildingToPlace: value ? null : get().selectedBuildingToPlace,

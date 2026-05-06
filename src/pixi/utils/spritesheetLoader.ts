@@ -261,12 +261,4 @@ export async function loadSpritesheets(): Promise<void> {
     }
   }
 
-  // Debug: log registered texture keys to help diagnose missing sprites at runtime
-  try {
-    // eslint-disable-next-line no-console
-    console.info("spritesheetLoader: registered textures:", Object.keys(PIXI.utils.TextureCache).slice(0, 200));
-  } catch (e) {
-    // ignore
-  }
-
 }

@@ -45,6 +45,7 @@ export interface GameStore {
   tickRate: number;
   lastError?: RuntimeIssue;
   activeScenario: GameScenarioProfile;
+  savedGameAvailable: boolean;
   setGameState: (state: WorldState) => void;
   resetGame: (profile?: GameScenarioProfile) => void;
   saveGame: () => boolean;
@@ -62,7 +63,7 @@ export interface GameStore {
     maxSteps: number,
     profile?: SimulationStepProfile[]
   ) => { stepsProcessed: number; carryoverSec: number; droppedFrameDebt: boolean };
-  placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => void;
+  placeBuildingAt: (ownerId: string, buildingType: BuildingType, tileId: string) => boolean;
   placeRoadAt: (ownerId: string, tileId: string) => void;
   removeRoadAt: (ownerId: string, tileId: string) => void;
   upgradeBuildingAt: (ownerId: string, buildingId: string) => void;
@@ -278,6 +279,11 @@ const initialGameState: WorldState = {
     averageLatencySec: 0,
     queuedJobCount: 0,
   },
+  ai: {
+    state: { seed: 1, tick: 0 },
+    lastActions: [],
+    appliedActions: [],
+  },
   worldPulse: 0,
 };
 
@@ -325,6 +331,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   tickRate: 1,
   lastError: undefined,
   activeScenario: 'challenging',
+  savedGameAvailable: hasGameSave(),
 
   setGameState: (state) => set({ gameState: state }),
   resetGame: (profile) => {
@@ -340,11 +347,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   saveGame: () => {
     const { gameState, activeScenario, tickRate } = get();
-    return writeGameSave(createGameSaveSnapshot(gameState, activeScenario, tickRate));
+    const saved = writeGameSave(createGameSaveSnapshot(gameState, activeScenario, tickRate));
+    if (saved) set({ savedGameAvailable: true });
+    return saved;
   },
   loadSavedGame: () => {
     const snapshot = readGameSave();
-    if (!snapshot) return false;
+    if (!snapshot) {
+      set({ savedGameAvailable: false });
+      return false;
+    }
 
     set({
       gameState: snapshot.gameState,
@@ -352,11 +364,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       tickRate: clampTickRate(snapshot.tickRate),
       isRunning: false,
       lastError: undefined,
+      savedGameAvailable: true,
     });
     return true;
   },
-  clearSavedGame: () => deleteGameSave(),
-  hasSavedGame: () => hasGameSave(),
+  clearSavedGame: () => {
+    const deleted = deleteGameSave();
+    if (deleted) set({ savedGameAvailable: false });
+    return deleted;
+  },
+  hasSavedGame: () => get().savedGameAvailable,
   setRunning: (running) => set({ isRunning: running }),
   togglePlayPause: () => set((state) => ({ isRunning: !state.isRunning })),
   setTickRate: (rate) => {
@@ -422,9 +439,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const { gameState } = get();
       const nextEconomy = placeBuilding(gameState, ownerId, buildingType, tileId);
       set({ gameState: { ...gameState, ...nextEconomy } });
+      return true;
     } catch (error) {
-      console.error("Failed to place building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_PLACE_FAILURE', 'placeBuildingAt', get().gameState.tick) });
+      return false;
     }
   },
 

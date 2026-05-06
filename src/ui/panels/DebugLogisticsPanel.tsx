@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { createEconomySnapshot } from '../../game/economy/economy.snapshot';
 import { useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
 import type { ResourceType } from '../../game/core/economy.types';
@@ -10,8 +12,9 @@ export default function DebugLogisticsPanel() {
   const showFootfallHeatmap = useUIStore(state => state.showFootfallHeatmap);
   const toggleFootfallHeatmap = useUIStore(state => state.toggleFootfallHeatmap);
 
-  const activeCarrierTasksCount = useGameStore(state => Object.keys(state.gameState.transport.activeCarrierTasks).length);
-  const queuedJobsCount = useGameStore(state => state.gameState.transport.queuedJobCount ?? 0);
+  const gameState = useGameStore(state => state.gameState);
+  const snapshot = useMemo(() => createEconomySnapshot(gameState), [gameState]);
+  const totalStoredResources = Object.values(snapshot.totalStoredResources).reduce((sum, amount) => sum + (amount ?? 0), 0);
   const totalFootfall = useGameStore(state => Object.values(state.gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0));
 
   const dispatchDebugJobsFromHQ = useGameStore(state => state.dispatchDebugJobsFromHQ);
@@ -21,8 +24,13 @@ export default function DebugLogisticsPanel() {
     <div className="macabre-panel" style={{ padding: '1rem', color: 'white', backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid #ff0000', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#ff4444' }}>Logistics Debug</h3>
       <div style={{ fontSize: '0.9rem' }}>
-        <div>Active Tasks: {activeCarrierTasksCount}</div>
-        <div>Queued Jobs: {queuedJobsCount}</div>
+        <div>Tick: {snapshot.tick}</div>
+        <div>Buildings: {snapshot.totalBuildings}</div>
+        <div>Workers: {snapshot.totalWorkers}</div>
+        <div>Active Tasks: {snapshot.activeCarrierTasks}</div>
+        <div>Queued Jobs: {snapshot.queuedJobs}</div>
+        <div>World Pulse: {Math.round(snapshot.worldPulse)}</div>
+        <div>Stored Resources: {Math.round(totalStoredResources)}</div>
         <div>Total Footfall: {Math.round(totalFootfall)}</div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>

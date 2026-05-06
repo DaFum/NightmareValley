@@ -82,11 +82,15 @@ export function GameLayout({
   const saveGame = useGameStore((state) => state.saveGame);
   const loadSavedGame = useGameStore((state) => state.loadSavedGame);
   const clearSavedGame = useGameStore((state) => state.clearSavedGame);
-  const hasSavedGame = useGameStore((state) => state.hasSavedGame);
+  const savedGameAvailable = useGameStore((state) => state.savedGameAvailable);
   const setScenarioProfile = useGameStore((state) => state.setScenarioProfile);
   const focusMode = useUIStore((state) => state.focusMode);
   const minimalHud = useUIStore((state) => state.minimalHud);
   const guideOpen = useUIStore((state) => state.guideOpen);
+  const activePanel = useUIStore((state) => state.activePanel);
+  const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
+  const roadPlacementMode = useUIStore((state) => state.roadPlacementMode);
+  const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
   const autosaveEnabled = useUIStore((state) => state.autosaveEnabled);
   const setAutosaveEnabled = useUIStore((state) => state.setAutosaveEnabled);
   const toggleAutosaveEnabled = useUIStore((state) => state.toggleAutosaveEnabled);
@@ -104,7 +108,6 @@ export function GameLayout({
     [outcomeCheckBucket]
   );
   const visibleOutcome = outcome.kind === 'victory' && dismissedVictory ? { ...outcome, kind: 'in-progress' as const } : outcome;
-  const savedGameAvailable = hasSavedGame();
   const showResumePrompt = savedGameAvailable && isFreshRun && !resumePromptDismissed && !menuOpen && !settingsOpen && !shortcutsOpen;
 
   React.useEffect(() => {
@@ -114,13 +117,17 @@ export function GameLayout({
   }, [outcome.kind, setRunning]);
 
   React.useEffect(() => {
+    const toolActive = !!(selectedBuildingToPlace || roadPlacementMode || roadRemovalMode);
+    const buildMenuOpen = activePanel === 'buildingMenu';
     document.body.classList.toggle('ui--focus', focusMode);
     document.body.classList.toggle('ui--minimal', minimalHud);
     document.body.classList.toggle('ui--guide-open', guideOpen);
+    document.body.classList.toggle('ui--tool-active', toolActive);
+    document.body.classList.toggle('ui--build-menu-open', buildMenuOpen);
     return () => {
-      document.body.classList.remove('ui--focus', 'ui--minimal', 'ui--guide-open');
+      document.body.classList.remove('ui--focus', 'ui--minimal', 'ui--guide-open', 'ui--tool-active', 'ui--build-menu-open');
     };
-  }, [focusMode, guideOpen, minimalHud]);
+  }, [activePanel, focusMode, guideOpen, minimalHud, roadPlacementMode, roadRemovalMode, selectedBuildingToPlace]);
 
   React.useEffect(() => {
     if (!autosaveEnabled) return;

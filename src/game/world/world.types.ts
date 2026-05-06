@@ -1,4 +1,5 @@
 import { EconomySimulationState } from '../core/economy.simulation';
+import { AiAction, AiState } from '../ai/ai.types';
 
 export type WorldEventSeverity = 'info' | 'warning' | 'danger';
 
@@ -8,6 +9,12 @@ export type WorldEventLogEntry = {
 	title: string;
 	description: string;
 	severity: WorldEventSeverity;
+};
+
+export type WorldAiRuntime = {
+	state: AiState;
+	lastActions: AiAction[];
+	appliedActions: AiAction[];
 };
 
 /**
@@ -23,6 +30,7 @@ export interface WorldState extends EconomySimulationState {
 		lastEventStep: number;
 		log: WorldEventLogEntry[];
 	};
+	ai?: WorldAiRuntime;
 	temporaryModifiers?: {
 		productionBoost?: number;
 		expiresAtAge?: number;

@@ -76,4 +76,14 @@ describe('game-save', () => {
     expect(storage.removeItem).toHaveBeenCalledWith(GAME_SAVE_STORAGE_KEY);
     expect(readGameSave(storage)).toBeNull();
   });
+
+  it('does not report corrupt or incompatible save data as available', () => {
+    const storage = createMemoryStorage();
+
+    storage.setItem(GAME_SAVE_STORAGE_KEY, '{broken');
+    expect(hasGameSave(storage)).toBe(false);
+
+    storage.setItem(GAME_SAVE_STORAGE_KEY, JSON.stringify({ version: 999 }));
+    expect(hasGameSave(storage)).toBe(false);
+  });
 });

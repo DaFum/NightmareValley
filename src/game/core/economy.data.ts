@@ -40,6 +40,11 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
     workerSlots: { rootCantor: 1 },
     allowedTerrain: ["scarredEarth", "weepingForest"],
     requiresRoadConnection: true,
+    extraction: {
+      resource: "sinewTimber",
+      amountPerCycle: 1,
+      cycleTimeSec: 24,
+    },
     description: "Replants the scream where supply has thinned.",
     constructionTime: 60,
   },

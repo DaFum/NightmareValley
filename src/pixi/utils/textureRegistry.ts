@@ -90,30 +90,8 @@ class TextureRegistryService {
     // loader itself will insert fallback textures for failed loads.
     this.initPromise = (async () => {
       try {
-        // Debug: announce start
-        // eslint-disable-next-line no-console
-        console.info("TextureRegistry: starting spritesheet load");
         await loadSpritesheets();
         this.isReady = true;
-        // Debug: report texture cache after load
-        try {
-          // eslint-disable-next-line no-console
-          console.info("TextureRegistry: load complete, texture keys:", Object.keys(PIXI.utils.TextureCache).slice(0, 200));
-          // Debug: print a few texture details to ensure baseTextures are valid
-          try {
-            const keys = Object.keys(PIXI.utils.TextureCache).slice(0, 10);
-            const details = keys.map((k) => {
-              const t = PIXI.utils.TextureCache[k] as PIXI.Texture | undefined;
-              return { key: k, width: t?.width ?? null, height: t?.height ?? null, baseValid: !!t?.baseTexture?.valid };
-            });
-            // eslint-disable-next-line no-console
-            console.info('TextureRegistry: sample texture details', details);
-          } catch (e) {
-            // ignore
-          }
-        } catch (e) {
-          // ignore
-        }
             // Ensure basic terrain textures exist so map tiles render even
             // if terrain art isn't present in the spritesheet manifest.
             // Manifest terrain PNGs are the normal map art path. The procedural
