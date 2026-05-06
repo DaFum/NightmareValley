@@ -15,8 +15,11 @@ const AI_BUILDING_ALIASES: Record<string, BuildingType> = {
 function getPrimaryPlayer(state: WorldState): PlayerState | undefined {
 	const playerIds = Object.keys(state.players);
 	if (playerIds.length === 0) return undefined;
+	if (state.aiOwnerId && state.players[state.aiOwnerId]) return state.players[state.aiOwnerId];
 	const prioritized = playerIds.find((id) => state.players[id]?.buildings?.length);
-	return state.players[prioritized ?? playerIds[0]];
+	if (prioritized) return state.players[prioritized];
+	const sortedIds = [...playerIds].sort((a, b) => a.localeCompare(b));
+	return state.players[sortedIds[0]];
 }
 
 function adjacentPositions(position: { x: number; y: number }) {
@@ -106,9 +109,10 @@ function applyAiActions(state: WorldState, ownerId: string | undefined, actions:
 
 			try {
 				const placed = placeBuilding(next, ownerId, buildingType, tileId);
-				next = syncStockFromVaults({ ...next, ...placed } as WorldState) as WorldState;
+				next = { ...next, ...placed };
 				appliedActions.push(action);
-			} catch {
+			} catch (error) {
+				console.warn('[world.tick] Failed to apply AI build action', { ownerId, buildingType, tileId, error });
 				continue;
 			}
 		} else if (action.type === 'expand') {

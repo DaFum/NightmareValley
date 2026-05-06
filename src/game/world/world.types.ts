@@ -24,6 +24,7 @@ export type WorldAiRuntime = {
 export interface WorldState extends EconomySimulationState {
 	seed: number;
 	lastDeltaSec: number;
+	aiOwnerId?: string;
 	scenarioProfile?: 'sandbox' | 'challenging' | 'hardcore';
 	biomeModifier?: number;
 	events?: {

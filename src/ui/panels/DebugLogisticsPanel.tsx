@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { createEconomySnapshot } from '../../game/economy/economy.snapshot';
 import { useGameStore } from '../../store/game.store';
 import { useShallow } from 'zustand/react/shallow';
@@ -12,10 +13,25 @@ export default function DebugLogisticsPanel() {
   const showFootfallHeatmap = useUIStore(state => state.showFootfallHeatmap);
   const toggleFootfallHeatmap = useUIStore(state => state.toggleFootfallHeatmap);
 
-  const { snapshot, totalFootfall } = useGameStore(useShallow((state) => ({
-    snapshot: createEconomySnapshot(state.gameState),
-    totalFootfall: Object.values(state.gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0),
-  })));
+  const gameState = useGameStore(
+    useShallow((state) => {
+      return {
+        tick: state.gameState.tick,
+        ageOfTeeth: state.gameState.ageOfTeeth,
+        players: state.gameState.players,
+        buildings: state.gameState.buildings,
+        workers: state.gameState.workers,
+        territory: state.gameState.territory,
+        transport: state.gameState.transport,
+        worldPulse: state.gameState.worldPulse,
+      };
+    }),
+  );
+  const snapshot = useMemo(() => createEconomySnapshot(gameState), [gameState]);
+  const totalFootfall = useMemo(
+    () => Object.values(gameState.territory.tiles).reduce((sum, t) => sum + t.footfall, 0),
+    [gameState.territory.tiles],
+  );
   const totalStoredResources = Object.values(snapshot.totalStoredResources).reduce((sum, amount) => sum + (amount ?? 0), 0);
 
   const dispatchDebugJobsFromHQ = useGameStore(state => state.dispatchDebugJobsFromHQ);
