@@ -51,12 +51,12 @@ function statusLabel(status: string): { label: string; color: string } {
 function getRoadDisconnectedDetail(
   state: EconomySimulationState,
   building: BuildingInstance,
-  productionStatus: ReturnType<typeof getProductionStatus>
+  productionStatus: ReturnType<typeof getProductionStatus>,
+  ownerBuildings: BuildingInstance[],
 ): string {
   if (productionStatus.kind === 'roadDisconnected') {
-    const ownerBuildings = Object.values(state.buildings).filter((candidate) => candidate.ownerId === building.ownerId && candidate.id !== building.id);
-    const source = ownerBuildings.find((candidate) => candidate.type === 'vaultOfDigestiveStone')
-      ?? ownerBuildings.find((candidate) => (BUILDING_DEFINITIONS[candidate.type]?.inputPriority?.length ?? 0) > 0)
+    const source = ownerBuildings.find((candidate) => candidate.id !== building.id && candidate.type === 'vaultOfDigestiveStone')
+      ?? ownerBuildings.find((candidate) => candidate.id !== building.id && (BUILDING_DEFINITIONS[candidate.type]?.inputPriority?.length ?? 0) > 0)
       ?? null;
 
     if (!source) return productionStatus.detail;
@@ -84,8 +84,8 @@ export default function EconomyPanel(): JSX.Element | null {
 
   const buildingRows = useMemo((): BuildingRow[] => {
     const economyState = { tick, ageOfTeeth, players, buildings, workers, territory, transport, worldPulse };
-    return Object.values(buildings)
-      .filter((b) => b.ownerId === player1Id)
+    const ownerBuildings = Object.values(buildings).filter((b) => b.ownerId === player1Id);
+    return ownerBuildings
       .map((b) => {
       const def = BUILDING_DEFINITIONS[b.type];
       const totalWorkerSlots = Object.values(def.workerSlots).reduce((s, n) => s + (n ?? 0), 0);
@@ -107,7 +107,7 @@ export default function EconomyPanel(): JSX.Element | null {
         name: def.name,
         level: b.level,
         status: productionStatus.kind,
-        statusDetail: getRoadDisconnectedDetail(economyState, b, productionStatus),
+        statusDetail: getRoadDisconnectedDetail(economyState, b, productionStatus, ownerBuildings),
         inputFill: Math.min(1, inputFill),
         outputFill: Math.min(1, outputFill),
         workers: b.assignedWorkers.length,

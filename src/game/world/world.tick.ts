@@ -106,7 +106,7 @@ function applyAiActions(state: WorldState, ownerId: string | undefined, actions:
 
 			try {
 				const placed = placeBuilding(next, ownerId, buildingType, tileId);
-				next = syncStockFromVaults({ ...next, ...placed } as WorldState) as WorldState;
+				next = { ...next, ...placed } as WorldState;
 				appliedActions.push(action);
 			} catch {
 				continue;

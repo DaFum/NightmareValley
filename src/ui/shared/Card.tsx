@@ -7,7 +7,7 @@ export type CardProps = React.HTMLAttributes<HTMLElement> & {
 export const Card: React.FC<CardProps> = ({ title, children, className, id, ...rest }) => {
   const classes = ['hud-panel', className].filter(Boolean).join(' ');
 
-  const headingId = title ? `${id ?? 'card'}-title` : undefined;
+  const headingId = (title && id) ? `${id}-title` : undefined;
 
   return (
     <section className={classes} id={id} aria-labelledby={headingId} {...rest}>
