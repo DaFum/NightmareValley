@@ -41,6 +41,7 @@ function getTransportInspectorModel(
   buildings?: BuildingLookup,
 ): WorkerTransportInspectorModel {
   if (!activeTask) {
+    const isCarrier = worker.type === 'burdenThrall';
     return {
       deliveryState: 'Idle',
       detail: 'Waiting for the next reachable transport job.',
@@ -48,7 +49,9 @@ function getTransportInspectorModel(
       carrying: 'Nothing',
       progress: 'No active route',
       idleReason: worker.isIdle
-        ? 'No active transport task is assigned. This worker will claim the next reachable queued job from connected roads.'
+        ? isCarrier
+          ? 'No active transport task is assigned. This worker will claim the next reachable queued job from connected roads.'
+          : 'No active transport task is assigned. This worker is waiting for production work from its home building.'
         : 'No active transport task is assigned, but this worker is still finishing movement or local work.',
     };
   }

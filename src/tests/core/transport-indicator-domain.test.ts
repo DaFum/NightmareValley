@@ -7,6 +7,20 @@ describe('transportIndicatorDomain', () => {
     const world = createWorld(1234, 12, 12, player1Id);
     world.transport.queuedJobCount = 16;
     world.transport.activeCarrierTasks = {};
+    const sourceBuildingId = world.players[player1Id].buildings[0];
+    world.transport.jobs = Object.fromEntries(
+      Array.from({ length: 16 }, (_, index) => [`job-${index}`, {
+        id: `job-${index}`,
+        fromBuildingId: sourceBuildingId,
+        toBuildingId: sourceBuildingId,
+        resourceType: 'toothPlanks',
+        amount: 1,
+        priority: 3,
+        reserved: 0,
+        delivered: 0,
+        status: 'queued',
+      }]),
+    );
 
     const model = getTransportIndicatorModel(world, player1Id);
 

@@ -9,6 +9,7 @@ import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { getInventoryForCostChecks, canAffordUpgradeForBuilding } from '../../store/simulation.selectors';
 import { getBuildingPanelStatus } from '../../store/buildingDomain';
+import { resourceShortLabel } from './resourceLabels';
 
 type BuildingInspectorProps = {
   buildingId: string;
@@ -451,43 +452,6 @@ function getUpgradeTitle({
       .join(', ')}.`;
   }
   return 'Upgrade unavailable in the current state.';
-}
-
-function resourceShortLabel(resource: ResourceType): string {
-  switch (resource) {
-    case 'toothPlanks':
-      return 'Planks';
-    case 'sepulcherStone':
-      return 'Stone';
-    case 'marrowGrain':
-      return 'Grain';
-    case 'boneDust':
-      return 'Dust';
-    case 'amnioticWater':
-      return 'Water';
-    case 'eyelessFish':
-      return 'Fish';
-    case 'brainSalt':
-      return 'Salt';
-    case 'funeralLoaf':
-      return 'Loaf';
-    case 'graveCoal':
-      return 'Coal';
-    case 'veinIronOre':
-      return 'Iron Ore';
-    case 'veinIronBar':
-      return 'Bars';
-    case 'tormentInstrument':
-      return 'Tools';
-    case 'haloGoldBar':
-      return 'Gold';
-    case 'cathedralGoldOre':
-      return 'Gold Ore';
-    case 'sinewTimber':
-      return 'Timber';
-    default:
-      return resource.replace(/([A-Z])/g, ' $1');
-  }
 }
 
 type InventoryBlockProps = {

@@ -220,7 +220,6 @@ export function GameStage() {
     roadRemovalMode,
     selectedBuildingToPlace,
     setPlacementFeedback,
-    territory,
   ]);
 
   const handlePointerDown = useSelectionInput({
