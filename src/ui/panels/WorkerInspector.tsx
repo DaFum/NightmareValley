@@ -39,7 +39,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
           <span className="panel-kicker">Worker</span>
           <h2>{def.name}</h2>
         </div>
-        <button className="hud-button" onClick={clearSelection}>Close</button>
+        <button className="hud-button" onClick={clearSelection} aria-label="Close worker inspector">Close</button>
       </div>
 
       <p className="inspector-panel__description">{def.description}</p>

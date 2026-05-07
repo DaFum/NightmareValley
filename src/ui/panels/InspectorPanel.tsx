@@ -33,7 +33,7 @@ export default function InspectorPanel(): JSX.Element | null {
           <span className="panel-kicker">Tile</span>
           <h2>{tile.terrain}</h2>
         </div>
-        <button className="hud-button" onClick={clearSelection}>Close</button>
+        <button className="hud-button" onClick={clearSelection} aria-label="Close tile inspector">Close</button>
       </div>
       <dl className="inspector-stats">
         <div><dt>Position</dt><dd>{tile.position.x}, {tile.position.y}</dd></div>

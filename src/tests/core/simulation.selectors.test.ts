@@ -83,7 +83,7 @@ describe('simulation selectors', () => {
     expect(terrainBlocked).toEqual(expect.objectContaining({
       ok: false,
       reasonCode: 'terrain_blocked',
-      message: expect.stringContaining('Build on'),
+      message: 'This footprint includes Rib mountain. Organ Harvester needs Scarred earth or Forest.',
     }));
   });
 });

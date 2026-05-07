@@ -3,7 +3,16 @@ import { BuildingType, ResourceType } from '../core/economy.types';
 import { aggregateVaultInventory, CampaignObjectiveMetric, GameObjective, getCampaignObjectives } from '../core/victory.rules';
 import { getMilitaryMetrics } from '../military';
 import { WorldState } from '../world/world.types';
-import { DEFAULT_SIMULATION_CONFIG } from './balancing.constants';
+import {
+  DEFAULT_SIMULATION_CONFIG,
+  ENEMY_PRESSURE_WARNING_THRESHOLD,
+  NEXT_ATTACK_WARNING_SEC,
+  TRANSPORT_AVERAGE_LATENCY_WARNING_SEC,
+  TRANSPORT_NETWORK_STRESS_WARNING,
+  TRANSPORT_QUEUE_CARRIER_BACKLOG_MULTIPLIER,
+  TRANSPORT_QUEUE_MIN_BACKLOG_WARNING,
+  VAULT_CRITICAL_INTEGRITY_PERCENT,
+} from './balancing.constants';
 import { RECIPES } from './recipes.data';
 
 export type EconomyBottleneckKind =
@@ -36,6 +45,8 @@ const ECONOMY_ACTION_UTILITY = {
   buildMatch: 1.35,
   resourceMatch: 1.2,
 } as const;
+
+const ECONOMY_BOTTLENECK_DISPLAY_LIMIT = 8;
 
 export function getEconomyRecommendationUtilityBonus(
   recommendation: EconomyRecommendation,
@@ -236,7 +247,7 @@ function findFirstMissingProducer(
   return undefined;
 }
 
-export function getEconomyBottlenecks(state: WorldState, ownerId?: string): EconomyBottleneck[] {
+function collectEconomyBottlenecks(state: WorldState, ownerId?: string): EconomyBottleneck[] {
   const bottlenecks: EconomyBottleneck[] = [];
 
   for (const building of Object.values(state.buildings)) {
@@ -323,7 +334,11 @@ export function getEconomyBottlenecks(state: WorldState, ownerId?: string): Econ
     }
   }
 
-  return bottlenecks.slice(0, 8);
+  return bottlenecks;
+}
+
+export function getEconomyBottlenecks(state: WorldState, ownerId?: string): EconomyBottleneck[] {
+  return collectEconomyBottlenecks(state, ownerId).slice(0, ECONOMY_BOTTLENECK_DISPLAY_LIMIT);
 }
 
 export function getEconomyRecommendation(state: WorldState, ownerId?: string): EconomyRecommendation {
@@ -428,7 +443,8 @@ function getObjectiveSnapshot(objective: GameObjective | undefined): SettlementS
 }
 
 function getEconomyActivity(state: WorldState, ownerId?: string): SettlementSituationSnapshot['economy'] {
-  const bottlenecks = getEconomyBottlenecks(state, ownerId);
+  const allBottlenecks = collectEconomyBottlenecks(state, ownerId);
+  const bottlenecks = allBottlenecks.slice(0, ECONOMY_BOTTLENECK_DISPLAY_LIMIT);
   let workingBuildings = 0;
 
   for (const building of Object.values(state.buildings)) {
@@ -440,8 +456,8 @@ function getEconomyActivity(state: WorldState, ownerId?: string): SettlementSitu
 
   return {
     workingBuildings,
-    starvedBuildings: bottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').length,
-    blockedBuildings: bottlenecks.filter((bottleneck) => bottleneck.kind === 'outputFull' || bottleneck.kind === 'roadDisconnected').length,
+    starvedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').length,
+    blockedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'outputFull' || bottleneck.kind === 'roadDisconnected').length,
     bottlenecks,
   };
 }
@@ -450,7 +466,7 @@ function getTransportSituation(state: WorldState, ownerId?: string): SettlementS
   const carriers = Object.values(state.workers).filter(
     (worker) => (!ownerId || worker.ownerId === ownerId) && worker.type === 'burdenThrall'
   );
-  const activeTasks = Object.values(state.transport.activeCarrierTasks ?? {}).filter((task) => {
+  const activeTasks = Object.values(state.transport?.activeCarrierTasks ?? {}).filter((task) => {
     if (!ownerId) return true;
     const worker = state.workers[task.workerId];
     return worker?.ownerId === ownerId;
@@ -458,9 +474,9 @@ function getTransportSituation(state: WorldState, ownerId?: string): SettlementS
   const totalCarriers = carriers.length;
   const busyCarriers = activeTasks.length;
   const idleCarriers = Math.max(0, totalCarriers - busyCarriers);
-  const queuedJobs = state.transport.queuedJobCount ?? 0;
-  const averageLatencySec = state.transport.averageLatencySec ?? 0;
-  const networkStress = state.transport.networkStress ?? 0;
+  const queuedJobs = state.transport?.queuedJobCount ?? 0;
+  const averageLatencySec = state.transport?.averageLatencySec ?? 0;
+  const networkStress = state.transport?.networkStress ?? 0;
 
   if (queuedJobs > 0 && totalCarriers === 0) {
     return {
@@ -477,7 +493,7 @@ function getTransportSituation(state: WorldState, ownerId?: string): SettlementS
     };
   }
 
-  if (queuedJobs > Math.max(3, totalCarriers * 2)) {
+  if (queuedJobs > Math.max(TRANSPORT_QUEUE_MIN_BACKLOG_WARNING, totalCarriers * TRANSPORT_QUEUE_CARRIER_BACKLOG_MULTIPLIER)) {
     return {
       tone: 'warn',
       headline: 'Transport queue is backing up',
@@ -492,7 +508,7 @@ function getTransportSituation(state: WorldState, ownerId?: string): SettlementS
     };
   }
 
-  if (networkStress >= 8 || averageLatencySec >= 12) {
+  if (networkStress >= TRANSPORT_NETWORK_STRESS_WARNING || averageLatencySec >= TRANSPORT_AVERAGE_LATENCY_WARNING_SEC) {
     return {
       tone: 'warn',
       headline: 'Routes are too slow',
@@ -571,7 +587,7 @@ function getMilitarySituation(state: WorldState, ownerId?: string): SettlementSi
     };
   }
 
-  if (vaultIntegrity > 0 && vaultIntegrity <= 35) {
+  if (vaultIntegrity > 0 && vaultIntegrity <= VAULT_CRITICAL_INTEGRITY_PERCENT) {
     return {
       tone: 'danger',
       headline: 'Vault integrity critical',
@@ -585,11 +601,11 @@ function getMilitarySituation(state: WorldState, ownerId?: string): SettlementSi
     };
   }
 
-  if (enemyPressure >= 70 || nextAttackSec <= 45) {
+  if (enemyPressure >= ENEMY_PRESSURE_WARNING_THRESHOLD || nextAttackSec <= NEXT_ATTACK_WARNING_SEC) {
     return {
       tone: 'warn',
       headline: 'Border pressure rising',
-      detail: nextAttackSec <= 45
+      detail: nextAttackSec <= NEXT_ATTACK_WARNING_SEC
         ? `The next attack is expected in ${Math.round(nextAttackSec)}s.`
         : `Enemy pressure is ${Math.round(enemyPressure)}.`,
       action: 'Build or upgrade Spires and recruit War Infants before the warning becomes a raid.',
@@ -616,6 +632,30 @@ function getMilitarySituation(state: WorldState, ownerId?: string): SettlementSi
 
 function issueToneRank(tone: SettlementSituationIssue['tone']): number {
   return tone === 'danger' ? 0 : 1;
+}
+
+function getIssueFingerprint(issue: SettlementSituationIssue): string {
+  return [
+    issue.kind,
+    issue.tone,
+    issue.label,
+    issue.action,
+    issue.resourceType ?? '',
+  ].join('|');
+}
+
+function dedupeSituationIssues(issues: SettlementSituationIssue[]): SettlementSituationIssue[] {
+  const seen = new Set<string>();
+  const uniqueIssues: SettlementSituationIssue[] = [];
+
+  for (const issue of issues) {
+    const fingerprint = getIssueFingerprint(issue);
+    if (seen.has(fingerprint)) continue;
+    seen.add(fingerprint);
+    uniqueIssues.push(issue);
+  }
+
+  return uniqueIssues;
 }
 
 function getSituationHeadline(status: SettlementSituationTone): string {
@@ -672,6 +712,7 @@ export function getSettlementSituationSnapshot(state: WorldState, ownerId?: stri
   }
 
   topIssues.sort((a, b) => issueToneRank(a.tone) - issueToneRank(b.tone));
+  const uniqueTopIssues = dedupeSituationIssues(topIssues);
 
   let status: SettlementSituationTone = 'good';
   if (military.tone === 'danger') status = 'danger';
@@ -680,8 +721,8 @@ export function getSettlementSituationSnapshot(state: WorldState, ownerId?: stri
 
   const primaryAction = military.tone === 'danger'
     ? { label: 'Defend the vault', detail: military.action }
-    : topIssues[0]
-      ? { label: topIssues[0].label, detail: topIssues[0].action }
+    : uniqueTopIssues[0]
+      ? { label: uniqueTopIssues[0].label, detail: uniqueTopIssues[0].action }
       : {
         label: recommendation.label,
         detail: recommendation.reason,
@@ -697,7 +738,7 @@ export function getSettlementSituationSnapshot(state: WorldState, ownerId?: stri
     economy,
     transport,
     military,
-    topIssues: topIssues.slice(0, 5),
+    topIssues: uniqueTopIssues.slice(0, 5),
   };
 }
 

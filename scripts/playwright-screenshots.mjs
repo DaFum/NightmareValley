@@ -6,9 +6,19 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const HOST = '127.0.0.1';
-const PORT = 4173;
-const BASE_URL = `http://${HOST}:${PORT}`;
 const INCLUDE_DEV_SCREENSHOTS = process.env.INCLUDE_DEV_SCREENSHOTS === '1';
+const DEFAULT_PORT = INCLUDE_DEV_SCREENSHOTS ? 5173 : 4173;
+
+function parsePort(value, fallback) {
+  if (value === undefined) return fallback;
+  const parsed = Number(value);
+  if (Number.isInteger(parsed) && parsed > 0 && parsed <= 65535) return parsed;
+  console.error(`[screenshots] Invalid PORT "${value}". Expected an integer from 1 to 65535.`);
+  process.exit(1);
+}
+
+const PORT = parsePort(process.env.PORT, DEFAULT_PORT);
+const BASE_URL = `http://${HOST}:${PORT}`;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const OUTPUT_DIR = path.resolve(__dirname, '../screenshots');

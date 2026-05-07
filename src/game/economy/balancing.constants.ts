@@ -1,5 +1,13 @@
 import type { TileTier } from '../core/game.types';
 
+export const TRANSPORT_QUEUE_MIN_BACKLOG_WARNING = 3;
+export const TRANSPORT_QUEUE_CARRIER_BACKLOG_MULTIPLIER = 2;
+export const TRANSPORT_NETWORK_STRESS_WARNING = 8;
+export const TRANSPORT_AVERAGE_LATENCY_WARNING_SEC = 12;
+export const VAULT_CRITICAL_INTEGRITY_PERCENT = 35;
+export const ENEMY_PRESSURE_WARNING_THRESHOLD = 70;
+export const NEXT_ATTACK_WARNING_SEC = 45;
+
 export interface SimulationConfig {
   defaultTransportPriority: number;
   maxJobsPerTick: number;

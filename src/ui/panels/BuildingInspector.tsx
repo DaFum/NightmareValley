@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordWorker, getWorkerHireCost } from '../../game/economy/production.logic';
 import { useGameStore } from '../../store/game.store';
@@ -14,6 +15,7 @@ type BuildingInspectorProps = {
 };
 
 export default function BuildingInspector({ buildingId }: BuildingInspectorProps): JSX.Element | null {
+  const gameState = useGameStore((state) => state.gameState);
   const building = useGameStore((state) => state.gameState.buildings[buildingId]);
   const player = useGameStore((state) => building ? state.gameState.players[building.ownerId] : undefined);
   const workers = useGameStore(
@@ -38,17 +40,18 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
   const togglePausedInput = useGameStore((state) => state.togglePausedInput);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
+  const panelDerived = useMemo(() => {
+    if (!building) return null;
+    return {
+      panelStatus: getBuildingPanelStatus(gameState, building.id),
+      inventory: getInventoryForCostChecks(gameState, building.ownerId),
+      canUpgrade: canAffordUpgradeForBuilding(gameState, building.id),
+    };
+  }, [building, gameState]);
+
   if (!building || !player) return null;
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
-  const panelDerived = useGameStore((state) => {
-    if (!building) return null;
-    return {
-      panelStatus: getBuildingPanelStatus(state.gameState, building.id),
-      inventory: getInventoryForCostChecks(state.gameState, building.ownerId),
-      canUpgrade: canAffordUpgradeForBuilding(state.gameState, building.id),
-    };
-  });
 
   const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', detail: 'No status available.' } as const;
   const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
@@ -69,7 +72,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
           <span className="panel-kicker">Building</span>
           <h2>{def.name}</h2>
         </div>
-        <button className="hud-button" onClick={clearSelection}>Close</button>
+        <button className="hud-button" onClick={clearSelection} aria-label="Close building inspector">Close</button>
       </div>
 
       <p className="inspector-panel__description">{def.description}</p>
@@ -123,7 +126,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
           })}
         </div>
       ) : (
-        <p className="inspector-note">Maximum level reached.</p>
+        <p className="inspector-note">{isUnderConstruction ? 'Finish construction before upgrading.' : 'Maximum level reached.'}</p>
       )}
 
       <WorkerSlotsSection
