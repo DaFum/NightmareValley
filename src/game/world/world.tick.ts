@@ -1,5 +1,5 @@
 import { WorldState } from './world.types';
-import { placeBuilding, simulateTick, syncStockFromVaults } from '../core/economy.simulation';
+import { placeBuilding, simulateTick } from '../core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG, SimulationConfig } from '../economy/balancing.constants';
 import { applyScheduledWorldEvents } from '../events/events.logic';
 import { AiAction } from '../ai/ai.types';
@@ -98,6 +98,8 @@ function getOwnerInventoryForBuild(state: WorldState, ownerId: string): Resource
 	const player = state.players[ownerId];
 	if (!player) return {};
 
+	// Warehouse-first invariant: AI build affordability uses vault output buffers,
+	// not the derived player.stock view.
 	const merged: ResourceInventory = {};
 	let hasVault = false;
 	for (const buildingId of player.buildings) {

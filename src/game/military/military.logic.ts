@@ -73,18 +73,18 @@ function getPrimaryVault(state: WorldState, playerId: string): BuildingInstance 
 
 export function getMilitaryMetrics(state: WorldState, playerId: string): MilitaryMetrics {
   const totalTiles = Math.max(1, Object.keys(state.territory.tiles).length);
+  const player = state.players[playerId];
   const enemyOwnerId = getEnemyOwnerId(state, playerId);
-  const soldiers = Object.values(state.workers).filter(
-    (worker) => worker.ownerId === playerId && worker.type === 'warInfant'
-  ).length;
+  const soldiers = player?.workers.filter((id) => state.workers[id]?.type === 'warInfant').length ?? 0;
   const spires = getPlayerBuildings(state, playerId).filter(
     (building) => building.type === 'spireOfJurisdiction' && building.isActive && isConstructed(building)
   );
-  const controlledTiles = Object.values(state.territory.tiles).filter((tile) => tile.ownerId === playerId).length;
-  const enemyTerritoryTiles = Object.values(state.territory.tiles).filter((tile) => {
-    if (enemyOwnerId) return tile.ownerId === enemyOwnerId;
-    return Boolean(tile.ownerId && tile.ownerId !== playerId);
-  }).length;
+  const controlledTiles = player?.territoryTileIds.length ?? 0;
+  const enemyTerritoryTiles = enemyOwnerId
+    ? state.players[enemyOwnerId]?.territoryTileIds.length ?? 0
+    : Object.values(state.players)
+      .filter((candidate) => candidate.id !== playerId)
+      .reduce((sum, candidate) => sum + candidate.territoryTileIds.length, 0);
   const spireDefense = spires.reduce(
     (sum, spire) => sum + SPIRE_BASE_DEFENSE + Math.max(0, spire.level - 1) * SPIRE_LEVEL_DEFENSE,
     0

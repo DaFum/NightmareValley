@@ -520,10 +520,9 @@ export function cancelConstruction(
     throw new Error(`Building ${buildingId} is already complete`);
   }
 
-  for (const tile of Object.values(next.territory.tiles)) {
-    if (tile.buildingId === buildingId) {
-      tile.buildingId = undefined;
-    }
+  const tile = getTileAt(next.territory, building.position.x, building.position.y);
+  if (tile?.buildingId === buildingId) {
+    tile.buildingId = undefined;
   }
 
   for (const workerId of building.assignedWorkers) {

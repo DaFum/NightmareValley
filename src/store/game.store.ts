@@ -117,17 +117,17 @@ function prepareInitialTerritory(ownerId: string, enemyOwnerId: string) {
 
     const dx = tile.position.x - start.x;
     const dy = tile.position.y - start.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const distanceSq = dx * dx + dy * dy;
 
-    if (distance <= ownedRadius) {
+    if (distanceSq <= ownedRadius * ownedRadius) {
       tile.ownerId = ownerId;
       ownedTileIds.push(tile.id);
     }
 
     const enemyDx = tile.position.x - enemyStart.x;
     const enemyDy = tile.position.y - enemyStart.y;
-    const enemyDistance = Math.sqrt(enemyDx * enemyDx + enemyDy * enemyDy);
-    if (enemyDistance <= enemyRadius) {
+    const enemyDistanceSq = enemyDx * enemyDx + enemyDy * enemyDy;
+    if (enemyDistanceSq <= enemyRadius * enemyRadius) {
       tile.ownerId = enemyOwnerId;
       if (tile.terrain === 'placentaLake' || tile.terrain === 'occupiedScar') {
         tile.terrain = 'scarredEarth';
