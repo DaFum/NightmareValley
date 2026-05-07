@@ -21,6 +21,15 @@ export function getInventoryForCostChecks(state: WorldState, ownerId: string): R
     }
   }
 
+  const stockEntries = Object.entries(player.stock ?? {});
+  if (
+    hasVault &&
+    stockEntries.length === Object.keys(merged).length &&
+    stockEntries.every(([resource, amount]) => (merged[resource] ?? 0) === (amount ?? 0))
+  ) {
+    return player.stock;
+  }
+
   // Warehouse-first contract: use vault buffers whenever any vault exists.
   return hasVault ? (merged as ResourceInventory) : player.stock;
 }

@@ -18,13 +18,12 @@ export function getWorkerInspectorModel(worker: WorkerInstance | null | undefine
 
 // Pure projection helper: returns a simulated assigned worker instance.
 export function projectAssignedWorker(worker: WorkerInstance, job: Job): WorkerInstance {
-  return { ...worker, currentJob: job, isIdle: false };
+  return { ...worker, currentJob: job, path: [], isIdle: false };
 }
 
 // Pure projection helper: returns a simulated cleared worker instance.
 export function projectClearedWorker(worker: WorkerInstance): WorkerInstance {
-  const { currentJob, ...rest } = worker;
-  return { ...rest, path: [], isIdle: true };
+  return { ...worker, currentJob: undefined, path: [], isIdle: true };
 }
 
 export function planWorkerRoute(grid: any, from: { x: number; y: number }, to: { x: number; y: number }) {
