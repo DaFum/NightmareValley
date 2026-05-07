@@ -1,15 +1,8 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
-import { ResourceType } from '../../game/core/economy.types';
-import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
-import { RECIPES } from '../../game/economy/recipes.data';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
-import { getEconomyPlanSnapshot } from '../../game/economy/economy.planner';
-import { WorldState } from '../../game/world/world.types';
+import { getSettlementSituationSnapshot } from '../../game/economy/economy.planner';
 import { GameScenarioProfile, player1Id, useGameStore } from '../../store/game.store';
-
-type BriefStatus = 'good' | 'warn' | 'idle';
 
 type BriefGoal = {
   label: string;
@@ -22,108 +15,45 @@ const scenarioLabels: Record<GameScenarioProfile, string> = {
   hardcore: 'Hardcore',
 };
 
-function getVaultInventory(buildings: WorldState['buildings']) {
-  const inventory: Partial<Record<ResourceType, number>> = {};
-  for (const building of Object.values(buildings)) {
-    if (building.ownerId !== player1Id || building.type !== 'vaultOfDigestiveStone') continue;
-    for (const [resource, amount] of Object.entries(building.outputBuffer)) {
-      const key = resource as ResourceType;
-      inventory[key] = (inventory[key] ?? 0) + (amount ?? 0);
-    }
-  }
-  return inventory;
-}
-
 export default function SettlementBriefPanel(): JSX.Element {
   const {
     activeScenario,
-    buildings,
-    workers,
-    transport,
+    gameState,
     setScenarioProfile,
   } = useGameStore(
     useShallow((state) => ({
       activeScenario: state.activeScenario,
-      buildings: state.gameState.buildings,
-      workers: state.gameState.workers,
-      transport: state.gameState.transport,
+      gameState: state.gameState,
       setScenarioProfile: state.setScenarioProfile,
     }))
   );
 
   const brief = useMemo(() => {
-    const playerBuildings = Object.values(buildings).filter((building) => building.ownerId === player1Id);
-    const inventory = getVaultInventory(buildings);
-    const carriers = Object.values(workers).filter((worker) => worker.ownerId === player1Id && worker.type === 'burdenThrall');
-    const idleCarriers = carriers.filter((worker) => worker.isIdle).length;
-    const queuedJobs = transport.queuedJobCount ?? 0;
-
-    let working = 0;
-    let starved = 0;
-    let blocked = 0;
-    for (const building of playerBuildings) {
-      const definition = BUILDING_DEFINITIONS[building.type];
-      const outputLimit = building.type === 'vaultOfDigestiveStone'
-        ? DEFAULT_SIMULATION_CONFIG.warehouseStorageLimit
-        : DEFAULT_SIMULATION_CONFIG.buildingOutputBufferLimit;
-      const outputFull = Object.values(building.outputBuffer).some((amount) => (amount ?? 0) >= outputLimit);
-
-      if (building.progressSec > 0 && outputFull) {
-        blocked++;
-      } else if (building.progressSec > 0) {
-        working++;
-      } else if (definition.recipeIds?.length) {
-        const recipe = RECIPES[building.currentRecipeId || definition.recipeIds[0]];
-        const isStarved = recipe
-          ? Object.entries(recipe.inputs).some(([resource, required]) => (building.inputBuffer[resource as ResourceType] ?? 0) < required)
-          : false;
-        if (isStarved) starved++;
-      }
-    }
-
-    const plannerSnapshot = getEconomyPlanSnapshot({ buildings, workers, transport } as WorldState, player1Id);
-    const goals: BriefGoal[] = getCampaignObjectives({ buildings, workers, transport } as WorldState, player1Id)
+    const situation = getSettlementSituationSnapshot(gameState, player1Id);
+    const objectives = getCampaignObjectives(gameState, player1Id);
+    const activeObjectiveIndex = objectives.findIndex((objective) => !objective.complete);
+    const firstVisibleObjective = activeObjectiveIndex < 0
+      ? Math.max(0, objectives.length - 6)
+      : Math.max(0, activeObjectiveIndex - 1);
+    const goals: BriefGoal[] = objectives
+      .slice(firstVisibleObjective, firstVisibleObjective + 6)
       .map((objective) => ({
         label: objective.target > 1 ? `${objective.label} ${Math.min(objective.current, objective.target)}/${objective.target}` : objective.label,
         done: objective.complete,
       }));
 
-    let status: BriefStatus = 'good';
-    let statusText = 'Settlement stable';
-    if (blocked > 0 || queuedJobs > carriers.length * 2) {
-      status = 'warn';
-      statusText = 'Logistics pressure';
-    } else if (starved > working && playerBuildings.length > 3) {
-      status = 'warn';
-      statusText = 'Inputs starved';
-    } else if (working === 0) {
-      status = 'idle';
-      statusText = 'Awaiting orders';
-    }
-
     return {
-      status,
-      statusText,
+      ...situation,
       goals,
-      working,
-      starved,
-      blocked,
-      idleCarriers,
-      carrierCount: carriers.length,
-      queuedJobs,
-      plankStock: inventory.toothPlanks ?? 0,
-      stoneStock: inventory.sepulcherStone ?? 0,
-      recommendation: plannerSnapshot.recommendation,
-      bottlenecks: plannerSnapshot.bottlenecks.slice(0, 3),
     };
-  }, [buildings, transport.queuedJobCount, workers]);
+  }, [gameState]);
 
   return (
     <section className="settlement-brief macabre-panel" aria-label="Settlement brief">
       <div className="settlement-brief__header">
         <div>
           <h2>Settlement Brief</h2>
-          <p className={`settlement-brief__status settlement-brief__status--${brief.status}`}>{brief.statusText}</p>
+          <p className={`settlement-brief__status settlement-brief__status--${brief.status}`}>{brief.headline}</p>
         </div>
         <div className="settlement-brief__scenario" aria-label="Scenario profile">
           {(Object.keys(scenarioLabels) as GameScenarioProfile[]).map((profile) => (
@@ -140,25 +70,36 @@ export default function SettlementBriefPanel(): JSX.Element {
       </div>
 
       <div className="settlement-brief__metrics">
-        <span><strong>{brief.working}</strong> working</span>
-        <span><strong>{brief.starved}</strong> starved</span>
-        <span><strong>{brief.blocked}</strong> blocked</span>
-        <span><strong>{brief.idleCarriers}/{brief.carrierCount}</strong> carriers idle</span>
-        <span><strong>{brief.queuedJobs}</strong> queued</span>
-        <span><strong>{brief.plankStock}</strong> planks</span>
-        <span><strong>{brief.stoneStock}</strong> stone</span>
+        <span><strong>{brief.economy.workingBuildings}</strong> working</span>
+        <span><strong>{brief.economy.starvedBuildings}</strong> starved</span>
+        <span><strong>{brief.economy.blockedBuildings}</strong> blocked</span>
+        <span><strong>{brief.transport.idleCarriers}/{brief.transport.totalCarriers}</strong> carriers idle</span>
+        <span><strong>{brief.transport.queuedJobs}</strong> queued</span>
+        <span><strong>{Math.round(brief.military.defenseStrength)}</strong> defense</span>
+        <span><strong>{Math.round(brief.military.enemyPressure)}</strong> pressure</span>
       </div>
 
-      <div className="settlement-brief__recommendation">
+      <div className={`settlement-brief__recommendation settlement-brief__recommendation--${brief.status}`}>
         <span>Next order</span>
-        <strong>{brief.recommendation.label}</strong>
-        <small>{brief.recommendation.reason}</small>
+        <strong>{brief.primaryAction.label}</strong>
+        <small>{brief.primaryAction.detail}</small>
       </div>
 
-      {brief.bottlenecks.length > 0 && (
-        <ul className="settlement-brief__bottlenecks" aria-label="Economy bottlenecks">
-          {brief.bottlenecks.map((bottleneck) => (
-            <li key={`${bottleneck.buildingId}-${bottleneck.kind}`}>{bottleneck.label}</li>
+      {brief.objective && (
+        <div className="settlement-brief__objective" aria-label="Current campaign objective">
+          <span>{brief.objective.chapter}</span>
+          <strong>{brief.objective.label}</strong>
+          <small>{brief.objective.progressLabel}</small>
+        </div>
+      )}
+
+      {brief.topIssues.length > 0 && (
+        <ul className="settlement-brief__issues" aria-label="Settlement issues">
+          {brief.topIssues.map((issue) => (
+            <li key={`${issue.kind}-${issue.label}`} className={`settlement-brief__issue settlement-brief__issue--${issue.tone}`}>
+              <strong>{issue.label}</strong>
+              <small>{issue.action}</small>
+            </li>
           ))}
         </ul>
       )}

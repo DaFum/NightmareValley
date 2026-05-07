@@ -220,8 +220,3 @@ Use `ISO_TILE_WIDTH` / `ISO_TILE_HEIGHT` / `HALF_TILE_HEIGHT` from `iso.constant
 - Hardcoding player IDs as strings — import `player1Id` from `game.store.ts`.
 - Leaving generated screenshots tracked in git.
 
-## When to open an issue
-
-- Missing assets referenced by `manifest.json`.
-- Repeated runtime `Unhandled promise rejection` originating from the texture loader.
-- Broad refactors touching rendering or game loop — discuss via issue before implementation.

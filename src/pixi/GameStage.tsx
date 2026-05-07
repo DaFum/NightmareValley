@@ -22,7 +22,8 @@ import { useIsoCamera } from './hooks/useIsoCamera';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
-import { canPreviewPlaceBuilding } from '../store/buildingDomain';
+import { getIsoViewportBounds, isIsoPointInBounds } from '../game/render/render.culling';
+import { getPlacementValidation } from '../store/simulation.selectors';
 import { isoScreenToTile } from './iso/iso.adapter';
 import { isRemovableRoadTile } from '../game/entities/roads/road.validation';
 
@@ -115,10 +116,17 @@ export function GameStage() {
 
   const visibleTiles = useMemo(() => {
     const padding = lodLevel === 'full' ? 192 : 128;
-    const minX = (-centerX - cameraX - padding) / zoom;
-    const maxX = (viewportWidth - centerX - cameraX + padding) / zoom;
-    const minY = (-centerY - cameraY - padding) / zoom;
-    const maxY = (viewportHeight - centerY - cameraY + padding) / zoom;
+    const bounds = getIsoViewportBounds({
+      cameraX,
+      cameraY,
+      centerX,
+      centerY,
+      viewportWidth,
+      viewportHeight,
+      zoom,
+      padding,
+    });
+    const { minX, maxX, minY, maxY } = bounds;
     const minChunkX = Math.floor(minX / CHUNK_SCREEN_SIZE);
     const maxChunkX = Math.floor(maxX / CHUNK_SCREEN_SIZE);
     const minChunkY = Math.floor(minY / CHUNK_SCREEN_SIZE);
@@ -132,12 +140,7 @@ export function GameStage() {
         if (!indices) continue;
         for (const i of indices) {
           const tile = world.tiles[i];
-          if (
-            tile.screenX >= minX &&
-            tile.screenX <= maxX &&
-            tile.screenY >= minY &&
-            tile.screenY <= maxY
-          ) {
+          if (isIsoPointInBounds(tile, bounds)) {
             filtered.push(tile);
           }
         }
@@ -166,9 +169,9 @@ export function GameStage() {
     });
   }, [selectedBuildingToPlace, roadPlacementMode, roadRemovalMode, centerX, cameraX, centerY, cameraY, zoom]);
 
-  const isGhostValid = useMemo(() => {
-    if (!ghostTile || !selectedBuildingToPlace) return false;
-    return canPreviewPlaceBuilding(gameState, player1Id, selectedBuildingToPlace, ghostTile.x, ghostTile.y);
+  const ghostPlacement = useMemo(() => {
+    if (!ghostTile || !selectedBuildingToPlace) return null;
+    return getPlacementValidation(gameState, player1Id, selectedBuildingToPlace, ghostTile.x, ghostTile.y);
   }, [gameState, ghostTile, selectedBuildingToPlace]);
 
   const isRoadGhostValid = useMemo(() => {
@@ -215,7 +218,10 @@ export function GameStage() {
           buildingType={selectedBuildingToPlace}
           hoveredTileX={ghostTile.x}
           hoveredTileY={ghostTile.y}
-          isValid={isGhostValid}
+          isValid={ghostPlacement?.ok ?? false}
+          reason={ghostPlacement?.message}
+          footprintWidth={ghostPlacement?.width ?? 1}
+          footprintHeight={ghostPlacement?.height ?? 1}
         />
       )}
       {(roadPlacementMode || roadRemovalMode) && ghostTile && (

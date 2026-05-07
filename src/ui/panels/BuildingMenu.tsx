@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useUIStore } from '../../store/ui.store';
+import { useUIStore, type PlacementFeedback } from '../../store/ui.store';
 import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
@@ -70,6 +70,7 @@ export function BuildingMenu() {
     selectBuildingToPlace,
     roadPlacementMode,
     roadRemovalMode,
+    placementFeedback,
     toggleRoadPlacementMode,
     toggleRoadRemovalMode,
   } = useUIStore();
@@ -127,6 +128,7 @@ export function BuildingMenu() {
     isOpen,
     roadPlacementMode,
     roadRemovalMode,
+    placementFeedback,
     selectedBuildingToPlace,
   });
   const categoryBuildingTypes = CATEGORY_BUILDINGS[category];
@@ -149,6 +151,7 @@ export function BuildingMenu() {
         onClick={toggleRoadPlacementMode}
         className={`macabre-panel build-dock__toggle ${roadPlacementMode ? 'active' : ''}`}
         aria-pressed={roadPlacementMode}
+        aria-label="Toggle road building tool"
         title="Place scar paths on owned buildable tiles"
       >
         Road
@@ -157,6 +160,7 @@ export function BuildingMenu() {
         onClick={toggleRoadRemovalMode}
         className={`macabre-panel build-dock__toggle ${roadRemovalMode ? 'active' : ''}`}
         aria-pressed={roadRemovalMode}
+        aria-label="Toggle road removal tool"
         title="Remove scar paths from owned road tiles"
       >
         Clear road
@@ -188,6 +192,7 @@ export function BuildingMenu() {
                 className={`build-menu-tab ${category === key ? 'active' : ''}`}
                 onClick={() => setCategory(key)}
                 aria-pressed={category === key}
+                aria-label={`Build category: ${CATEGORY_LABELS[key]}`}
               >
                 {CATEGORY_LABELS[key]}
               </button>
@@ -200,6 +205,7 @@ export function BuildingMenu() {
                 onClick={toggleRoadPlacementMode}
                 className={`building-option ${roadPlacementMode ? 'selected' : ''}`}
                 aria-pressed={roadPlacementMode}
+                aria-label="Select road building tool"
                 title="Place scar paths on owned buildable tiles"
               >
                 <span className="building-option__header">
@@ -215,6 +221,7 @@ export function BuildingMenu() {
                 onClick={toggleRoadRemovalMode}
                 className={`building-option ${roadRemovalMode ? 'selected' : ''}`}
                 aria-pressed={roadRemovalMode}
+                aria-label="Select road removal tool"
                 title="Remove scar paths from owned road tiles"
               >
                 <span className="building-option__header">
@@ -295,13 +302,17 @@ function getToolHint({
   isOpen,
   roadPlacementMode,
   roadRemovalMode,
+  placementFeedback,
   selectedBuildingToPlace,
 }: {
   isOpen: boolean;
   roadPlacementMode: boolean;
   roadRemovalMode: boolean;
+  placementFeedback: PlacementFeedback | null;
   selectedBuildingToPlace: BuildingType | null;
 }) {
+  if (placementFeedback) return placementFeedback;
+
   if (selectedBuildingToPlace) {
     const definition = BUILDING_DEFINITIONS[selectedBuildingToPlace];
     return {

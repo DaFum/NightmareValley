@@ -5,10 +5,11 @@ import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
 import { BuildingInstance } from '../../game/core/game.types';
 import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
-import { getBottleneckAction, getEconomyPlanSnapshot } from '../../game/economy/economy.planner';
+import { getBottleneckAction, getEconomyPlanSnapshot, getSettlementSituationSnapshot } from '../../game/economy/economy.planner';
 import { getTransportRouteDiagnostic } from '../../game/transport';
 import { getProductionStatus } from '../../game/entities/buildings/building.status';
 import type { EconomySimulationState } from '../../game/core/economy.simulation';
+import type { WorldState } from '../../game/world/world.types';
 
 const fmt1 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const fmtPct = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
@@ -64,7 +65,7 @@ function getRoadDisconnectedDetail(
 }
 
 export default function EconomyPanel(): JSX.Element | null {
-  const { buildings, workers, transport, territory, players, ageOfTeeth, tick, worldPulse } = useGameStore(
+  const { buildings, workers, transport, territory, players, ageOfTeeth, tick, worldPulse, military } = useGameStore(
     useShallow((s) => ({
       buildings: s.gameState.buildings,
       workers: s.gameState.workers,
@@ -74,6 +75,7 @@ export default function EconomyPanel(): JSX.Element | null {
       ageOfTeeth: s.gameState.ageOfTeeth,
       tick: s.gameState.tick,
       worldPulse: s.gameState.worldPulse,
+      military: s.gameState.military,
     }))
   );
 
@@ -159,8 +161,13 @@ export default function EconomyPanel(): JSX.Element | null {
   }, [buildings, transport.activeCarrierTasks]);
 
   const plannerSnapshot = useMemo(
-    () => getEconomyPlanSnapshot({ buildings, workers, transport } as any, player1Id),
-    [buildings, transport, workers]
+    () => getEconomyPlanSnapshot({ buildings, workers, transport, players, territory, ageOfTeeth, tick, worldPulse, military } as WorldState, player1Id),
+    [ageOfTeeth, buildings, military, players, territory, tick, transport, workers, worldPulse]
+  );
+
+  const situationSnapshot = useMemo(
+    () => getSettlementSituationSnapshot({ buildings, workers, transport, players, territory, ageOfTeeth, tick, worldPulse, military } as WorldState, player1Id),
+    [ageOfTeeth, buildings, military, players, territory, tick, transport, workers, worldPulse]
   );
 
   const carriers = Object.values(workers).filter(
@@ -242,6 +249,10 @@ export default function EconomyPanel(): JSX.Element | null {
               <div><dt>Avg latency</dt><dd>{latency}s</dd></div>
               <div><dt>Net stress</dt><dd>{stress}</dd></div>
             </dl>
+            <p className={`econ-transport-advice econ-transport-advice--${situationSnapshot.transport.tone}`}>
+              <strong>{situationSnapshot.transport.headline}</strong>
+              <span>{situationSnapshot.transport.action}</span>
+            </p>
           </section>
 
           <section className="economy-panel__section" aria-label="Resource flow">
@@ -281,10 +292,10 @@ export default function EconomyPanel(): JSX.Element | null {
         </div>
       </div>
 
-      {topBottleneck && (
-        <div className={`economy-panel__action economy-panel__action--${topBottleneck.kind}`}>
-          <strong>{topBottleneck.label}</strong>
-          <span>{getBottleneckAction(topBottleneck)}</span>
+      {(topBottleneck || situationSnapshot.primaryAction) && (
+        <div className={`economy-panel__action economy-panel__action--${topBottleneck?.kind ?? situationSnapshot.status}`}>
+          <strong>{topBottleneck?.label ?? situationSnapshot.primaryAction.label}</strong>
+          <span>{topBottleneck ? getBottleneckAction(topBottleneck) : situationSnapshot.primaryAction.detail}</span>
         </div>
       )}
     </div>

@@ -7,6 +7,9 @@ import { resolvePointerToTile } from '../../store/mapInteractionDomain';
 import { useSelectionStore } from '../../store/selection.store';
 import { useUIStore } from '../../store/ui.store';
 import { useIsoPointer } from './useIsoPointer';
+import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
+import { canAffordBuildingForPlayer, getPlacementValidation } from '../../store/simulation.selectors';
+import { canPlaceRoadForPlayer, isRemovableRoadTile, type RoadPlacementReason } from '../../game/entities/roads/road.api';
 
 interface SelectionInputOptions {
   world: IsoRenderWorld;
@@ -37,6 +40,8 @@ export function useSelectionInput({
   const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
   const isDebugSpawningWarehouse = useUIStore((state) => state.isDebugSpawningWarehouse);
   const setDebugSpawningWarehouse = useUIStore((state) => state.setDebugSpawningWarehouse);
+  const setPlacementFeedback = useUIStore((state) => state.setPlacementFeedback);
+  const clearPlacementFeedback = useUIStore((state) => state.clearPlacementFeedback);
   const selectBuilding = useSelectionStore((state) => state.selectBuilding);
   const selectWorker = useSelectionStore((state) => state.selectWorker);
   const selectTile = useSelectionStore((state) => state.selectTile);
@@ -60,22 +65,129 @@ export function useSelectionInput({
 
     const hit = resolveIsoHitRef.current(event.global.x, event.global.y);
     const tileRef = resolvePointerToTile(gameState, event.global.x, event.global.y, centerX + cameraX, centerY + cameraY, zoom);
-    const placementModeActive = isDebugSpawningWarehouse || !!selectedBuildingToPlace || roadPlacementMode || roadRemovalMode;
     const tileId = tileRef?.tile.id ?? hit.tileId;
-    const placementBlocked = !!tileId && (!!hit.buildingId || !!hit.workerId);
-    if (placementModeActive && placementBlocked) {
-      if (isDebugSpawningWarehouse) setDebugSpawningWarehouse(false);
-      if (selectedBuildingToPlace) selectBuildingToPlace(null);
+    const tile = tileId ? gameState.territory.tiles[tileId] : undefined;
+
+    if (selectedBuildingToPlace) {
+      const definition = BUILDING_DEFINITIONS[selectedBuildingToPlace];
+      const label = definition?.name ?? selectedBuildingToPlace;
+
+      if (!tile) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: `Cannot place ${label}`,
+          detail: 'Move the cursor back over known ground.',
+        });
+        return;
+      }
+
+      if (hit.workerId) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: `Cannot place ${label}`,
+          detail: 'A worker is standing on this tile. Wait for the tile to clear or choose another spot.',
+        });
+        return;
+      }
+
+      if (!canAffordBuildingForPlayer(gameState, player1Id, selectedBuildingToPlace)) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: `Cannot place ${label}`,
+          detail: 'The vault lacks the required build materials. Open Build to see missing costs.',
+        });
+        return;
+      }
+
+      const validation = getPlacementValidation(
+        gameState,
+        player1Id,
+        selectedBuildingToPlace,
+        tile.position.x,
+        tile.position.y,
+      );
+
+      if (!validation.ok) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: `Cannot place ${label}`,
+          detail: validation.message,
+        });
+        return;
+      }
+
+      const placed = placeBuildingAt(player1Id, selectedBuildingToPlace, tile.id);
+      if (placed) {
+        clearPlacementFeedback();
+        selectBuildingToPlace(null);
+      } else {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: `Cannot place ${label}`,
+          detail: 'Placement was rejected by the simulation. Try a nearby owned valid tile.',
+        });
+      }
       return;
     }
 
-    if (roadPlacementMode && tileId && !hit.buildingId && !hit.workerId) {
-      placeRoadAt(player1Id, tileId);
+    if (roadPlacementMode) {
+      if (!tile) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: 'Road blocked',
+          detail: 'Move the cursor back over known ground.',
+        });
+        return;
+      }
+      if (hit.workerId) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: 'Road blocked',
+          detail: 'A worker is standing on this tile. Wait for the tile to clear or route around it.',
+        });
+        return;
+      }
+      const roadValidation = canPlaceRoadForPlayer(gameState.territory, tile.position.x, tile.position.y, player1Id);
+      if (!roadValidation.ok) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: 'Road blocked',
+          detail: getRoadPlacementMessage(roadValidation.reason),
+        });
+        return;
+      }
+      placeRoadAt(player1Id, tile.id);
+      clearPlacementFeedback();
       return;
     }
 
-    if (roadRemovalMode && tileId && !hit.buildingId && !hit.workerId) {
-      removeRoadAt(player1Id, tileId);
+    if (roadRemovalMode) {
+      if (!tile || tile.ownerId !== player1Id) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: 'Cannot clear road',
+          detail: 'Only owned road tiles can be removed.',
+        });
+        return;
+      }
+      if (hit.workerId || hit.buildingId) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: 'Cannot clear road',
+          detail: 'Clear roads only on empty road tiles.',
+        });
+        return;
+      }
+      if (!isRemovableRoadTile(tile)) {
+        setPlacementFeedback({
+          tone: 'warn',
+          label: 'Cannot clear road',
+          detail: 'Select an owned scar path tile to remove.',
+        });
+        return;
+      }
+      removeRoadAt(player1Id, tile.id);
+      clearPlacementFeedback();
       return;
     }
 
@@ -85,20 +197,18 @@ export function useSelectionInput({
       return;
     }
 
-    if (selectedBuildingToPlace && tileId && !hit.buildingId && !hit.workerId) {
-      const placed = placeBuildingAt(player1Id, selectedBuildingToPlace, tileId);
-      if (placed) selectBuildingToPlace(null);
-      return;
-    }
-
     if (hit.buildingId) {
+      clearPlacementFeedback();
       selectBuilding(hit.buildingId);
     } else if (hit.workerId) {
+      clearPlacementFeedback();
       selectWorker(hit.workerId);
     } else {
+      clearPlacementFeedback();
       selectTile(tileId ?? null);
     }
   }, [
+    clearPlacementFeedback,
     isDebugSpawningWarehouse,
     placeBuildingAt,
     placeRoadAt,
@@ -110,6 +220,7 @@ export function useSelectionInput({
     selectTile,
     selectWorker,
     selectedBuildingToPlace,
+    setPlacementFeedback,
     setDebugSpawningWarehouse,
     spacePressedRef,
     gameState,
@@ -122,3 +233,22 @@ export function useSelectionInput({
 }
 
 export default useSelectionInput;
+
+function getRoadPlacementMessage(reason: RoadPlacementReason): string {
+  switch (reason) {
+    case 'out_of_bounds':
+      return 'Move the cursor back over known ground.';
+    case 'occupied':
+      return 'Roads need an empty tile.';
+    case 'dirt_path':
+    case 'already_road':
+      return 'This tile is already part of the road network.';
+    case 'invalid_terrain':
+      return 'Roads can be built on scarred earth, forest, or ash bog terrain.';
+    case 'unowned':
+      return 'Claim this tile before building a road here.';
+    default:
+      const _exhaustive: never = reason;
+      return 'This tile cannot accept a road.';
+  }
+}

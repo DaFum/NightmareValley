@@ -1,8 +1,18 @@
 import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { BuildingType, ResourceType } from '../core/economy.types';
-import { aggregateVaultInventory, GameObjective, getCampaignObjectives } from '../core/victory.rules';
+import { aggregateVaultInventory, CampaignObjectiveMetric, GameObjective, getCampaignObjectives } from '../core/victory.rules';
+import { getMilitaryMetrics } from '../military';
 import { WorldState } from '../world/world.types';
-import { DEFAULT_SIMULATION_CONFIG } from './balancing.constants';
+import {
+  DEFAULT_SIMULATION_CONFIG,
+  ENEMY_PRESSURE_WARNING_THRESHOLD,
+  NEXT_ATTACK_WARNING_SEC,
+  TRANSPORT_AVERAGE_LATENCY_WARNING_SEC,
+  TRANSPORT_NETWORK_STRESS_WARNING,
+  TRANSPORT_QUEUE_CARRIER_BACKLOG_MULTIPLIER,
+  TRANSPORT_QUEUE_MIN_BACKLOG_WARNING,
+  VAULT_CRITICAL_INTEGRITY_PERCENT,
+} from './balancing.constants';
 import { RECIPES } from './recipes.data';
 
 export type EconomyBottleneckKind =
@@ -36,6 +46,8 @@ const ECONOMY_ACTION_UTILITY = {
   resourceMatch: 1.2,
 } as const;
 
+const ECONOMY_BOTTLENECK_DISPLAY_LIMIT = 8;
+
 export function getEconomyRecommendationUtilityBonus(
   recommendation: EconomyRecommendation,
   actionTags: string[]
@@ -57,6 +69,67 @@ export type EconomyPlanSnapshot = {
   nextObjective?: GameObjective;
   recommendation: EconomyRecommendation;
   bottlenecks: EconomyBottleneck[];
+};
+
+export type SettlementSituationTone = 'good' | 'idle' | 'warn' | 'danger';
+
+export type SettlementSituationIssueKind = 'economy' | 'transport' | 'military' | 'objective';
+
+export type SettlementSituationIssue = {
+  kind: SettlementSituationIssueKind;
+  tone: Exclude<SettlementSituationTone, 'good' | 'idle'>;
+  label: string;
+  action: string;
+  buildingId?: string;
+  resourceType?: ResourceType;
+};
+
+export type SettlementSituationSnapshot = {
+  status: SettlementSituationTone;
+  headline: string;
+  primaryAction: {
+    label: string;
+    detail: string;
+    buildingType?: BuildingType;
+    resourceType?: ResourceType;
+  };
+  objective?: {
+    id: GameObjective['id'];
+    label: string;
+    chapter: GameObjective['chapter'];
+    progressLabel: string;
+    complete: boolean;
+  };
+  economy: {
+    workingBuildings: number;
+    starvedBuildings: number;
+    blockedBuildings: number;
+    bottlenecks: EconomyBottleneck[];
+  };
+  transport: {
+    tone: SettlementSituationTone;
+    headline: string;
+    detail: string;
+    action: string;
+    queuedJobs: number;
+    totalCarriers: number;
+    busyCarriers: number;
+    idleCarriers: number;
+    averageLatencySec: number;
+    networkStress: number;
+  };
+  military: {
+    tone: SettlementSituationTone;
+    headline: string;
+    detail: string;
+    action: string;
+    enemyPressure: number;
+    defenseStrength: number;
+    vaultIntegrity: number;
+    nextAttackSec: number;
+    activeRaidStrength: number;
+  };
+  topIssues: SettlementSituationIssue[];
 };
 
 export function getBottleneckAction(bottleneck: EconomyBottleneck): string {
@@ -174,7 +247,7 @@ function findFirstMissingProducer(
   return undefined;
 }
 
-export function getEconomyBottlenecks(state: WorldState, ownerId?: string): EconomyBottleneck[] {
+function collectEconomyBottlenecks(state: WorldState, ownerId?: string): EconomyBottleneck[] {
   const bottlenecks: EconomyBottleneck[] = [];
 
   for (const building of Object.values(state.buildings)) {
@@ -261,7 +334,11 @@ export function getEconomyBottlenecks(state: WorldState, ownerId?: string): Econ
     }
   }
 
-  return bottlenecks.slice(0, 8);
+  return bottlenecks;
+}
+
+export function getEconomyBottlenecks(state: WorldState, ownerId?: string): EconomyBottleneck[] {
+  return collectEconomyBottlenecks(state, ownerId).slice(0, ECONOMY_BOTTLENECK_DISPLAY_LIMIT);
 }
 
 export function getEconomyRecommendation(state: WorldState, ownerId?: string): EconomyRecommendation {
@@ -309,10 +386,359 @@ export function getEconomyRecommendation(state: WorldState, ownerId?: string): E
     };
   }
 
+  if (nextObjective.metricType) {
+    return getMetricRecommendation(nextObjective.metricType, nextObjective);
+  }
+
   return {
     label: nextObjective.label,
     reason: 'Complete the next campaign objective.',
     objective: nextObjective,
+  };
+}
+
+function getMetricRecommendation(
+  metricType: CampaignObjectiveMetric,
+  objective: GameObjective
+): EconomyRecommendation {
+  const remaining = Math.max(0, objective.target - objective.current);
+
+  switch (metricType) {
+    case 'controlledTiles':
+      return {
+        label: 'Expand controlled territory',
+        reason: `Build or upgrade a Spire of Jurisdiction near the frontier to claim ${remaining} more tiles.`,
+        objective,
+      };
+    case 'defenseStrength':
+      return {
+        label: 'Muster border defense',
+        reason: `Recruit War Infants and staff Spires until defense strength rises by ${remaining}.`,
+        objective,
+      };
+    case 'raidsRepelled':
+      return {
+        label: 'Survive the next attack wave',
+        reason: 'Keep the vault defended until the next raid is repelled.',
+        objective,
+      };
+    default:
+      return {
+        label: objective.label,
+        reason: 'Complete the next campaign objective.',
+        objective,
+      };
+  }
+}
+
+function getObjectiveSnapshot(objective: GameObjective | undefined): SettlementSituationSnapshot['objective'] {
+  if (!objective) return undefined;
+  return {
+    id: objective.id,
+    label: objective.label,
+    chapter: objective.chapter,
+    progressLabel: `${Math.min(objective.current, objective.target)}/${objective.target}`,
+    complete: objective.complete,
+  };
+}
+
+function getEconomyActivity(state: WorldState, ownerId?: string): SettlementSituationSnapshot['economy'] {
+  const allBottlenecks = collectEconomyBottlenecks(state, ownerId);
+  const bottlenecks = allBottlenecks.slice(0, ECONOMY_BOTTLENECK_DISPLAY_LIMIT);
+  let workingBuildings = 0;
+
+  for (const building of Object.values(state.buildings)) {
+    if (ownerId && building.ownerId !== ownerId) continue;
+    if (building.type === 'vaultOfDigestiveStone') continue;
+    if (!building.isActive) continue;
+    if ((building.progressSec ?? 0) > 0) workingBuildings++;
+  }
+
+  return {
+    workingBuildings,
+    starvedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').length,
+    blockedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'outputFull' || bottleneck.kind === 'roadDisconnected').length,
+    bottlenecks,
+  };
+}
+
+function getTransportSituation(state: WorldState, ownerId?: string): SettlementSituationSnapshot['transport'] {
+  const carriers = Object.values(state.workers).filter(
+    (worker) => (!ownerId || worker.ownerId === ownerId) && worker.type === 'burdenThrall'
+  );
+  const activeTasks = Object.values(state.transport?.activeCarrierTasks ?? {}).filter((task) => {
+    if (!ownerId) return true;
+    const worker = state.workers[task.workerId];
+    return worker?.ownerId === ownerId;
+  });
+  const totalCarriers = carriers.length;
+  const busyCarriers = activeTasks.length;
+  const idleCarriers = Math.max(0, totalCarriers - busyCarriers);
+  const queuedJobs = state.transport?.queuedJobCount ?? 0;
+  const averageLatencySec = state.transport?.averageLatencySec ?? 0;
+  const networkStress = state.transport?.networkStress ?? 0;
+
+  if (queuedJobs > 0 && totalCarriers === 0) {
+    return {
+      tone: 'warn',
+      headline: 'No carriers can answer queued jobs',
+      detail: `${queuedJobs} deliveries are waiting, but the settlement has no available Burden Thralls.`,
+      action: 'Inspect the vault and hire Burden Thralls before adding more production.',
+      queuedJobs,
+      totalCarriers,
+      busyCarriers,
+      idleCarriers,
+      averageLatencySec,
+      networkStress,
+    };
+  }
+
+  if (queuedJobs > Math.max(TRANSPORT_QUEUE_MIN_BACKLOG_WARNING, totalCarriers * TRANSPORT_QUEUE_CARRIER_BACKLOG_MULTIPLIER)) {
+    return {
+      tone: 'warn',
+      headline: 'Transport queue is backing up',
+      detail: `${queuedJobs} queued jobs are competing for ${totalCarriers} carriers.`,
+      action: 'Hire more carriers, shorten roads, or raise delivery priority on starved buildings.',
+      queuedJobs,
+      totalCarriers,
+      busyCarriers,
+      idleCarriers,
+      averageLatencySec,
+      networkStress,
+    };
+  }
+
+  if (networkStress >= TRANSPORT_NETWORK_STRESS_WARNING || averageLatencySec >= TRANSPORT_AVERAGE_LATENCY_WARNING_SEC) {
+    return {
+      tone: 'warn',
+      headline: 'Routes are too slow',
+      detail: `Average latency is ${averageLatencySec.toFixed(1)}s with network stress ${networkStress.toFixed(1)}.`,
+      action: 'Pave high-footfall roads and keep vault-to-workplace routes direct.',
+      queuedJobs,
+      totalCarriers,
+      busyCarriers,
+      idleCarriers,
+      averageLatencySec,
+      networkStress,
+    };
+  }
+
+  if (queuedJobs === 0 && busyCarriers === 0) {
+    return {
+      tone: totalCarriers > 0 ? 'idle' : 'warn',
+      headline: totalCarriers > 0 ? 'Transport idle' : 'No carriers recruited',
+      detail: totalCarriers > 0
+        ? 'No deliveries are waiting right now.'
+        : 'Production will stall once resources need to move.',
+      action: totalCarriers > 0
+        ? 'Build another production chain or inspect bottlenecks before expanding.'
+        : 'Hire Burden Thralls from the vault before relying on logistics.',
+      queuedJobs,
+      totalCarriers,
+      busyCarriers,
+      idleCarriers,
+      averageLatencySec,
+      networkStress,
+    };
+  }
+
+  return {
+    tone: 'good',
+    headline: 'Transport moving',
+    detail: `${busyCarriers}/${totalCarriers} carriers are moving goods; ${queuedJobs} jobs are queued.`,
+    action: 'Keep high-demand buildings connected and watch for growing queues.',
+    queuedJobs,
+    totalCarriers,
+    busyCarriers,
+    idleCarriers,
+    averageLatencySec,
+    networkStress,
+  };
+}
+
+function getMilitarySituation(state: WorldState, ownerId?: string): SettlementSituationSnapshot['military'] {
+  const player = ownerId ? state.players[ownerId] : Object.values(state.players)[0];
+  const military = state.military;
+  const metrics = player
+    ? getMilitaryMetrics(state, player.id)
+    : {
+      defenseStrength: 0,
+      vaultIntegrity: 0,
+    };
+  const nextAttackSec = military?.activeRaid
+    ? 0
+    : Math.max(0, (military?.nextAttackAge ?? Number.POSITIVE_INFINITY) - state.ageOfTeeth);
+  const enemyPressure = military?.enemyPressure ?? 0;
+  const activeRaidStrength = military?.activeRaid?.strength ?? 0;
+  const defenseStrength = metrics.defenseStrength ?? 0;
+  const vaultIntegrity = metrics.vaultIntegrity ?? 0;
+
+  if (military?.activeRaid) {
+    return {
+      tone: 'danger',
+      headline: 'Attack in progress',
+      detail: `Raid strength ${activeRaidStrength}; defense strength ${defenseStrength}. Vault integrity ${Math.round(vaultIntegrity)}%.`,
+      action: 'Recruit War Infants and keep Spires staffed until the raid breaks.',
+      enemyPressure,
+      defenseStrength,
+      vaultIntegrity,
+      nextAttackSec,
+      activeRaidStrength,
+    };
+  }
+
+  if (vaultIntegrity > 0 && vaultIntegrity <= VAULT_CRITICAL_INTEGRITY_PERCENT) {
+    return {
+      tone: 'danger',
+      headline: 'Vault integrity critical',
+      detail: `The vault is at ${Math.round(vaultIntegrity)}% integrity.`,
+      action: 'Pause expansion and reinforce defense before the next raid lands.',
+      enemyPressure,
+      defenseStrength,
+      vaultIntegrity,
+      nextAttackSec,
+      activeRaidStrength,
+    };
+  }
+
+  if (enemyPressure >= ENEMY_PRESSURE_WARNING_THRESHOLD || nextAttackSec <= NEXT_ATTACK_WARNING_SEC) {
+    return {
+      tone: 'warn',
+      headline: 'Border pressure rising',
+      detail: nextAttackSec <= NEXT_ATTACK_WARNING_SEC
+        ? `The next attack is expected in ${Math.round(nextAttackSec)}s.`
+        : `Enemy pressure is ${Math.round(enemyPressure)}.`,
+      action: 'Build or upgrade Spires and recruit War Infants before the warning becomes a raid.',
+      enemyPressure,
+      defenseStrength,
+      vaultIntegrity,
+      nextAttackSec,
+      activeRaidStrength,
+    };
+  }
+
+  return {
+    tone: 'good',
+    headline: 'Border contained',
+    detail: `Defense strength ${defenseStrength}; enemy pressure ${Math.round(enemyPressure)}.`,
+    action: 'Keep one reserve of Funeral Loaf and Rib Blades for emergency recruitment.',
+    enemyPressure,
+    defenseStrength,
+    vaultIntegrity,
+    nextAttackSec,
+    activeRaidStrength,
+  };
+}
+
+function issueToneRank(tone: SettlementSituationIssue['tone']): number {
+  return tone === 'danger' ? 0 : 1;
+}
+
+function getIssueFingerprint(issue: SettlementSituationIssue): string {
+  return [
+    issue.kind,
+    issue.tone,
+    issue.label,
+    issue.action,
+    issue.resourceType ?? '',
+  ].join('|');
+}
+
+function dedupeSituationIssues(issues: SettlementSituationIssue[]): SettlementSituationIssue[] {
+  const seen = new Set<string>();
+  const uniqueIssues: SettlementSituationIssue[] = [];
+
+  for (const issue of issues) {
+    const fingerprint = getIssueFingerprint(issue);
+    if (seen.has(fingerprint)) continue;
+    seen.add(fingerprint);
+    uniqueIssues.push(issue);
+  }
+
+  return uniqueIssues;
+}
+
+function getSituationHeadline(status: SettlementSituationTone): string {
+  switch (status) {
+    case 'danger':
+      return 'Settlement in immediate danger';
+    case 'warn':
+      return 'Settlement needs intervention';
+    case 'idle':
+      return 'Settlement awaiting orders';
+    default:
+      return 'Settlement stable';
+  }
+}
+
+export function getSettlementSituationSnapshot(state: WorldState, ownerId?: string): SettlementSituationSnapshot {
+  const objectives = getCampaignObjectives(state, ownerId);
+  const nextObjective = objectives.find((objective) => !objective.complete);
+  const recommendation = getEconomyRecommendation(state, ownerId);
+  const economy = getEconomyActivity(state, ownerId);
+  const transport = getTransportSituation(state, ownerId);
+  const military = getMilitarySituation(state, ownerId);
+  const topIssues: SettlementSituationIssue[] = [];
+
+  if (military.tone === 'danger' || military.tone === 'warn') {
+    topIssues.push({
+      kind: 'military',
+      tone: military.tone,
+      label: military.headline,
+      action: military.action,
+    });
+  }
+
+  if (transport.tone === 'warn') {
+    topIssues.push({
+      kind: 'transport',
+      tone: 'warn',
+      label: transport.headline,
+      action: transport.action,
+    });
+  }
+
+  for (const bottleneck of economy.bottlenecks.slice(0, 3)) {
+    const tone: SettlementSituationIssue['tone'] =
+      bottleneck.kind === 'roadDisconnected' || bottleneck.kind === 'outputFull' ? 'warn' : 'warn';
+    topIssues.push({
+      kind: 'economy',
+      tone,
+      label: bottleneck.label,
+      action: getBottleneckAction(bottleneck),
+      buildingId: bottleneck.buildingId,
+      resourceType: bottleneck.resourceType,
+    });
+  }
+
+  topIssues.sort((a, b) => issueToneRank(a.tone) - issueToneRank(b.tone));
+  const uniqueTopIssues = dedupeSituationIssues(topIssues);
+
+  let status: SettlementSituationTone = 'good';
+  if (military.tone === 'danger') status = 'danger';
+  else if (military.tone === 'warn' || transport.tone === 'warn' || economy.bottlenecks.length > 0) status = 'warn';
+  else if (economy.workingBuildings === 0) status = 'idle';
+
+  const primaryAction = military.tone === 'danger'
+    ? { label: 'Defend the vault', detail: military.action }
+    : uniqueTopIssues[0]
+      ? { label: uniqueTopIssues[0].label, detail: uniqueTopIssues[0].action }
+      : {
+        label: recommendation.label,
+        detail: recommendation.reason,
+        buildingType: recommendation.buildingType,
+        resourceType: recommendation.resourceType,
+      };
+
+  return {
+    status,
+    headline: getSituationHeadline(status),
+    primaryAction,
+    objective: getObjectiveSnapshot(nextObjective),
+    economy,
+    transport,
+    military,
+    topIssues: uniqueTopIssues.slice(0, 5),
   };
 }
 

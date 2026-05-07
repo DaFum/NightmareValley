@@ -22,7 +22,7 @@ export default function ShortcutHelpDialog({ open, onClose }: ShortcutHelpDialog
             <p className="panel-kicker">Command reference</p>
             <h2 id="shortcut-dialog-title">Keyboard Controls</h2>
           </div>
-          <button className="hud-button" onClick={onClose}>Close</button>
+          <button className="hud-button" onClick={onClose} aria-label="Close shortcut help">Close</button>
         </header>
 
         <dl className="shortcut-list">

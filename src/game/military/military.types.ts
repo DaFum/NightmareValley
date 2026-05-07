@@ -13,6 +13,7 @@ export interface MilitaryRuntimeState {
   difficulty: MilitaryDifficulty;
   enemyPressure: number;
   nextAttackAge: number;
+  raidsRepelled?: number;
   activeRaid?: MilitaryRaid;
   lastWarningAttackAge?: number;
   defeatReason?: MilitaryDefeatReason;

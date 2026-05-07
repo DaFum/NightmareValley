@@ -54,7 +54,7 @@ export default function PauseMenuDialog({
           <button className="hud-button" onClick={onClearSave} disabled={!hasSavedGame}>Delete Save</button>
           <button className="hud-button" onClick={onOpenSettings}>Settings</button>
           <button className="hud-button" onClick={onRestart}>Restart Run</button>
-          <button className="hud-button" onClick={onClose}>Close</button>
+          <button className="hud-button" onClick={onClose} aria-label="Close pause menu">Close</button>
         </div>
       </section>
     </div>

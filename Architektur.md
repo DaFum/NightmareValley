@@ -161,7 +161,7 @@ src/game/core/
 * `game.constants.ts` — globale Konstanten wie Tickrate, Tilegröße, Limits.
 * `entity.ids.ts` — ID-Erzeugung und Entity-Identifier-Utilities.
 * `random.ts` — deterministische oder allgemeine Zufallsfunktionen.
-* `victory.rules.ts` — Sieg- und Niederlagenbedingungen.
+* `victory.rules.ts` — Sieg- und Niederlagenbedingungen inklusive Kampagnenkapiteln, Expansion, Verteidigungsmetriken und Score.
 
 ---
 
@@ -311,6 +311,7 @@ src/game/economy/
 ├── production.logic.ts
 ├── extraction.logic.ts
 ├── transport.logic.ts
+├── economy.planner.ts
 ├── balancing.constants.ts
 └── economy.snapshot.ts
 ```
@@ -321,6 +322,7 @@ src/game/economy/
 * `production.logic.ts` — Verarbeitung von Inputs zu Outputs.
 * `extraction.logic.ts` — Rohstoffförderung aus Natur oder Deposits.
 * `transport.logic.ts` — wirtschaftlicher Transportfluss auf hoher Ebene.
+* `economy.planner.ts` — erzeugt kampagnen-, transport-, economy- und militärbezogene Handlungsempfehlungen für HUD und Panels.
 * `balancing.constants.ts` — Balancing-Werte für Wirtschaft und Produktion.
 * `economy.snapshot.ts` — generiert Debug-/UI-Snapshots der Ökonomie.
 
@@ -423,7 +425,7 @@ src/game/render/
 
 * `render.types.ts` — Typen für alle renderbaren Daten.
 * `render.adapter.ts` — wandelt Simulationsdaten in Renderdaten um.
-* `render.culling.ts` — filtert unsichtbare Chunks und Entities.
+* `render.culling.ts` — berechnet Iso-Viewport-Bounds und filtert unsichtbare Renderdaten ohne Renderer-Abhängigkeit.
 * `render.sort.ts` — Sortierung nach Footpoint/Y.
 * `render.interpolation.ts` — glättet Bewegungen zwischen Ticks.
 * `render.textures.ts` — Zuordnung von Typen zu Texturen/Spritesheets.
@@ -461,8 +463,8 @@ src/game/military/
 └── military.logic.ts
 ```
 
-* `military.types.ts` — Runtime-State für Difficulty, Feinddruck, Raid-Timer und aktive Angriffe.
-* `military.logic.ts` — deterministische Defense-Metriken, Raid-Spawn, tickbasierter Kampf und Vault-Schaden.
+* `military.types.ts` — Runtime-State für Difficulty, Feinddruck, Raid-Timer, abgewehrte Raids und aktive Angriffe.
+* `military.logic.ts` — deterministische Defense-Metriken, Raid-Spawn, tickbasierter Kampf, Vault-Schaden und Survival-Fortschritt.
 * `index.ts` — öffentlicher Export für World-Tick, Debug-Route und UI.
 
 ---
@@ -707,6 +709,7 @@ src/ui/hud/
 ```text
 src/ui/panels/
 ├── BuildingMenu.tsx
+├── SettlementBriefPanel.tsx
 ├── InspectorPanel.tsx
 ├── BuildingInspector.tsx
 ├── WorkerInspector.tsx
@@ -717,6 +720,7 @@ src/ui/panels/
 ```
 
 * `BuildingMenu.tsx` — Auswahlmenü für Basic, Processing, Storage, Military und Road.
+* `SettlementBriefPanel.tsx` — handlungsorientierte Zusammenfassung aus Kampagnenziel, Transportzustand, Bottlenecks und Militärdruck.
 * `InspectorPanel.tsx` — Container für Detailansichten.
 * `BuildingInspector.tsx` — Gebäudedetails.
 * `WorkerInspector.tsx` — Workerdetails.

@@ -146,7 +146,7 @@ export default function SettingsDialog({
         </div>
 
         <div className="game-dialog__actions">
-          <button className="hud-button hud-button--primary" onClick={onClose}>Done</button>
+          <button className="hud-button hud-button--primary" onClick={onClose} aria-label="Close settings">Done</button>
         </div>
       </section>
     </div>
