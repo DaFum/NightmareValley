@@ -158,7 +158,11 @@ async function takeScreenshots() {
       await waitForGameReady(devPage);
       const heatmapToggle = devPage.getByLabel('Show footfall heatmap');
       if (await heatmapToggle.count() > 0) {
-        await heatmapToggle.check({ force: true });
+        await heatmapToggle.evaluate((node) => {
+          if (node instanceof HTMLInputElement && !node.checked) {
+            node.click();
+          }
+        });
         await devPage.waitForFunction(() => {
           const checkbox = document.querySelector('input[aria-label="Show footfall heatmap"]');
           return !!(checkbox && checkbox instanceof HTMLInputElement && checkbox.checked);

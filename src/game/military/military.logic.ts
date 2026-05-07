@@ -49,6 +49,7 @@ export function createInitialMilitaryState(profile: WorldState['scenarioProfile'
     difficulty,
     enemyPressure: 15,
     nextAttackAge: DIFFICULTY_CONFIG[difficulty].initialAttackAge,
+    raidsRepelled: 0,
   };
 }
 
@@ -75,16 +76,16 @@ export function getMilitaryMetrics(state: WorldState, playerId: string): Militar
   const totalTiles = Math.max(1, Object.keys(state.territory.tiles).length);
   const player = state.players[playerId];
   const enemyOwnerId = getEnemyOwnerId(state, playerId);
-  const soldiers = player?.workers.filter((id) => state.workers[id]?.type === 'warInfant').length ?? 0;
+  const soldiers = (player?.workers ?? []).filter((id) => state.workers[id]?.type === 'warInfant').length;
   const spires = getPlayerBuildings(state, playerId).filter(
     (building) => building.type === 'spireOfJurisdiction' && building.isActive && isConstructed(building)
   );
-  const controlledTiles = player?.territoryTileIds.length ?? 0;
+  const controlledTiles = player?.territoryTileIds?.length ?? 0;
   const enemyTerritoryTiles = enemyOwnerId
-    ? state.players[enemyOwnerId]?.territoryTileIds.length ?? 0
+    ? state.players[enemyOwnerId]?.territoryTileIds?.length ?? 0
     : Object.values(state.players)
       .filter((candidate) => candidate.id !== playerId)
-      .reduce((sum, candidate) => sum + candidate.territoryTileIds.length, 0);
+      .reduce((sum, candidate) => sum + (candidate.territoryTileIds?.length ?? 0), 0);
   const spireDefense = spires.reduce(
     (sum, spire) => sum + SPIRE_BASE_DEFENSE + Math.max(0, spire.level - 1) * SPIRE_LEVEL_DEFENSE,
     0
@@ -180,6 +181,7 @@ function resolveActiveRaid(state: WorldState, playerId: string, deltaSec: number
       military: {
         ...military,
         enemyPressure: Math.max(0, military.enemyPressure - 15),
+        raidsRepelled: (military.raidsRepelled ?? 0) + 1,
         activeRaid: undefined,
       },
     };

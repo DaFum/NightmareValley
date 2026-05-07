@@ -52,4 +52,15 @@ describe('gameplay layout CSS', () => {
     expect(menuRules.some((rule) => rule.includes('position: relative'))).toBe(true);
     expect(menuRules.some((rule) => rule.includes('z-index: 30'))).toBe(true);
   });
+
+  it('prevents desktop HUD flex-basis from becoming mobile panel height', () => {
+    const source = css();
+    const mobileBlock = source.match(/@media \(max-width: 760px\) \{[\s\S]*?\/\* ─── Game Guide/)?.[0] ?? '';
+    const economyRule = mobileBlock.match(/\.top-hud__economy\s*\{[^}]+\}/)?.[0] ?? '';
+    const pulseRule = mobileBlock.match(/\.top-hud__pulse\s*\{[^}]+\}/)?.[0] ?? '';
+
+    expect(economyRule).toContain('flex: 0 0 auto');
+    expect(pulseRule).toContain('flex: 0 0 auto');
+    expect(pulseRule).toContain('min-width: 0');
+  });
 });

@@ -129,6 +129,50 @@ describe('economy planner', () => {
     expect(Array.isArray(snapshot.bottlenecks)).toBe(true);
   });
 
+  it('surfaces expansion as a campaign dependency after the core industry is built', () => {
+    const state = makeState({
+      vault: building('vault', 'vaultOfDigestiveStone', {
+        outputBuffer: { funeralLoaf: 10, tormentInstrument: 3 },
+      }),
+      quarry: building('quarry', 'sepulcherQuarry'),
+      well: building('well', 'wombWell'),
+      hooks: building('hooks', 'shoreOfHooks'),
+      salt: building('salt', 'refectoryOfSalt'),
+      field: building('field', 'fieldOfMouths'),
+      mill: building('mill', 'dustCathedralMill'),
+      oven: building('oven', 'ovenOfLastBread'),
+      coal: building('coal', 'coalWound'),
+      iron: building('iron', 'ironVeinPit'),
+      smeltery: building('smeltery', 'bloodSmeltery'),
+      crucible: building('crucible', 'instrumentCrucible'),
+      warPit: building('warPit', 'pitOfWarBirth'),
+      spire: building('spire', 'spireOfJurisdiction', {
+        level: 2,
+        assignedWorkers: ['soldier'],
+      }),
+    }) as any;
+    state.players.p1.territoryTileIds = ['tile_0'];
+    state.workers = {
+      soldier: {
+        id: 'soldier',
+        type: 'warInfant',
+        ownerId: 'p1',
+        position: { x: 0, y: 0 },
+        isIdle: false,
+        morale: 100,
+        infection: 0,
+        scars: 0,
+      },
+    } as any;
+    state.military = { difficulty: 'medium', enemyPressure: 20, nextAttackAge: 600, raidsRepelled: 1 };
+
+    const snapshot = getEconomyPlanSnapshot(state, 'p1');
+
+    expect(snapshot.nextObjective?.id).toBe('holdTerritory');
+    expect(snapshot.recommendation.label).toBe('Expand controlled territory');
+    expect(snapshot.recommendation.reason).toContain('Spire of Jurisdiction');
+  });
+
   it('returns actionable copy for road and worker blockers', () => {
     expect(getBottleneckAction({
       buildingId: 'mill',

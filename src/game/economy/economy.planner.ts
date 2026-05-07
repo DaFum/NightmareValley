@@ -1,6 +1,6 @@
 import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { BuildingType, ResourceType } from '../core/economy.types';
-import { aggregateVaultInventory, GameObjective, getCampaignObjectives } from '../core/victory.rules';
+import { aggregateVaultInventory, CampaignObjectiveMetric, GameObjective, getCampaignObjectives } from '../core/victory.rules';
 import { WorldState } from '../world/world.types';
 import { DEFAULT_SIMULATION_CONFIG } from './balancing.constants';
 import { RECIPES } from './recipes.data';
@@ -309,11 +309,49 @@ export function getEconomyRecommendation(state: WorldState, ownerId?: string): E
     };
   }
 
+  if (nextObjective.metricType) {
+    return getMetricRecommendation(nextObjective.metricType, nextObjective);
+  }
+
   return {
     label: nextObjective.label,
     reason: 'Complete the next campaign objective.',
     objective: nextObjective,
   };
+}
+
+function getMetricRecommendation(
+  metricType: CampaignObjectiveMetric,
+  objective: GameObjective
+): EconomyRecommendation {
+  const remaining = Math.max(0, objective.target - objective.current);
+
+  switch (metricType) {
+    case 'controlledTiles':
+      return {
+        label: 'Expand controlled territory',
+        reason: `Build or upgrade a Spire of Jurisdiction near the frontier to claim ${remaining} more tiles.`,
+        objective,
+      };
+    case 'defenseStrength':
+      return {
+        label: 'Muster border defense',
+        reason: `Recruit War Infants and staff Spires until defense strength rises by ${remaining}.`,
+        objective,
+      };
+    case 'raidsRepelled':
+      return {
+        label: 'Survive the next attack wave',
+        reason: 'Keep the vault defended until the next raid is repelled.',
+        objective,
+      };
+    default:
+      return {
+        label: objective.label,
+        reason: 'Complete the next campaign objective.',
+        objective,
+      };
+  }
 }
 
 export function getEconomyPlanSnapshot(state: WorldState, ownerId?: string): EconomyPlanSnapshot {

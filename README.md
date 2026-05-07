@@ -52,6 +52,7 @@ Playable slice:
 - The top HUD controls pause plus `1x`, `2x`, and `4x` simulation speeds.
 - `spireOfJurisdiction` buildings expand and defend territory. `pitOfWarBirth` and spires can recruit `warInfant` soldiers when the vault has the required supplies.
 - The Military panel shows enemy pressure, soldiers, spire defense, raid timing, vault integrity, and a recruit action.
+- Campaign victory now requires the full industry chain, stored rations/tools, a war pit, a jurisdiction spire, enough controlled territory, enough defense strength, and at least one repelled raid.
 - Development `/debug` includes seed, tick, world metrics, pathing, transport, AI, and military diagnostics.
 
 Basic play loop:
@@ -59,8 +60,11 @@ Basic play loop:
 2. Connect workplaces to the vault with roads so carriers can move goods.
 3. Add processing buildings for planks, bone dust, bread, iron bars, and blades.
 4. Upgrade key buildings from the inspector once the vault can afford the cost.
-5. Build spires to expand territory, recruit soldiers, and survive raid pressure.
-6. Win by meeting the campaign economy/territory conditions; lose if the vault is destroyed.
+5. Build a Pit of War Birth, raise spires at the frontier, recruit soldiers, and survive raid pressure.
+6. Win by meeting the campaign economy, expansion, defense, and survival conditions; lose if the vault is destroyed.
+
+Gameplay reference:
+- See [docs/gameplay.md](docs/gameplay.md) for the current start state, production chains, campaign chapters, military loop, save/load behavior, and acceptance checks.
 
 Provider behavior:
 - `RootLayout` composes `AppProviders` for the whole app shell.

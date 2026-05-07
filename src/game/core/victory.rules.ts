@@ -1,5 +1,6 @@
 import { BuildingType, ResourceInventory, ResourceType } from './economy.types';
 import { WorldState } from '../world/world.types';
+import { getMilitaryMetrics } from '../military';
 
 export type GameOutcomeKind = 'in-progress' | 'victory' | 'defeat';
 
@@ -16,9 +17,24 @@ export type ObjectiveId =
   | 'smeltIron'
   | 'forgeCrucible'
   | 'bakeRations'
+  | 'raiseWarPit'
+  | 'raiseSpire'
+  | 'holdTerritory'
+  | 'musterDefense'
+  | 'repelFirstRaid'
   | 'forgeInstruments';
 
-export type CampaignChapter = 'Founding' | 'Food' | 'Preservation' | 'Industry' | 'Tools' | 'Fortification';
+export type CampaignChapter =
+  | 'Founding'
+  | 'Food'
+  | 'Preservation'
+  | 'Industry'
+  | 'Tools'
+  | 'Fortification'
+  | 'Expansion'
+  | 'Survival / Victory';
+
+export type CampaignObjectiveMetric = 'controlledTiles' | 'defenseStrength' | 'raidsRepelled';
 
 export type GameObjective = {
   id: ObjectiveId;
@@ -30,6 +46,7 @@ export type GameObjective = {
   reward: string;
   buildingType?: BuildingType;
   resourceType?: ResourceType;
+  metricType?: CampaignObjectiveMetric;
 };
 
 export type GameScore = {
@@ -67,6 +84,11 @@ const OBJECTIVE_TARGETS: Record<ObjectiveId, number> = {
   smeltIron: 1,
   forgeCrucible: 1,
   bakeRations: 10,
+  raiseWarPit: 1,
+  raiseSpire: 1,
+  holdTerritory: 400,
+  musterDefense: 18,
+  repelFirstRaid: 1,
   forgeInstruments: 3,
 };
 
@@ -77,19 +99,15 @@ function countBuildings(state: WorldState, buildingType: BuildingType, ownerId?:
   }).length;
 }
 
-function objective(
-  state: WorldState,
-  ownerId: string | undefined,
+function baseObjective(
   id: ObjectiveId,
   label: string,
   chapter: CampaignChapter,
   reward: string,
   target: number,
-  source: { buildingType?: BuildingType; resourceType?: ResourceType }
+  current: number,
+  source: { buildingType?: BuildingType; resourceType?: ResourceType; metricType?: CampaignObjectiveMetric }
 ): GameObjective {
-  const current = source.buildingType
-    ? countBuildings(state, source.buildingType, ownerId)
-    : aggregateVaultInventory(state, ownerId)[source.resourceType!] ?? 0;
   return {
     id,
     label,
@@ -100,6 +118,70 @@ function objective(
     complete: current >= target,
     ...source,
   };
+}
+
+function buildingObjective(
+  state: WorldState,
+  ownerId: string | undefined,
+  id: ObjectiveId,
+  label: string,
+  chapter: CampaignChapter,
+  reward: string,
+  target: number,
+  buildingType: BuildingType
+): GameObjective {
+  return baseObjective(id, label, chapter, reward, target, countBuildings(state, buildingType, ownerId), { buildingType });
+}
+
+function resourceObjective(
+  state: WorldState,
+  ownerId: string | undefined,
+  id: ObjectiveId,
+  label: string,
+  chapter: CampaignChapter,
+  reward: string,
+  target: number,
+  resourceType: ResourceType
+): GameObjective {
+  return baseObjective(id, label, chapter, reward, target, aggregateVaultInventory(state, ownerId)[resourceType] ?? 0, { resourceType });
+}
+
+function getCampaignMetricValue(state: WorldState, ownerId: string | undefined, metricType: CampaignObjectiveMetric): number {
+  const players = state.players ?? {};
+  const player = ownerId ? players[ownerId] : Object.values(players)[0];
+  if (!player) return 0;
+
+  switch (metricType) {
+    case 'controlledTiles':
+      return player.territoryTileIds?.length ?? 0;
+    case 'defenseStrength':
+      return getMilitaryMetrics(state, player.id).defenseStrength;
+    case 'raidsRepelled':
+      return state.military?.raidsRepelled ?? 0;
+    default:
+      return 0;
+  }
+}
+
+function metricObjective(
+  state: WorldState,
+  ownerId: string | undefined,
+  id: ObjectiveId,
+  label: string,
+  chapter: CampaignChapter,
+  reward: string,
+  target: number,
+  metricType: CampaignObjectiveMetric
+): GameObjective {
+  return baseObjective(
+    id,
+    label,
+    chapter,
+    reward,
+    target,
+    getCampaignMetricValue(state, ownerId, metricType),
+    { metricType }
+  );
 }
 
 export function aggregateVaultInventory(state: WorldState, ownerId?: string): ResourceInventory {
@@ -117,19 +199,24 @@ export function aggregateVaultInventory(state: WorldState, ownerId?: string): Re
 
 export function getCampaignObjectives(state: WorldState, ownerId?: string): GameObjective[] {
   const objectives: GameObjective[] = [
-    objective(state, ownerId, 'secureStone', 'Build a Sepulcher Quarry', 'Founding', 'Stone construction unlocked', OBJECTIVE_TARGETS.secureStone, { buildingType: 'sepulcherQuarry' }),
-    objective(state, ownerId, 'secureWater', 'Build a Womb Well', 'Founding', 'Water supply stabilized', OBJECTIVE_TARGETS.secureWater, { buildingType: 'wombWell' }),
-    objective(state, ownerId, 'hookFish', 'Build a Shore of Hooks', 'Food', 'Fish chain unlocked', OBJECTIVE_TARGETS.hookFish, { buildingType: 'shoreOfHooks' }),
-    objective(state, ownerId, 'refineSalt', 'Build a Refectory of Salt', 'Preservation', 'Preservation chain unlocked', OBJECTIVE_TARGETS.refineSalt, { buildingType: 'refectoryOfSalt' }),
-    objective(state, ownerId, 'growGrain', 'Build a Field of Mouths', 'Food', 'Grain economy unlocked', OBJECTIVE_TARGETS.growGrain, { buildingType: 'fieldOfMouths' }),
-    objective(state, ownerId, 'grindBoneDust', 'Build a Dust Cathedral Mill', 'Food', 'Bone dust processing unlocked', OBJECTIVE_TARGETS.grindBoneDust, { buildingType: 'dustCathedralMill' }),
-    objective(state, ownerId, 'bakeBread', 'Build an Oven of Last Bread', 'Food', 'Ration production unlocked', OBJECTIVE_TARGETS.bakeBread, { buildingType: 'ovenOfLastBread' }),
-    objective(state, ownerId, 'mineCoal', 'Open a Coal Wound', 'Industry', 'Fuel industry unlocked', OBJECTIVE_TARGETS.mineCoal, { buildingType: 'coalWound' }),
-    objective(state, ownerId, 'mineIron', 'Open an Iron Vein Pit', 'Industry', 'Ore industry unlocked', OBJECTIVE_TARGETS.mineIron, { buildingType: 'ironVeinPit' }),
-    objective(state, ownerId, 'smeltIron', 'Build a Blood Smeltery', 'Industry', 'Iron bars unlocked', OBJECTIVE_TARGETS.smeltIron, { buildingType: 'bloodSmeltery' }),
-    objective(state, ownerId, 'forgeCrucible', 'Build an Instrument Crucible', 'Tools', 'Tool forging unlocked', OBJECTIVE_TARGETS.forgeCrucible, { buildingType: 'instrumentCrucible' }),
-    objective(state, ownerId, 'bakeRations', 'Store Funeral Loaf', 'Fortification', 'Food reserve secured', OBJECTIVE_TARGETS.bakeRations, { resourceType: 'funeralLoaf' }),
-    objective(state, ownerId, 'forgeInstruments', 'Store Torment Instruments', 'Fortification', 'Endgame authority secured', OBJECTIVE_TARGETS.forgeInstruments, { resourceType: 'tormentInstrument' }),
+    buildingObjective(state, ownerId, 'secureStone', 'Build a Sepulcher Quarry', 'Founding', 'Stone construction unlocked', OBJECTIVE_TARGETS.secureStone, 'sepulcherQuarry'),
+    buildingObjective(state, ownerId, 'secureWater', 'Build a Womb Well', 'Founding', 'Water supply stabilized', OBJECTIVE_TARGETS.secureWater, 'wombWell'),
+    buildingObjective(state, ownerId, 'hookFish', 'Build a Shore of Hooks', 'Food', 'Fish chain unlocked', OBJECTIVE_TARGETS.hookFish, 'shoreOfHooks'),
+    buildingObjective(state, ownerId, 'refineSalt', 'Build a Refectory of Salt', 'Preservation', 'Preservation chain unlocked', OBJECTIVE_TARGETS.refineSalt, 'refectoryOfSalt'),
+    buildingObjective(state, ownerId, 'growGrain', 'Build a Field of Mouths', 'Food', 'Grain economy unlocked', OBJECTIVE_TARGETS.growGrain, 'fieldOfMouths'),
+    buildingObjective(state, ownerId, 'grindBoneDust', 'Build a Dust Cathedral Mill', 'Food', 'Bone dust processing unlocked', OBJECTIVE_TARGETS.grindBoneDust, 'dustCathedralMill'),
+    buildingObjective(state, ownerId, 'bakeBread', 'Build an Oven of Last Bread', 'Food', 'Ration production unlocked', OBJECTIVE_TARGETS.bakeBread, 'ovenOfLastBread'),
+    buildingObjective(state, ownerId, 'mineCoal', 'Open a Coal Wound', 'Industry', 'Fuel industry unlocked', OBJECTIVE_TARGETS.mineCoal, 'coalWound'),
+    buildingObjective(state, ownerId, 'mineIron', 'Open an Iron Vein Pit', 'Industry', 'Ore industry unlocked', OBJECTIVE_TARGETS.mineIron, 'ironVeinPit'),
+    buildingObjective(state, ownerId, 'smeltIron', 'Build a Blood Smeltery', 'Industry', 'Iron bars unlocked', OBJECTIVE_TARGETS.smeltIron, 'bloodSmeltery'),
+    buildingObjective(state, ownerId, 'forgeCrucible', 'Build an Instrument Crucible', 'Tools', 'Tool forging unlocked', OBJECTIVE_TARGETS.forgeCrucible, 'instrumentCrucible'),
+    resourceObjective(state, ownerId, 'bakeRations', 'Store Funeral Loaf', 'Fortification', 'Food reserve secured', OBJECTIVE_TARGETS.bakeRations, 'funeralLoaf'),
+    buildingObjective(state, ownerId, 'raiseWarPit', 'Build a Pit of War Birth', 'Fortification', 'Soldier recruitment unlocked', OBJECTIVE_TARGETS.raiseWarPit, 'pitOfWarBirth'),
+    buildingObjective(state, ownerId, 'raiseSpire', 'Build a Spire of Jurisdiction', 'Expansion', 'Border authority established', OBJECTIVE_TARGETS.raiseSpire, 'spireOfJurisdiction'),
+    metricObjective(state, ownerId, 'holdTerritory', 'Expand controlled territory', 'Expansion', 'Buildable frontier secured', OBJECTIVE_TARGETS.holdTerritory, 'controlledTiles'),
+    metricObjective(state, ownerId, 'musterDefense', 'Muster border defense', 'Survival / Victory', 'Defense can withstand the first wave', OBJECTIVE_TARGETS.musterDefense, 'defenseStrength'),
+    metricObjective(state, ownerId, 'repelFirstRaid', 'Repel an attack wave', 'Survival / Victory', 'Settlement survival proven', OBJECTIVE_TARGETS.repelFirstRaid, 'raidsRepelled'),
+    resourceObjective(state, ownerId, 'forgeInstruments', 'Store Torment Instruments', 'Survival / Victory', 'Endgame authority secured', OBJECTIVE_TARGETS.forgeInstruments, 'tormentInstrument'),
   ];
 
   return objectives;
@@ -181,7 +268,7 @@ export function evaluateGameOutcome(state: WorldState, ownerId?: string): GameOu
     return {
       kind: 'victory',
       title: 'Valley Subdued',
-      summary: 'The settlement can feed itself, quarry stone, and forge instruments of rule.',
+      summary: 'The settlement can feed itself, expand its jurisdiction, survive hostile pressure, and forge instruments of rule.',
       objectives,
       score: calculateGameScore(state, ownerId),
     };

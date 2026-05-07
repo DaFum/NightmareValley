@@ -161,7 +161,7 @@ src/game/core/
 * `game.constants.ts` — globale Konstanten wie Tickrate, Tilegröße, Limits.
 * `entity.ids.ts` — ID-Erzeugung und Entity-Identifier-Utilities.
 * `random.ts` — deterministische oder allgemeine Zufallsfunktionen.
-* `victory.rules.ts` — Sieg- und Niederlagenbedingungen.
+* `victory.rules.ts` — Sieg- und Niederlagenbedingungen inklusive Kampagnenkapiteln, Expansion, Verteidigungsmetriken und Score.
 
 ---
 
@@ -461,8 +461,8 @@ src/game/military/
 └── military.logic.ts
 ```
 
-* `military.types.ts` — Runtime-State für Difficulty, Feinddruck, Raid-Timer und aktive Angriffe.
-* `military.logic.ts` — deterministische Defense-Metriken, Raid-Spawn, tickbasierter Kampf und Vault-Schaden.
+* `military.types.ts` — Runtime-State für Difficulty, Feinddruck, Raid-Timer, abgewehrte Raids und aktive Angriffe.
+* `military.logic.ts` — deterministische Defense-Metriken, Raid-Spawn, tickbasierter Kampf, Vault-Schaden und Survival-Fortschritt.
 * `index.ts` — öffentlicher Export für World-Tick, Debug-Route und UI.
 
 ---

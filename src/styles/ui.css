@@ -1683,6 +1683,13 @@ body.ui--tool-active .game-layout__debug-panel {
 
   .top-hud__economy {
     display: block;
+    flex: 0 0 auto;
+  }
+
+  .top-hud__pulse {
+    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
   }
 
   .hud-panel {

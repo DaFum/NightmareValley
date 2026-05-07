@@ -149,6 +149,7 @@ describe('military logic', () => {
         difficulty: 'easy',
         enemyPressure: 20,
         nextAttackAge: 600,
+        raidsRepelled: 2,
         activeRaid: {
           id: 'raid_1',
           strength: 4,
@@ -161,6 +162,7 @@ describe('military logic', () => {
     const next = processMilitaryTick(world, PLAYER_ID, 1);
 
     expect(next.military?.activeRaid).toBeUndefined();
+    expect(next.military?.raidsRepelled).toBe(3);
     expect(next.events?.log[0]?.title).toContain('Repelled');
     expect(next.buildings.vault.integrity).toBe(100);
   });

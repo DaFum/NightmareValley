@@ -56,6 +56,8 @@ function makeCompleteChainState(): WorldState {
       ...building('crucible', 'instrumentCrucible', 13, 0, { veinIronBar: 1 }),
       currentRecipeId: 'forgeTormentInstrument',
     } as any,
+    warPit: building('warPit', 'pitOfWarBirth', 14, 0),
+    spire: { ...building('spire', 'spireOfJurisdiction', 15, 0), level: 2, assignedWorkers: ['w_spire'] } as any,
   };
 
   const workers: WorldState['workers'] = {
@@ -72,6 +74,8 @@ function makeCompleteChainState(): WorldState {
     w_iron: worker('w_iron', 'deepVeinMiner', 'iron', 11, 0),
     w_smeltery: worker('w_smeltery', 'smelterMonk', 'smeltery', 12, 0),
     w_crucible: worker('w_crucible', 'painArtisan', 'crucible', 13, 0),
+    w_warPit: worker('w_warPit', 'warInfant', 'warPit', 14, 0),
+    w_spire: worker('w_spire', 'warInfant', 'spire', 15, 0),
   };
 
   return {
@@ -86,7 +90,7 @@ function makeCompleteChainState(): WorldState {
         stock: {},
         buildings: Object.keys(buildings),
         workers: Object.keys(workers),
-        territoryTileIds: [],
+        territoryTileIds: Array.from({ length: 400 }, (_, index) => `tile_${index}`),
         populationLimit: 40,
         doctrine: 'industry',
         dread: 0,
@@ -95,8 +99,29 @@ function makeCompleteChainState(): WorldState {
     },
     buildings,
     workers,
-    territory: { tiles: {}, tileIndex: {} },
+    territory: {
+      tiles: Object.fromEntries(
+        Array.from({ length: 400 }, (_, index) => [
+          `tile_${index}`,
+          {
+            id: `tile_${index}`,
+            position: { x: index % 20, y: Math.floor(index / 20) },
+            terrain: 'scarredEarth',
+            ownerId: playerId,
+            footfall: 0,
+            tier: 'grass',
+          },
+        ])
+      ),
+      tileIndex: {},
+    } as any,
     transport: { jobs: {}, activeCarrierTasks: {}, networkStress: 0, averageLatencySec: 0, queuedJobCount: 0 },
+    military: {
+      difficulty: 'medium',
+      enemyPressure: 20,
+      nextAttackAge: 600,
+      raidsRepelled: 1,
+    },
     worldPulse: 0,
   };
 }
