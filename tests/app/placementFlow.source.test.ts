@@ -22,9 +22,12 @@ describe('placement flow', () => {
 
   it('uses an exhaustive typed road placement reason for player-facing road feedback', () => {
     const hook = readFileSync(join(process.cwd(), 'src/pixi/hooks/useSelectionInput.ts'), 'utf8');
+    const domain = readFileSync(join(process.cwd(), 'src/store/placementFeedbackDomain.ts'), 'utf8');
 
-    expect(hook).toContain("type RoadPlacementReason");
-    expect(hook).toContain('function getRoadPlacementMessage(reason: RoadPlacementReason): string');
-    expect(hook).toContain('const _exhaustive: never = reason;');
+    expect(hook).toContain('getRoadPlacementReasonMessage(roadValidation.reason)');
+    expect(hook).not.toContain('function getRoadPlacementMessage');
+    expect(domain).toContain("type RoadPlacementReason");
+    expect(domain).toContain('export function getRoadPlacementReasonMessage(reason: RoadPlacementReason): string');
+    expect(domain).toContain('const _exhaustive: never = reason;');
   });
 });

@@ -60,10 +60,10 @@ describe('workerDomain selectors', () => {
     );
 
     expect(haulingModel?.transport.deliveryState).toBe('Delivering');
-    expect(haulingModel?.transport.detail).toContain('Carrying 2 sinewTimber');
+    expect(haulingModel?.transport.detail).toContain('Carrying 2 Sinew Timber');
     expect(haulingModel?.transport.route).toBe('Organ Harvester -> Vault of Digestive Stone');
     expect(haulingModel?.transport.progress).toBe('2/3 tiles');
-    expect(haulingModel?.transport.carrying).toBe('2 sinewTimber');
+    expect(haulingModel?.transport.carrying).toBe('2 Sinew Timber');
     expect(haulingModel?.transport.idleReason).toBeNull();
   });
 });

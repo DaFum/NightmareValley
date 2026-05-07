@@ -53,11 +53,20 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
 
-  const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', detail: 'No status available.' } as const;
+  const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', label: 'Idle', detail: 'No status available.' } as const;
   const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
   const inventory = panelDerived?.inventory ?? {};
   const canUpgrade = panelDerived?.canUpgrade ?? false;
   const isUnderConstruction = building.constructionProgress !== undefined && building.constructionProgress < 1;
+  const upgradeMissing = upgradeCost
+    ? getMissingCostEntries(inventory, upgradeCost.resources)
+    : [];
+  const upgradeTitle = getUpgradeTitle({
+    canUpgrade,
+    isUnderConstruction,
+    upgradeCostMissing: upgradeMissing,
+    hasUpgradeCost: !!upgradeCost,
+  });
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
@@ -80,11 +89,14 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       <dl className="inspector-stats">
         <div><dt>Level</dt><dd>{building.level}/{def.maxLevel}</dd></div>
         <div><dt>Integrity</dt><dd>{Math.round(building.integrity)}%</dd></div>
-        <div><dt>Status</dt><dd title={productionStatus.detail}>{statusLabel(productionStatus.kind)}</dd></div>
+        <div><dt>Status</dt><dd title={productionStatus.detail}>{productionStatus.label}</dd></div>
         <div><dt>Road</dt><dd>{building.connectedToRoad ? 'connected' : 'missing'}</dd></div>
         <div><dt>Workers</dt><dd>{building.assignedWorkers.length}</dd></div>
         <div><dt>Corruption</dt><dd>{Math.round(building.corruption ?? 0)}%</dd></div>
       </dl>
+      <p className={`inspector-note inspector-note--status inspector-note--${productionStatus.kind}`}>
+        {productionStatus.detail}
+      </p>
 
       <InventoryBlock title="Input" inventory={building.inputBuffer} />
       <InventoryBlock title="Output" inventory={building.outputBuffer} />
@@ -96,7 +108,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         {!building.connectedToRoad ? (
           <button className="hud-button" onClick={() => connectBuildingAt(building.id)}>Connect road</button>
         ) : null}
-        <button className="hud-button" disabled={!canUpgrade} onClick={() => upgradeBuildingAt(player.id, building.id)}>
+        <button className="hud-button" disabled={!canUpgrade} title={upgradeTitle} onClick={() => upgradeBuildingAt(player.id, building.id)}>
           Upgrade
         </button>
         {isUnderConstruction ? (
@@ -120,7 +132,8 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
                 ) : (
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
-                {amount}
+                <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
+                {inventory[resource as ResourceType] ?? 0}/{amount}
               </span>
             );
           })}
@@ -201,23 +214,6 @@ function formatRecipeFlow(recipe: (typeof RECIPES)[string]) {
   const inputs = Object.entries(recipe.inputs).map(([resource, amount]) => `${amount} ${resource}`).join(' + ');
   const outputs = Object.entries(recipe.outputs).map(([resource, amount]) => `${amount} ${resource}`).join(' + ');
   return `${inputs} -> ${outputs}`;
-}
-
-function statusLabel(kind: string) {
-  switch (kind) {
-    case 'roadDisconnected':
-      return 'road missing';
-    case 'missingWorker':
-      return 'needs worker';
-    case 'missingInput':
-      return 'needs input';
-    case 'outputFull':
-      return 'output full';
-    case 'underConstruction':
-      return 'building';
-    default:
-      return kind;
-  }
 }
 
 type WorkerSlotsSectionProps = {
@@ -390,6 +386,9 @@ function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: Del
           ))}
         </div>
       </div>
+      <p className="inspector-note delivery-controls__note">
+        Higher priority pulls vault deliveries sooner. Paused inputs stop requesting carriers for that resource.
+      </p>
       {inputResources.size > 0 && (
         <div className="delivery-pause-list">
           <span className="delivery-pause-label">Pause delivery</span>
@@ -416,6 +415,78 @@ function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: Del
       )}
     </section>
   );
+}
+
+function getMissingCostEntries(
+  inventory: ResourceInventory,
+  cost: Partial<Record<ResourceType, number>>,
+) {
+  return Object.entries(cost)
+    .map(([resource, required]) => ({
+      resource: resource as ResourceType,
+      required: required ?? 0,
+      available: inventory[resource as ResourceType] ?? 0,
+    }))
+    .filter(({ available, required }) => available < required);
+}
+
+function getUpgradeTitle({
+  canUpgrade,
+  isUnderConstruction,
+  upgradeCostMissing,
+  hasUpgradeCost,
+}: {
+  canUpgrade: boolean;
+  isUnderConstruction: boolean;
+  upgradeCostMissing: ReturnType<typeof getMissingCostEntries>;
+  hasUpgradeCost: boolean;
+}) {
+  if (canUpgrade) return 'Upgrade this building using vault resources.';
+  if (isUnderConstruction) return 'Finish construction before upgrading.';
+  if (!hasUpgradeCost) return 'Maximum level reached.';
+  if (upgradeCostMissing.length > 0) {
+    return `Vault is short: ${upgradeCostMissing
+      .map(({ resource, available, required }) => `${resourceShortLabel(resource)} ${available}/${required}`)
+      .join(', ')}.`;
+  }
+  return 'Upgrade unavailable in the current state.';
+}
+
+function resourceShortLabel(resource: ResourceType): string {
+  switch (resource) {
+    case 'toothPlanks':
+      return 'Planks';
+    case 'sepulcherStone':
+      return 'Stone';
+    case 'marrowGrain':
+      return 'Grain';
+    case 'boneDust':
+      return 'Dust';
+    case 'amnioticWater':
+      return 'Water';
+    case 'eyelessFish':
+      return 'Fish';
+    case 'brainSalt':
+      return 'Salt';
+    case 'funeralLoaf':
+      return 'Loaf';
+    case 'graveCoal':
+      return 'Coal';
+    case 'veinIronOre':
+      return 'Ore';
+    case 'veinIronBar':
+      return 'Bars';
+    case 'tormentInstrument':
+      return 'Tools';
+    case 'haloGoldBar':
+      return 'Gold';
+    case 'cathedralGoldOre':
+      return 'Ore';
+    case 'sinewTimber':
+      return 'Timber';
+    default:
+      return resource.replace(/([A-Z])/g, ' $1');
+  }
 }
 
 type InventoryBlockProps = {

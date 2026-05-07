@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
-import { getEconomyBottlenecks } from '../../game/economy/economy.planner';
+import { getBottleneckAction, getEconomyBottlenecks } from '../../game/economy/economy.planner';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { player1Id, useGameStore } from '../../store/game.store';
 
@@ -71,6 +71,7 @@ export default function ProductionChainPanel(): JSX.Element {
                   <div>
                     <strong>{objective.label}</strong>
                     <small>{blocked ? blocked.label : objective.reward}</small>
+                    {blocked ? <em>{getBottleneckAction(blocked)}</em> : null}
                   </div>
                   <span className="production-chain__count">{Math.min(objective.current, objective.target)}/{objective.target}</span>
                 </li>

@@ -24,6 +24,7 @@ import { useSelectionInput } from './hooks/useSelectionInput';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../game/iso/iso.constants';
 import { getIsoViewportBounds, isIsoPointInBounds } from '../game/render/render.culling';
 import { getPlacementValidation } from '../store/simulation.selectors';
+import { getBuildingPlacementToolFeedback, getRoadToolFeedback } from '../store/placementFeedbackDomain';
 import { isoScreenToTile } from './iso/iso.adapter';
 import { isRemovableRoadTile } from '../game/entities/roads/road.validation';
 
@@ -45,6 +46,8 @@ export function GameStage() {
   const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
   const roadPlacementMode = useUIStore((state) => state.roadPlacementMode);
   const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
+  const setPlacementFeedback = useUIStore((state) => state.setPlacementFeedback);
+  const clearPlacementFeedback = useUIStore((state) => state.clearPlacementFeedback);
   const territory = useGameStore((state) => state.gameState.territory);
   const gameState = useGameStore((state) => state.gameState);
   const aiOwnerId = useGameStore((state) => state.gameState.aiOwnerId);
@@ -54,6 +57,7 @@ export function GameStage() {
   useGameLoop();
 
   const [ghostTile, setGhostTile] = React.useState<{ x: number; y: number } | null>(null);
+  const lastToolFeedbackKeyRef = React.useRef('');
 
   const initialZoomRef = React.useRef(zoom);
   useEffect(() => {
@@ -183,6 +187,37 @@ export function GameStage() {
     if (roadRemovalMode) return isRemovableRoadTile(tile);
     return ['scarredEarth', 'weepingForest', 'ashBog'].includes(tile.terrain) && tile.tier === 'grass';
   }, [ghostTile, roadPlacementMode, roadRemovalMode, territory]);
+
+  useEffect(() => {
+    const feedback = selectedBuildingToPlace
+      ? getBuildingPlacementToolFeedback(gameState, player1Id, selectedBuildingToPlace, ghostTile)
+      : roadPlacementMode || roadRemovalMode
+        ? getRoadToolFeedback(territory, player1Id, roadRemovalMode ? 'remove' : 'place', ghostTile)
+        : null;
+
+    if (!feedback) {
+      if (lastToolFeedbackKeyRef.current) {
+        lastToolFeedbackKeyRef.current = '';
+        clearPlacementFeedback();
+      }
+      return;
+    }
+
+    const key = `${feedback.tone}|${feedback.label}|${feedback.detail}`;
+    if (key !== lastToolFeedbackKeyRef.current) {
+      lastToolFeedbackKeyRef.current = key;
+      setPlacementFeedback(feedback);
+    }
+  }, [
+    clearPlacementFeedback,
+    gameState,
+    ghostTile,
+    roadPlacementMode,
+    roadRemovalMode,
+    selectedBuildingToPlace,
+    setPlacementFeedback,
+    territory,
+  ]);
 
   const handlePointerDown = useSelectionInput({
     world,
