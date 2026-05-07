@@ -2,7 +2,6 @@ import { BuildingType, ResourceInventory, ResourceType } from '../game/core/econ
 import { EconomySimulationState } from '../game/core/economy.simulation';
 import { WorldState } from '../game/world/world.types';
 import { listBuildings } from '../game/entities/buildings/building.data';
-import { canPlaceBuilding } from '../game/entities/buildings/building.placement';
 import { deriveBuildingStatus, deriveProductionBuildingStatus, getProductionStatus } from '../game/entities/buildings/building.status';
 import { getUpgradeCost } from '../game/economy/production.logic';
 import { selectAuthoritativeInventory } from './simulation.selectors';
@@ -24,8 +23,6 @@ export function canPreviewPlaceBuilding(
   const def = BUILDING_DEFINITIONS[buildingType];
   if (!def) return false;
 
-  const basePlacement = canPlaceBuilding(state.territory, ownerId, originX, originY, def.widthTiles ?? 1, def.heightTiles ?? 1);
-  if (!basePlacement.ok) return false;
   return canPlaceBuildingForPlayerFootprint(state as WorldState, ownerId, buildingType, originX, originY);
 }
 

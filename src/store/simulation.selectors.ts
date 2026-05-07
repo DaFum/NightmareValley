@@ -10,16 +10,28 @@ export function getInventoryForCostChecks(state: WorldState, ownerId: string): R
   if (!player) return {} as ResourceInventory;
 
   const merged: Record<string, number> = {};
+  let hasVault = false;
 
   for (const buildingId of player.buildings) {
     const building = state.buildings[buildingId];
     if (building?.type !== 'vaultOfDigestiveStone') continue;
+    hasVault = true;
     for (const [resource, amount] of Object.entries(building.outputBuffer)) {
       merged[resource] = (merged[resource] ?? 0) + (amount ?? 0);
     }
   }
 
-  return merged as ResourceInventory;
+  const stockEntries = Object.entries(player.stock ?? {});
+  if (
+    hasVault &&
+    stockEntries.length === Object.keys(merged).length &&
+    stockEntries.every(([resource, amount]) => (merged[resource] ?? 0) === (amount ?? 0))
+  ) {
+    return player.stock;
+  }
+
+  // Warehouse-first contract: use vault buffers whenever any vault exists.
+  return hasVault ? (merged as ResourceInventory) : player.stock;
 }
 
 /** Canonical selector for warehouse-authoritative affordability checks. */
