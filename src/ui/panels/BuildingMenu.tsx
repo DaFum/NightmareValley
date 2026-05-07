@@ -3,9 +3,10 @@ import { useShallow } from 'zustand/react/shallow';
 import { useUIStore } from '../../store/ui.store';
 import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
-import { canAffordBuilding } from '../../game/economy/production.logic';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { BuildingType, ResourceInventory, ResourceType } from '../../game/core/economy.types';
+import { getInventoryForCostChecks } from '../../store/simulation.selectors';
+import { getBuildingAffordabilityFromInventory, listBuildingDomainEntries } from '../../store/buildingDomain';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
 
 type BuildCategory = 'campaign' | 'foundations' | 'food' | 'industry' | 'advanced';
@@ -63,22 +64,7 @@ export function BuildingMenu() {
   const economySnapshot = useGameStore(useShallow((state) => {
     const gameState = state.gameState;
     const player = gameState.players[player1Id];
-    const availableInventory: ResourceInventory = {} as ResourceInventory;
-    let hasVault = false;
-
-    if (player) {
-      for (const buildingId of player.buildings) {
-        const b = gameState.buildings[buildingId];
-        if (b?.type === 'vaultOfDigestiveStone') {
-          hasVault = true;
-          for (const [res, amt] of Object.entries(b.outputBuffer)) {
-            (availableInventory as Record<string, number>)[res] = ((availableInventory as Record<string, number>)[res] ?? 0) + (amt ?? 0);
-          }
-        }
-      }
-    }
-
-    const inventory = hasVault ? availableInventory : player?.stock ?? {};
+    const inventory = player ? getInventoryForCostChecks(gameState, player1Id) : ({} as ResourceInventory);
     const nextObjective = getCampaignObjectives(gameState, player1Id).find((objective) => !objective.complete);
 
     return {
@@ -132,9 +118,10 @@ export function BuildingMenu() {
     selectedBuildingToPlace,
   });
   const categoryBuildingTypes = CATEGORY_BUILDINGS[category];
+  const allBuildings = listBuildingDomainEntries();
   const buildingsToRender = categoryBuildingTypes
-    .map((type) => BUILDING_DEFINITIONS[type])
-    .filter(Boolean);
+    .map((type) => allBuildings.find((entry) => entry.type === type))
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
 
   return (
     <div className="build-dock">
@@ -197,11 +184,10 @@ export function BuildingMenu() {
 
           <div className="building-list">
             {buildingsToRender.map(def => {
-              const canAfford = canAffordBuilding(inventory, def.type);
+              const affordability = getBuildingAffordabilityFromInventory(inventory, def.type);
+              const canAfford = affordability.canAfford;
               const isSelected = selectedBuildingToPlace === def.type;
-              const missingCosts = Object.entries(def.buildCost.resources)
-                .filter(([res, amt]) => (inventory[res as ResourceType] ?? 0) < (amt ?? 0))
-                .map(([res, amt]) => `${res}: ${inventory[res as ResourceType] ?? 0}/${amt}`);
+              const missingCosts = affordability.missing.map(({ resource, available, required }) => `${resource}: ${available}/${required}`);
               const placementLabel = def.allowedTerrain
                 .map((terrain) => terrainLabel[terrain] ?? terrain)
                 .join(', ');

@@ -1,6 +1,7 @@
 import { TerritoryState } from '../../core/game.types';
 import { getTileAt } from '../../map/map.query';
 
+/** @deprecated Use simulation selectors + core isTileBuildableForPlayer for authoritative placement checks. */
 export function canPlaceBuilding(territory: TerritoryState, tx: number, ty: number, width = 1, height = 1) {
 	if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return { ok: false, reason: 'invalid_footprint' };
 	let originTileId: string | undefined;

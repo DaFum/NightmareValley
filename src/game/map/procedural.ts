@@ -1,5 +1,6 @@
 import { TiledMapData, TiledTileset, TiledTileDef } from './map.types';
 import { TerrainType } from '../core/economy.types';
+import { clamp } from '../../lib/math';
 
 type GenOptions = {
   width?: number;
@@ -129,8 +130,8 @@ function walkPath(
       sy = ady > 0 ? Math.sign(dy) : 0;
     }
 
-    x = Math.max(0, Math.min(mapWidth  - 1, x + sx));
-    y = Math.max(0, Math.min(mapHeight - 1, y + sy));
+    x = clamp(x + sx, 0, mapWidth - 1);
+    y = clamp(y + sy, 0, mapHeight - 1);
   }
 }
 
@@ -342,4 +343,3 @@ export function generateProceduralTiledMap(opts: GenOptions = {}): TiledMapData 
   return { width, height, tilewidth: 64, tileheight: 32, layers: [terrainLayer], tilesets: [tileset] };
 }
 
-export default generateProceduralTiledMap;

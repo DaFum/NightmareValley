@@ -1,6 +1,6 @@
 import { BuildingId, WorkerId } from "../core/entity.ids";
 import { Position, BuildingInstance, WorkerInstance } from "../core/game.types";
-import Logger from "../../lib/logger";
+import { Logger } from "../../lib/logger";
 import { ResourceType } from "../core/economy.types";
 import { EconomySimulationState, createId, getNonZeroResources, requiresRoad } from "../core/economy.simulation";
 import { clamp } from "../../lib/math";

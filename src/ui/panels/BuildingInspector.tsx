@@ -1,13 +1,13 @@
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/economy.data';
-import { canAffordUpgrade, canAffordWorker, getUpgradeCost, getWorkerHireCost } from '../../game/economy/production.logic';
+import { canAffordWorker, getWorkerHireCost } from '../../game/economy/production.logic';
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
 import { useShallow } from 'zustand/react/shallow';
 import { WorkerType, ResourceType, ResourceInventory } from '../../game/core/economy.types';
 import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
-import { getProductionStatus } from '../../game/entities/buildings/building.status';
-import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
+import { getInventoryForCostChecks, canAffordUpgradeForBuilding } from '../../store/simulation.selectors';
+import { getBuildingPanelStatus } from '../../store/buildingDomain';
 
 type BuildingInspectorProps = {
   buildingId: string;
@@ -16,25 +16,6 @@ type BuildingInspectorProps = {
 export default function BuildingInspector({ buildingId }: BuildingInspectorProps): JSX.Element | null {
   const building = useGameStore((state) => state.gameState.buildings[buildingId]);
   const player = useGameStore((state) => building ? state.gameState.players[building.ownerId] : undefined);
-  const vaultInventory = useGameStore(
-    useShallow((state): ResourceInventory | null => {
-      if (!building) return null;
-      const p = state.gameState.players[building.ownerId];
-      if (!p) return null;
-      const merged: Record<string, number> = {};
-      let hasVault = false;
-      for (const bid of p.buildings) {
-        const b = state.gameState.buildings[bid];
-        if (b?.type === 'vaultOfDigestiveStone') {
-          hasVault = true;
-          for (const [res, amt] of Object.entries(b.outputBuffer)) {
-            merged[res] = (merged[res] ?? 0) + (amt ?? 0);
-          }
-        }
-      }
-      return hasVault ? (merged as ResourceInventory) : null;
-    })
-  );
   const workers = useGameStore(
     useShallow((state) => {
       if (!building) return {};
@@ -59,14 +40,19 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
   if (!building || !player) return null;
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
-  const productionStatus = getProductionStatus(
-    useGameStore.getState().gameState,
-    building,
-    DEFAULT_SIMULATION_CONFIG
-  );
-  const upgradeCost = getUpgradeCost(building, building.level + 1);
-  const inventory = vaultInventory ?? player.stock;
-  const canUpgrade = canAffordUpgrade(inventory, building);
+  const panelDerived = useGameStore((state) => {
+    if (!building) return null;
+    return {
+      panelStatus: getBuildingPanelStatus(state.gameState, building.id),
+      inventory: getInventoryForCostChecks(state.gameState, building.ownerId),
+      canUpgrade: canAffordUpgradeForBuilding(state.gameState, building.id),
+    };
+  });
+
+  const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', detail: 'No status available.' } as const;
+  const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
+  const inventory = panelDerived?.inventory ?? {};
+  const canUpgrade = panelDerived?.canUpgrade ?? false;
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
@@ -204,7 +190,7 @@ function formatRecipeFlow(recipe: (typeof RECIPES)[string]) {
   return `${inputs} -> ${outputs}`;
 }
 
-function statusLabel(kind: ReturnType<typeof getProductionStatus>['kind']) {
+function statusLabel(kind: string) {
   switch (kind) {
     case 'roadDisconnected':
       return 'road missing';

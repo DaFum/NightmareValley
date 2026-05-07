@@ -1,6 +1,6 @@
 import { Graphics } from '@pixi/react';
 import { ISO_TILE_WIDTH, ISO_TILE_HEIGHT } from '../../game/iso/iso.constants';
-import { tileToScreen } from '../../game/iso/iso.project';
+import { isoTileToScreen } from '../iso/iso.adapter';
 
 type IsoRoadGhostLayerProps = {
   hoveredTileX: number;
@@ -15,7 +15,7 @@ export default function IsoRoadGhostLayer({
   isValid,
   mode,
 }: IsoRoadGhostLayerProps): JSX.Element {
-  const { x, y } = tileToScreen(hoveredTileX, hoveredTileY, ISO_TILE_WIDTH, ISO_TILE_HEIGHT);
+  const { x, y } = isoTileToScreen(hoveredTileX, hoveredTileY);
   const tint = isValid ? (mode === 'place' ? 0x7ee787 : 0xf0a500) : 0xff4444;
 
   return (
