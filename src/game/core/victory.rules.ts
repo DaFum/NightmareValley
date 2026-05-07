@@ -48,6 +48,12 @@ export type GameOutcome = {
   score?: GameScore;
 };
 
+export type ScoreSnapshot = {
+  tick: number;
+  ageOfTeeth: number;
+  score: GameScore;
+};
+
 const OBJECTIVE_TARGETS: Record<ObjectiveId, number> = {
   secureStone: 1,
   secureWater: 1,
@@ -146,6 +152,14 @@ export function calculateGameScore(state: WorldState, ownerId?: string): GameSco
   };
 }
 
+export function calculateScoreSnapshot(state: WorldState, ownerId?: string): ScoreSnapshot {
+  return {
+    tick: state.tick,
+    ageOfTeeth: state.ageOfTeeth,
+    score: calculateGameScore(state, ownerId),
+  };
+}
+
 export function evaluateGameOutcome(state: WorldState, ownerId?: string): GameOutcome {
   const objectives = getCampaignObjectives(state, ownerId);
   const allComplete = objectives.every((objective) => objective.complete);
@@ -180,4 +194,3 @@ export function evaluateGameOutcome(state: WorldState, ownerId?: string): GameOu
     objectives,
   };
 }
-

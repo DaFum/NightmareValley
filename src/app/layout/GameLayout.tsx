@@ -22,8 +22,9 @@ import { useUIStore } from '../../store/ui.store';
 import { useSelectionStore } from '../../store/selection.store';
 import ShortcutHelpDialog from '../../ui/dialogs/ShortcutHelpDialog';
 import { getGameHotkeyAction } from '../../ui/hotkeys/gameHotkeys';
+import { isDevFeatureEnabled } from '../devFeatures';
 
-const IS_DEV = __DEV__;
+const IS_DEV = isDevFeatureEnabled('debugPanels');
 const ContentCodexPanel = React.lazy(() => import('../../ui/panels/ContentCodexPanel'));
 const ProductionChainPanel = React.lazy(() => import('../../ui/panels/ProductionChainPanel'));
 const VictoryDialog = React.lazy(() => import('../../ui/dialogs/VictoryDialog'));

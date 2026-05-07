@@ -2,10 +2,11 @@ import React from 'react';
 import { RootLayout } from './app/layout/RootLayout';
 import { GameRoute } from './app/routes/GameRoute';
 import NotFoundRoute from './app/routes/NotFoundRoute';
+import { isDevFeatureEnabled } from './app/devFeatures';
 import './styles/globals.css';
 import './styles/ui.css';
 
-const DEBUG_ROUTE_ENABLED = __DEV__;
+const DEBUG_ROUTE_ENABLED = isDevFeatureEnabled('debugRoute');
 const LazyDebugRoute = DEBUG_ROUTE_ENABLED
   ? React.lazy(() => import('./app/routes/DebugRoute'))
   : null;

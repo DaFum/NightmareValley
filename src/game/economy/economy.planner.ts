@@ -30,6 +30,29 @@ export type EconomyRecommendation = {
   objective?: GameObjective;
 };
 
+const ECONOMY_ACTION_UTILITY = {
+  default: 1,
+  buildMatch: 1.35,
+  resourceMatch: 1.2,
+} as const;
+
+export function getEconomyRecommendationUtilityBonus(
+  recommendation: EconomyRecommendation,
+  actionTags: string[]
+): number {
+  if (!actionTags.length) return ECONOMY_ACTION_UTILITY.default;
+
+  if (recommendation.buildingType && actionTags.includes(`build:${recommendation.buildingType}`)) {
+    return ECONOMY_ACTION_UTILITY.buildMatch;
+  }
+
+  if (recommendation.resourceType && actionTags.includes(`resource:${recommendation.resourceType}`)) {
+    return ECONOMY_ACTION_UTILITY.resourceMatch;
+  }
+
+  return ECONOMY_ACTION_UTILITY.default;
+}
+
 export type EconomyPlanSnapshot = {
   nextObjective?: GameObjective;
   recommendation: EconomyRecommendation;

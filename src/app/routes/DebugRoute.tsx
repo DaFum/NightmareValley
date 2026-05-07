@@ -2,8 +2,9 @@ import { useGameStore } from '../../store/game.store'
 import { useUIStore } from '../../store/ui.store'
 import { useDebugStore } from '../../store/debug.store'
 import { useRenderStore } from '../../store/render.store'
+import { isDevFeatureEnabled } from '../devFeatures'
 
-const DEBUG_ROUTE_ENABLED = __DEV__
+const DEBUG_ROUTE_ENABLED = isDevFeatureEnabled('debugRoute')
 
 export default function DebugRoute(): JSX.Element {
 	const tick = useGameStore((state) => state.gameState.tick)
