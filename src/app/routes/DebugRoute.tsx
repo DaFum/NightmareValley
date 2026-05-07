@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { player1Id, useGameStore } from '../../store/game.store'
 import { useUIStore } from '../../store/ui.store'
 import { useDebugStore } from '../../store/debug.store'
@@ -8,11 +9,11 @@ import { getMilitaryMetrics } from '../../game/military'
 const DEBUG_ROUTE_ENABLED = isDevFeatureEnabled('debugRoute')
 
 export default function DebugRoute(): JSX.Element {
-	const tick = useGameStore((state) => state.gameState.tick)
-	const seed = useGameStore((state) => state.gameState.seed)
-	const ageOfTeeth = useGameStore((state) => state.gameState.ageOfTeeth)
-	const worldMetrics = useGameStore((state) => {
-		const gameState = state.gameState
+	const gameState = useGameStore((state) => state.gameState)
+	const tick = gameState.tick
+	const seed = gameState.seed
+	const ageOfTeeth = gameState.ageOfTeeth
+	const worldMetrics = useMemo(() => {
 		const roads = Object.values(gameState.territory.tiles).filter((tile) => tile.terrain === 'scarPath').length
 		const playerTiles = Object.values(gameState.territory.tiles).filter((tile) => tile.ownerId === player1Id).length
 		const enemyTiles = Object.values(gameState.territory.tiles).filter((tile) => tile.ownerId === gameState.aiOwnerId).length
@@ -37,7 +38,7 @@ export default function DebugRoute(): JSX.Element {
 			nextAttackAge: gameState.military?.nextAttackAge ?? 0,
 			enemyPressure: gameState.military?.enemyPressure ?? 0,
 		}
-	})
+	}, [gameState])
 	const isRunning = useGameStore((state) => state.isRunning)
 	const tickRate = useGameStore((state) => state.tickRate)
 	const lastError = useGameStore((state) => state.lastError)

@@ -1,8 +1,7 @@
 
 import { useMemo } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/economy.data';
-import { BuildingInstance } from '../../game/core/game.types';
+import { BuildingInstance, WorkerInstance } from '../../game/core/game.types';
 import { canAffordWorker, getWorkerHireCost } from '../../game/economy/production.logic';
 import { getMilitaryMetrics } from '../../game/military';
 import { player1Id, useGameStore } from '../../store/game.store';
@@ -11,16 +10,21 @@ import imageMap from '../../pixi/utils/vite-asset-loader';
 
 const fmt0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
 
-function countAssignedType(building: BuildingInstance, workerType: keyof typeof WORKER_DEFINITIONS): number {
+function countAssignedType(
+  building: BuildingInstance,
+  workers: Record<string, WorkerInstance>,
+  workerType: keyof typeof WORKER_DEFINITIONS
+): number {
   return building.assignedWorkers.reduce((count, workerId) => {
-    const worker = useGameStore.getState().gameState.workers[workerId];
+    const worker = workers[workerId];
     return count + (worker?.type === workerType ? 1 : 0);
   }, 0);
 }
 
 export default function MilitaryPanel(): JSX.Element | null {
-  const snapshot = useGameStore(useShallow((state) => {
-    const gameState = state.gameState;
+  const gameState = useGameStore((state) => state.gameState);
+  const spawnAndAssignWorker = useGameStore((state) => state.spawnAndAssignWorker);
+  const snapshot = useMemo(() => {
     const player = gameState.players[player1Id];
     const inventory = getInventoryForCostChecks(gameState, player1Id);
     const metrics = getMilitaryMetrics(gameState, player1Id);
@@ -45,15 +49,14 @@ export default function MilitaryPanel(): JSX.Element | null {
       hireCost: getWorkerHireCost('warInfant'),
       inventory,
     };
-  }));
-  const spawnAndAssignWorker = useGameStore((state) => state.spawnAndAssignWorker);
+  }, [gameState]);
 
   const recruitTarget = useMemo(() => {
     return snapshot.recruitBuildings.find((building) => {
       const slots = BUILDING_DEFINITIONS[building.type].workerSlots.warInfant ?? 0;
-      return countAssignedType(building, 'warInfant') < slots;
+      return countAssignedType(building, gameState.workers, 'warInfant') < slots;
     }) ?? null;
-  }, [snapshot.recruitBuildings]);
+  }, [gameState.workers, snapshot.recruitBuildings]);
 
   if (!snapshot.hasPlayer) return null;
 
