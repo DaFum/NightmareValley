@@ -1,5 +1,6 @@
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
+import { useShallow } from 'zustand/react/shallow';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { getWorkerInspectorModel } from '../../store/workerDomain';
 
@@ -8,18 +9,34 @@ type WorkerInspectorProps = {
 };
 
 export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX.Element | null {
-  const worker = useGameStore((state) => state.gameState.workers[workerId]);
-  const homeBuilding = useGameStore((state) => {
-    const w = state.gameState.workers[workerId];
-    return w?.homeBuildingId ? state.gameState.buildings[w.homeBuildingId] : undefined;
-  });
-  const activeTask = useGameStore((state) => state.gameState.transport.activeCarrierTasks[workerId]);
+  const { worker, homeBuilding, activeTask, taskBuildings } = useGameStore(
+    useShallow((state) => {
+      const selectedWorker = state.gameState.workers[workerId];
+      const task = state.gameState.transport.activeCarrierTasks[workerId];
+      const pickupBuilding = task ? state.gameState.buildings[task.pickupBuildingId] : undefined;
+      const dropoffBuilding = task ? state.gameState.buildings[task.dropoffBuildingId] : undefined;
+      return {
+        worker: selectedWorker,
+        homeBuilding: selectedWorker?.homeBuildingId
+          ? state.gameState.buildings[selectedWorker.homeBuildingId]
+          : undefined,
+        activeTask: task,
+        taskBuildings: task
+          ? {
+            [task.pickupBuildingId]: pickupBuilding,
+            [task.dropoffBuildingId]: dropoffBuilding,
+          }
+          : {},
+      };
+    }),
+  );
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!worker) return null;
 
-  const workerModel = getWorkerInspectorModel(worker);
+  const workerModel = getWorkerInspectorModel(worker, activeTask, taskBuildings);
   const def = workerModel?.definition || { name: 'Unknown Worker', description: 'No definition found.' };
+  const transport = workerModel?.transport;
   const portraitSrc = imageMap[`workers/${worker.type}.png`] ?? imageMap[`workers/${worker.type}.svg`];
 
   return (
@@ -33,7 +50,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
             className="inspector-portrait"
           />
         ) : (
-          <div className="inspector-portrait" style={{ backgroundColor: '#222' }} />
+          <div className="inspector-portrait inspector-portrait--placeholder" />
         )}
         <div>
           <span className="panel-kicker">Worker</span>
@@ -51,14 +68,21 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
         <div><dt>Scars</dt><dd>{worker.scars}</dd></div>
         <div><dt>Position</dt><dd>{worker.position.x}, {worker.position.y}</dd></div>
         <div><dt>Home</dt><dd>{homeBuilding?.type ?? 'none'}</dd></div>
+        <div><dt>Carrying</dt><dd>{transport?.carrying ?? 'Nothing'}</dd></div>
       </dl>
 
-      {activeTask ? (
-        <section className="inventory-block">
-          <h3>Transport</h3>
-          <p className="inspector-note">{activeTask.resourceType} — {activeTask.phase === "toPickup" ? "heading to pickup" : "delivering"}</p>
-        </section>
-      ) : null}
+      <section className="inventory-block worker-transport">
+        <h3>Transport</h3>
+        <dl className="inspector-stats worker-transport__stats">
+          <div><dt>Delivery State</dt><dd>{transport?.deliveryState ?? 'Idle'}</dd></div>
+          <div><dt>Route</dt><dd>{transport?.route ?? 'No active route'}</dd></div>
+          <div><dt>Progress</dt><dd>{transport?.progress ?? 'No active route'}</dd></div>
+        </dl>
+        <p className="inspector-note">{transport?.idleReason ?? transport?.detail ?? 'No transport details available.'}</p>
+        {transport?.idleReason ? (
+          <p className="inspector-note worker-transport__hint">{transport.detail}</p>
+        ) : null}
+      </section>
     </aside>
   );
 }

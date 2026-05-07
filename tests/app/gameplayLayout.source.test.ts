@@ -4,14 +4,19 @@ import { join } from 'path';
 describe('gameplay layout CSS', () => {
   const css = () => readFileSync(join(process.cwd(), 'src/styles/ui.css'), 'utf8');
 
-  it('keeps the dev logistics panel out of the build dock hit area', () => {
+  it('keeps the dev logistics panel out of bottom dock tool hit areas', () => {
     const source = css();
     const debugPanelRule = source.match(/\.game-layout__debug-panel\s*\{[^}]+\}/)?.[0] ?? '';
+    const debugSource = readFileSync(join(process.cwd(), 'src/ui/panels/DebugLogisticsPanel.tsx'), 'utf8');
 
-    expect(debugPanelRule).toContain('top: 8rem');
-    expect(debugPanelRule).not.toContain('bottom: 1rem');
+    expect(debugPanelRule).toContain('right: 24px');
+    expect(debugPanelRule).toContain('bottom: 96px');
+    expect(debugPanelRule).not.toContain('left: 1rem');
     expect(debugPanelRule).toContain('z-index: 90');
     expect(debugPanelRule).toContain('overflow-y: auto');
+    expect(source).toContain('.debug-logistics-panel__checkbox');
+    expect(debugSource).toContain('className="macabre-panel debug-logistics-panel"');
+    expect(debugSource).not.toContain('style={{');
   });
 
   it('allows the top HUD to wrap instead of overlapping at gameplay widths', () => {

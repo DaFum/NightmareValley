@@ -44,9 +44,9 @@ export default function DebugLogisticsPanel() {
   const resetFootfall = useGameStore(state => state.resetFootfall);
 
   return (
-    <div className="macabre-panel" style={{ padding: '1rem', color: 'white', backgroundColor: 'rgba(0, 0, 0, 0.8)', border: '1px solid #ff0000', borderRadius: '4px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-      <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#ff4444' }}>Logistics Debug</h3>
-      <div style={{ fontSize: '0.9rem' }}>
+    <div className="macabre-panel debug-logistics-panel">
+      <h3 className="debug-logistics-panel__title">Logistics Debug</h3>
+      <div className="debug-logistics-panel__stats">
         <div>Tick: {snapshot.tick}</div>
         <div>Buildings: {snapshot.totalBuildings}</div>
         <div>Workers: {snapshot.totalWorkers}</div>
@@ -56,26 +56,29 @@ export default function DebugLogisticsPanel() {
         <div>Stored Resources: {Math.round(totalStoredResources)}</div>
         <div>Total Footfall: {Math.round(totalFootfall)}</div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+      <div className="debug-logistics-panel__actions">
         <button
           onClick={() => setDebugSpawningWarehouse(!isDebugSpawningWarehouse)}
-          style={{ backgroundColor: isDebugSpawningWarehouse ? '#ff4444' : '#333', color: 'white', padding: '0.5rem', border: '1px solid #555', cursor: 'pointer' }}
+          className={[
+            'debug-logistics-panel__button',
+            isDebugSpawningWarehouse ? 'debug-logistics-panel__button--active' : '',
+          ].filter(Boolean).join(' ')}
         >
           {isDebugSpawningWarehouse ? 'Cancel Spawn' : 'Spawn warehouse at cursor'}
         </button>
         <button
           onClick={() => dispatchDebugJobsFromHQ(10, DEBUG_RESOURCE)}
-          style={{ backgroundColor: '#333', color: 'white', padding: '0.5rem', border: '1px solid #555', cursor: 'pointer' }}
+          className="debug-logistics-panel__button"
         >
           {`Dispatch 10 ${DEBUG_RESOURCE}`}
         </button>
         <button
           onClick={resetFootfall}
-          style={{ backgroundColor: '#333', color: 'white', padding: '0.5rem', border: '1px solid #555', cursor: 'pointer' }}
+          className="debug-logistics-panel__button"
         >
           Reset footfall
         </button>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+        <label className="debug-logistics-panel__checkbox">
           <input
             type="checkbox"
             aria-label="Show footfall heatmap"
