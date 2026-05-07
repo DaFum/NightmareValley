@@ -162,8 +162,21 @@ export function calculateScoreSnapshot(state: WorldState, ownerId?: string): Sco
 
 export function evaluateGameOutcome(state: WorldState, ownerId?: string): GameOutcome {
   const objectives = getCampaignObjectives(state, ownerId);
-  const allComplete = objectives.every((objective) => objective.complete);
+  const player = ownerId ? state.players[ownerId] : Object.values(state.players)[0];
+  const primaryVault = player?.buildings
+    .map((id) => state.buildings[id])
+    .find((building) => building?.type === 'vaultOfDigestiveStone');
 
+  if (state.military?.defeatReason === 'vaultDestroyed' || (primaryVault && primaryVault.integrity <= 0)) {
+    return {
+      kind: 'defeat',
+      title: 'Vault Devoured',
+      summary: 'The central vault has fallen and the settlement can no longer command its territory.',
+      objectives,
+    };
+  }
+
+  const allComplete = objectives.every((objective) => objective.complete);
   if (allComplete) {
     return {
       kind: 'victory',
@@ -174,7 +187,6 @@ export function evaluateGameOutcome(state: WorldState, ownerId?: string): GameOu
     };
   }
 
-  const player = ownerId ? state.players[ownerId] : Object.values(state.players)[0];
   const hasBuildings = player ? player.buildings.some((id) => !!state.buildings[id]) : Object.keys(state.buildings).length > 0;
   const hasWorkers = player ? player.workers.some((id) => !!state.workers[id]) : Object.keys(state.workers).length > 0;
 

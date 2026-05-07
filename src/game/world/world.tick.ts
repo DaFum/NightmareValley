@@ -7,6 +7,7 @@ import { runAiTick } from '../ai/ai.tick';
 import { MapTile, PlayerState } from '../core/game.types';
 import { BuildingType } from '../core/economy.types';
 import { BUILDING_DEFINITIONS } from '../core/economy.data';
+import { processMilitaryTick } from '../military';
 
 const AI_BUILDING_ALIASES: Record<string, BuildingType> = {
 	milestone_grinder: 'fieldOfMouths',
@@ -20,6 +21,13 @@ function getPrimaryPlayer(state: WorldState): PlayerState | undefined {
 	if (prioritized) return state.players[prioritized];
 	const sortedIds = [...playerIds].sort((a, b) => a.localeCompare(b));
 	return state.players[sortedIds[0]];
+}
+
+function getDefendedPlayerId(state: WorldState): string | undefined {
+	const playerIds = Object.keys(state.players);
+	if (playerIds.length === 0) return undefined;
+	const nonAi = playerIds.find((id) => id !== state.aiOwnerId);
+	return nonAi ?? playerIds[0];
 }
 
 function adjacentPositions(position: { x: number; y: number }) {
@@ -184,12 +192,15 @@ export function tickWorld(
 	};
 
 	const appliedAi = applyAiActions(merged, aiPlayer?.id, aiResult.actions);
-	return applyScheduledWorldEvents({
+	const withAi: WorldState = {
 		...appliedAi.state,
 		ai: {
 			state: aiResult.state,
 			lastActions: aiResult.actions,
 			appliedActions: appliedAi.appliedActions,
 		},
-	});
+	};
+	const defendedPlayerId = getDefendedPlayerId(withAi);
+	const withMilitary = defendedPlayerId ? processMilitaryTick(withAi, defendedPlayerId, safeDelta) : withAi;
+	return applyScheduledWorldEvents(withMilitary);
 }

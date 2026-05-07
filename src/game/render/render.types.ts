@@ -1,4 +1,4 @@
-import type { ResourceInventory } from "../core/economy.types";
+import type { ResourceInventory, TerrainType } from "../core/economy.types";
 import { TileTier } from "../core/game.types";
 import { IsoBuildingRenderData, IsoWorkerRenderData } from "../iso/iso.types";
 
@@ -7,6 +7,8 @@ export type IsoTileRenderData = {
   screenX: number;
   screenY: number;
   textureKey: string;
+  terrain: TerrainType;
+  ownerId?: string;
   chunkId: string;
   resourceDeposit?: ResourceInventory;
   footfall: number;
