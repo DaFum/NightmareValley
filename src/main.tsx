@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App';
 import { Logger } from './lib/logger';
+import './game/core/export-wiring';
 
 // Global debugging helpers: capture unhandled promise rejections and errors
 if (typeof window !== 'undefined' && !(window as Window & { __nvGlobalHandlersBound?: boolean }).__nvGlobalHandlersBound) {
