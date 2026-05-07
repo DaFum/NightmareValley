@@ -8,6 +8,7 @@ import WarehousePanel from '../../ui/panels/WarehousePanel';
 import SettlementBriefPanel from '../../ui/panels/SettlementBriefPanel';
 import GameGuidePanel from '../../ui/panels/GameGuidePanel';
 import EventLogPanel from '../../ui/panels/EventLogPanel';
+import MilitaryPanel from '../../ui/panels/MilitaryPanel';
 import ResumeRunPrompt from '../../ui/panels/ResumeRunPrompt';
 import TacticalMapPanel from '../../ui/panels/TacticalMapPanel';
 import SelectionStatusChip from '../../ui/hud/SelectionStatusChip';
@@ -51,6 +52,7 @@ const defaultBottomDock = (
     </React.Suspense>
     <WarehousePanel />
     <EconomyPanel />
+    <MilitaryPanel />
     <React.Suspense fallback={null}>
       <ContentCodexPanel />
     </React.Suspense>

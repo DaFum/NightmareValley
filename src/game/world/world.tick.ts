@@ -5,9 +5,10 @@ import { applyScheduledWorldEvents } from '../events/events.logic';
 import { AiAction } from '../ai/ai.types';
 import { runAiTick } from '../ai/ai.tick';
 import { MapTile, PlayerState } from '../core/game.types';
-import { BuildingType } from '../core/economy.types';
+import { BuildingType, ResourceInventory, ResourceType } from '../core/economy.types';
 import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { processMilitaryTick } from '../military';
+import { canAffordBuilding } from '../economy/production.logic';
 
 const AI_BUILDING_ALIASES: Record<string, BuildingType> = {
 	milestone_grinder: 'fieldOfMouths',
@@ -93,6 +94,25 @@ function findAiBuildTileId(state: WorldState, ownerId: string, buildingType: Bui
 	return null;
 }
 
+function getOwnerInventoryForBuild(state: WorldState, ownerId: string): ResourceInventory {
+	const player = state.players[ownerId];
+	if (!player) return {};
+
+	const merged: ResourceInventory = {};
+	let hasVault = false;
+	for (const buildingId of player.buildings) {
+		const building = state.buildings[buildingId];
+		if (!building || building.type !== 'vaultOfDigestiveStone') continue;
+		hasVault = true;
+		for (const [resource, amount] of Object.entries(building.outputBuffer)) {
+			const key = resource as ResourceType;
+			merged[key] = (merged[key] ?? 0) + (amount ?? 0);
+		}
+	}
+
+	return hasVault ? merged : player.stock;
+}
+
 function canClaimFrontierTile(state: WorldState, ownerId: string, tile: MapTile | undefined): tile is MapTile {
 	if (!tile || tile.ownerId || tile.buildingId) return false;
 	const ownedTileIds = state.players[ownerId]?.territoryTileIds ?? [];
@@ -114,6 +134,7 @@ function applyAiActions(state: WorldState, ownerId: string | undefined, actions:
 			const buildingType = resolveActionBuildingType(action);
 			const tileId = buildingType ? findAiBuildTileId(next, ownerId, buildingType) : null;
 			if (!buildingType || !tileId) continue;
+			if (!canAffordBuilding(getOwnerInventoryForBuild(next, ownerId), buildingType)) continue;
 
 			try {
 				const placed = placeBuilding(next, ownerId, buildingType, tileId);

@@ -9,6 +9,7 @@ import IsoFootfallLayer from './layers/IsoFootfallLayer';
 import IsoFootfallHeatmapLayer from './layers/IsoFootfallHeatmapLayer';
 import IsoResourceLayer from './layers/IsoResourceLayer';
 import IsoRoadLayer from './layers/IsoRoadLayer';
+import IsoTerritoryLayer from './layers/IsoTerritoryLayer';
 import IsoGhostPlacementLayer from './layers/IsoGhostPlacementLayer';
 import IsoRoadGhostLayer from './layers/IsoRoadGhostLayer';
 
@@ -45,6 +46,7 @@ export function GameStage() {
   const roadRemovalMode = useUIStore((state) => state.roadRemovalMode);
   const territory = useGameStore((state) => state.gameState.territory);
   const gameState = useGameStore((state) => state.gameState);
+  const aiOwnerId = useGameStore((state) => state.gameState.aiOwnerId);
 
   const { spacePressedRef } = useIsoCamera();
   const world = useRenderWorld();
@@ -201,6 +203,7 @@ export function GameStage() {
   return (
     <Container x={centerX + cameraX} y={centerY + cameraY} scale={zoom} hitArea={hitArea} sortableChildren={true} eventMode={'static' as const} pointerdown={handlePointerDown} pointermove={handlePointerMove}>
       <IsoTerrainLayer tiles={world.tiles} />
+      <IsoTerritoryLayer tiles={visibleTiles} playerId={player1Id} enemyOwnerId={aiOwnerId} />
       <IsoResourceLayer tiles={world.tiles} />
       <IsoRoadLayer tiles={world.tiles} />
       <IsoFootfallLayer tiles={visibleTiles} />

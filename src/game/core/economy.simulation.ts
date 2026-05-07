@@ -11,7 +11,7 @@ import { BuildingType, WorkerType, ResourceType, ResourceInventory } from "./eco
 import { TransportState } from "../transport";
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
-import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
+import { addResource, removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
 import { isConstructed } from "../entities/buildings/building.types";
 import { expandTerritoryFromInfluence } from "../map/map.territory";
@@ -495,6 +495,60 @@ export function upgradeBuilding(
 
   building.level += 1;
   building.integrity = Math.min(100, building.integrity + 10);
+
+  return syncPopulationLimitsFromVaults(syncStockFromVaults(next));
+}
+
+export function cancelConstruction(
+  state: EconomySimulationState,
+  ownerId: string,
+  buildingId: BuildingId
+): EconomySimulationState {
+  const next = cloneState(state);
+  const player = next.players[ownerId];
+  const building = next.buildings[buildingId];
+
+  if (!player || !building) {
+    throw new Error(`Unknown owner or building`);
+  }
+
+  if (building.ownerId !== ownerId) {
+    throw new Error(`Building ${buildingId} belongs to another regime`);
+  }
+
+  if (isConstructed(building)) {
+    throw new Error(`Building ${buildingId} is already complete`);
+  }
+
+  for (const tile of Object.values(next.territory.tiles)) {
+    if (tile.buildingId === buildingId) {
+      tile.buildingId = undefined;
+    }
+  }
+
+  for (const workerId of building.assignedWorkers) {
+    const worker = next.workers[workerId];
+    if (!worker) continue;
+    worker.homeBuildingId = undefined;
+    worker.currentBuildingId = undefined;
+    worker.currentJob = undefined;
+    worker.isIdle = true;
+  }
+
+  player.buildings = player.buildings.filter((id) => id !== buildingId);
+  delete next.buildings[buildingId];
+
+  const refundVault = getOwnerVaults(next, ownerId)[0];
+  for (const [resource, amount] of Object.entries(BUILDING_DEFINITIONS[building.type].buildCost.resources)) {
+    const refund = Math.floor((amount ?? 0) * 0.5);
+    if (refund <= 0) continue;
+    const resourceType = resource as ResourceType;
+    if (refundVault) {
+      refundVault.outputBuffer = addResource(refundVault.outputBuffer, resourceType, refund);
+    } else {
+      player.stock = addResource(player.stock, resourceType, refund);
+    }
+  }
 
   return syncPopulationLimitsFromVaults(syncStockFromVaults(next));
 }

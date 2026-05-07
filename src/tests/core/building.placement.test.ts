@@ -1,4 +1,4 @@
-import { canPlaceBuildingFootprint, placeBuilding, EconomySimulationState } from "../../game/core/economy.simulation";
+import { canPlaceBuildingFootprint, cancelConstruction, placeBuilding, EconomySimulationState } from "../../game/core/economy.simulation";
 import { BuildingInstance } from "../../game/core/game.types";
 import { isConstructed } from "../../game/entities/buildings/building.types";
 
@@ -81,6 +81,69 @@ describe("placeBuilding", () => {
 
     expect(placed.level).toBe(0);
     expect(placed.constructionProgress).toBe(0);
+  });
+
+  it("can cancel an unfinished building, frees the tile, and refunds to a vault", () => {
+    const tileId = "tile_0_0";
+    const state: EconomySimulationState = {
+      tick: 0,
+      ageOfTeeth: 0,
+      players: {
+        p1: {
+          id: "p1",
+          stock: { toothPlanks: 10, sepulcherStone: 10 },
+          buildings: ["vault1"],
+        } as any,
+      },
+      buildings: {
+        vault1: {
+          id: "vault1",
+          type: "vaultOfDigestiveStone",
+          ownerId: "p1",
+          level: 1,
+          position: { x: 0, y: 1 },
+          outputBuffer: { toothPlanks: 10, sepulcherStone: 10 },
+          inputBuffer: {},
+          internalStorage: {},
+          assignedWorkers: [],
+          progressSec: 0,
+          isActive: true,
+          connectedToRoad: true,
+          integrity: 100,
+        } as any,
+      },
+      territory: {
+        tiles: {
+          [tileId]: {
+            id: tileId,
+            position: { x: 0, y: 0 },
+            terrain: "scarredEarth",
+            ownerId: "p1",
+            buildingId: undefined,
+            roadLevel: 1,
+          } as any,
+        },
+      } as any,
+      workers: {},
+      transport: {
+        jobs: {},
+        activeCarrierTasks: {},
+        networkStress: 0,
+        averageLatencySec: 0,
+        queuedJobCount: 0,
+      } as any,
+      worldPulse: 0,
+    } as any;
+
+    const placedState = placeBuilding(state, "p1", "organHarvester", tileId);
+    const placed = Object.values(placedState.buildings).find(b => b.type === "organHarvester")!;
+    const cancelled = cancelConstruction(placedState, "p1", placed.id);
+
+    expect(cancelled.buildings[placed.id]).toBeUndefined();
+    expect(cancelled.territory.tiles[tileId].buildingId).toBeUndefined();
+    expect(cancelled.players.p1.buildings).not.toContain(placed.id);
+    expect(cancelled.buildings.vault1.outputBuffer.toothPlanks).toBe(9);
+    expect(cancelled.buildings.vault1.outputBuffer.sepulcherStone).toBe(9);
   });
 
   it("newly placed building is not operational (isConstructed returns false)", () => {

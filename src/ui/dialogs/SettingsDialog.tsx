@@ -12,15 +12,15 @@ type SettingsDialogProps = {
 };
 
 const scenarioOptions: Array<{ value: GameScenarioProfile; label: string; description: string }> = [
-  { value: 'sandbox', label: 'Sandbox', description: 'Generous stockpiles for relaxed building.' },
-  { value: 'challenging', label: 'Challenging', description: 'Balanced starting supplies and normal pressure.' },
-  { value: 'hardcore', label: 'Hardcore', description: 'Lean supplies for a stricter opening.' },
+  { value: 'sandbox', label: 'Easy', description: 'Generous stockpiles and slower enemy pressure.' },
+  { value: 'challenging', label: 'Medium', description: 'Balanced starting supplies and normal attacks.' },
+  { value: 'hardcore', label: 'Hard', description: 'Lean supplies and earlier hostile waves.' },
 ];
 
 const speedOptions = [
   { value: 1, label: '1x', description: 'Precise placement and inspection.' },
   { value: 2, label: '2x', description: 'Balanced settlement growth.' },
-  { value: 5, label: '5x', description: 'Fast production testing.' },
+  { value: 4, label: '4x', description: 'Fast production and attack pressure.' },
 ];
 
 export default function SettingsDialog({
@@ -71,7 +71,7 @@ export default function SettingsDialog({
 
         <div className="settings-grid">
           <section className="settings-block" aria-labelledby="settings-scenario-title">
-            <h3 id="settings-scenario-title">Scenario</h3>
+            <h3 id="settings-scenario-title">Difficulty</h3>
             <div className="settings-list">
               {scenarioOptions.map((option) => (
                 <button

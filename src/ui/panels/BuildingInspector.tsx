@@ -28,6 +28,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
     })
   );
   const upgradeBuildingAt = useGameStore((state) => state.upgradeBuildingAt);
+  const cancelConstructionAt = useGameStore((state) => state.cancelConstructionAt);
   const connectBuildingAt = useGameStore((state) => state.connectBuildingAt);
   const toggleBuildingActive = useGameStore((state) => state.toggleBuildingActive);
   const spawnAndAssignWorker = useGameStore((state) => state.spawnAndAssignWorker);
@@ -53,6 +54,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
   const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
   const inventory = panelDerived?.inventory ?? {};
   const canUpgrade = panelDerived?.canUpgrade ?? false;
+  const isUnderConstruction = building.constructionProgress !== undefined && building.constructionProgress < 1;
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
@@ -94,6 +96,14 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         <button className="hud-button" disabled={!canUpgrade} onClick={() => upgradeBuildingAt(player.id, building.id)}>
           Upgrade
         </button>
+        {isUnderConstruction ? (
+          <button className="hud-button" onClick={() => {
+            cancelConstructionAt(player.id, building.id);
+            clearSelection();
+          }}>
+            Cancel build
+          </button>
+        ) : null}
       </div>
 
       {upgradeCost ? (

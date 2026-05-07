@@ -3,6 +3,7 @@ import {
   EconomySimulationState,
   placeBuilding,
   upgradeBuilding,
+  cancelConstruction,
   connectBuildingToRoad,
   setBuildingRecipe,
   toggleBuildingAutoHire,
@@ -31,6 +32,7 @@ import {
   readGameSave,
   writeGameSave,
 } from './game-save';
+import { createInitialMilitaryState } from '../game/military';
 
 export type GameScenarioProfile = 'sandbox' | 'challenging' | 'hardcore';
 
@@ -67,6 +69,7 @@ export interface GameStore {
   placeRoadAt: (ownerId: string, tileId: string) => void;
   removeRoadAt: (ownerId: string, tileId: string) => void;
   upgradeBuildingAt: (ownerId: string, buildingId: string) => void;
+  cancelConstructionAt: (ownerId: string, buildingId: string) => void;
   connectBuildingAt: (buildingId: string) => void;
   setBuildingRecipeAt: (ownerId: string, buildingId: string, recipeId: string) => void;
   toggleBuildingAutoHireAt: (ownerId: string, buildingId: string, workerType: WorkerType) => void;
@@ -83,9 +86,12 @@ export interface GameStore {
 import { createId } from '../game/core/economy.simulation';
 
 export const player1Id = createId('player');
+export const aiPlayerId = 'player_nightmare_chorus';
 const vaultId = createId('bld');
 const harvesterId = createId('bld');
 const millId = createId('bld');
+const aiVaultId = 'bld_enemy_vault';
+const aiSpireId = 'bld_enemy_spire';
 const carrier1Id = createId('wrk');
 const carrier2Id = createId('wrk');
 const carrier3Id = createId('wrk');
@@ -96,11 +102,14 @@ const gnashSawyerId = createId('wrk');
 
 const initialTerritory = loadInitialMap();
 
-function prepareInitialTerritory(ownerId: string) {
+function prepareInitialTerritory(ownerId: string, enemyOwnerId: string) {
   const territory = deepClone(initialTerritory);
   const ownedRadius = 13;
   const start = { x: 7, y: 7 };
+  const enemyRadius = 5;
+  const enemyStart = { x: 40, y: 40 };
   const ownedTileIds: string[] = [];
+  const enemyOwnedTileIds: string[] = [];
 
   for (const tile of Object.values(territory.tiles)) {
     tile.footfall = 0;
@@ -113,6 +122,17 @@ function prepareInitialTerritory(ownerId: string) {
     if (distance <= ownedRadius) {
       tile.ownerId = ownerId;
       ownedTileIds.push(tile.id);
+    }
+
+    const enemyDx = tile.position.x - enemyStart.x;
+    const enemyDy = tile.position.y - enemyStart.y;
+    const enemyDistance = Math.sqrt(enemyDx * enemyDx + enemyDy * enemyDy);
+    if (enemyDistance <= enemyRadius) {
+      tile.ownerId = enemyOwnerId;
+      if (tile.terrain === 'placentaLake' || tile.terrain === 'occupiedScar') {
+        tile.terrain = 'scarredEarth';
+      }
+      enemyOwnedTileIds.push(tile.id);
     }
 
     if (tile.terrain === 'weepingForest') {
@@ -130,20 +150,23 @@ function prepareInitialTerritory(ownerId: string) {
     }
   }
 
-  const markBuilding = (x: number, y: number, buildingId: string) => {
+  const markBuilding = (x: number, y: number, buildingId: string, buildingOwnerId = ownerId) => {
     const tileId = territory.tileIndex?.[`${x},${y}`] ?? `tile_${x}_${y}`;
     const tile = territory.tiles[tileId];
     if (tile) {
-      tile.ownerId = ownerId;
+      tile.ownerId = buildingOwnerId;
       tile.buildingId = buildingId;
+      tile.terrain = 'scarredEarth';
     }
   };
 
   markBuilding(7, 7, vaultId);
   markBuilding(5, 7, harvesterId);
   markBuilding(9, 7, millId);
+  markBuilding(enemyStart.x, enemyStart.y, aiVaultId, enemyOwnerId);
+  markBuilding(enemyStart.x - 2, enemyStart.y, aiSpireId, enemyOwnerId);
 
-  return { territory, ownedTileIds };
+  return { territory, ownedTileIds, enemyOwnedTileIds };
 }
 
 function createStarterBuilding(
@@ -156,12 +179,13 @@ function createStarterBuilding(
     outputBuffer?: ResourceInventory;
     internalStorage?: ResourceInventory;
     currentRecipeId?: string;
-  } = {}
+  } = {},
+  ownerId = player1Id
 ): BuildingInstance {
   return {
     id,
     type,
-    ownerId: player1Id,
+    ownerId,
     level: 1,
     integrity: 100,
     position,
@@ -198,17 +222,17 @@ function createStarterWorker(
   };
 }
 
-const preparedInitialTerritory = prepareInitialTerritory(player1Id);
+const preparedInitialTerritory = prepareInitialTerritory(player1Id, aiPlayerId);
 
 function scenarioStock(profile: GameScenarioProfile): ResourceInventory {
   switch (profile) {
     case 'sandbox':
-      return { toothPlanks: 160, sepulcherStone: 120, marrowGrain: 80, amnioticWater: 80, boneDust: 20, funeralLoaf: 30 };
+      return { toothPlanks: 180, sepulcherStone: 140, marrowGrain: 80, amnioticWater: 80, boneDust: 20, funeralLoaf: 36, ribBlade: 4, skinWall: 3, veinIronBar: 2 };
     case 'hardcore':
-      return { toothPlanks: 45, sepulcherStone: 30, marrowGrain: 12, amnioticWater: 12, boneDust: 0, funeralLoaf: 0 };
+      return { toothPlanks: 45, sepulcherStone: 30, marrowGrain: 12, amnioticWater: 12, boneDust: 0, funeralLoaf: 2, ribBlade: 1 };
     case 'challenging':
     default:
-      return { toothPlanks: 80, sepulcherStone: 55, marrowGrain: 20, amnioticWater: 20, boneDust: 0, funeralLoaf: 0 };
+      return { toothPlanks: 88, sepulcherStone: 64, marrowGrain: 24, amnioticWater: 24, boneDust: 0, funeralLoaf: 8, ribBlade: 2, skinWall: 1 };
   }
 }
 
@@ -246,6 +270,21 @@ const initialGameState: WorldState = {
       doctrine: "industry",
       dread: 0,
       holinessDebt: 0
+    },
+    [aiPlayerId]: {
+      id: aiPlayerId,
+      name: "The Hostile Choir",
+      stock: { toothPlanks: 24, sepulcherStone: 24, funeralLoaf: 8, ribBlade: 4 },
+      buildings: [
+        aiVaultId,
+        aiSpireId,
+      ],
+      workers: [],
+      territoryTileIds: preparedInitialTerritory.enemyOwnedTileIds,
+      populationLimit: 20,
+      doctrine: "war",
+      dread: 20,
+      holinessDebt: 0
     }
   },
   buildings: {
@@ -261,6 +300,10 @@ const initialGameState: WorldState = {
       outputBuffer: { toothPlanks: 1 },
       currentRecipeId: "rendSinewTimber",
     }),
+    [aiVaultId]: createStarterBuilding(aiVaultId, "vaultOfDigestiveStone", { x: 40, y: 40 }, [], {
+      outputBuffer: { toothPlanks: 24, sepulcherStone: 24, funeralLoaf: 8, ribBlade: 4 },
+    }, aiPlayerId),
+    [aiSpireId]: createStarterBuilding(aiSpireId, "spireOfJurisdiction", { x: 38, y: 40 }, [], {}, aiPlayerId),
   },
   workers: {
     [carrier1Id]: createStarterWorker(carrier1Id, "burdenThrall", { x: 7, y: 8 }, undefined, true),
@@ -283,6 +326,12 @@ const initialGameState: WorldState = {
     state: { seed: 1, tick: 0 },
     lastActions: [],
     appliedActions: [],
+  },
+  aiOwnerId: aiPlayerId,
+  military: createInitialMilitaryState('challenging'),
+  events: {
+    lastEventStep: 0,
+    log: [],
   },
   worldPulse: 0,
 };
@@ -315,6 +364,7 @@ function withScenarioProfile(state: WorldState, profile: GameScenarioProfile): W
   const interim = {
     ...state,
     scenarioProfile: profile,
+    military: createInitialMilitaryState(profile),
     players: {
       ...state.players,
       [player1Id]: { ...player, stock: newStock },
@@ -476,6 +526,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) {
       console.error("Failed to upgrade building:", error);
       set({ lastError: toRuntimeIssue(error, 'BUILD_UPGRADE_FAILURE', 'upgradeBuildingAt', get().gameState.tick) });
+    }
+  },
+
+  cancelConstructionAt: (ownerId, buildingId) => {
+    try {
+      const { gameState } = get();
+      const nextEconomy = cancelConstruction(gameState, ownerId, buildingId);
+      set({ gameState: { ...gameState, ...nextEconomy } });
+    } catch (error) {
+      console.error("Failed to cancel construction:", error);
+      set({ lastError: toRuntimeIssue(error, 'BUILD_CANCEL_FAILURE', 'cancelConstructionAt', get().gameState.tick) });
     }
   },
 
