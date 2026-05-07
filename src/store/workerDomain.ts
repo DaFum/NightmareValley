@@ -5,6 +5,7 @@ import { getWorkerDef, listWorkerTypes } from '../game/entities/workers/worker.d
 import { planPath } from '../game/entities/workers/worker.pathing';
 import { workerStatus } from '../game/entities/workers/worker.status';
 import { createWorker } from '../game/entities/workers/worker.types';
+import { resourceLabel } from './economy.utils';
 
 type BuildingLookup = Record<string, Pick<BuildingInstance, 'type'> | undefined>;
 
@@ -32,10 +33,6 @@ function getTaskProgress(task: CarrierTask): string {
   if (totalSteps <= 0) return 'No route steps';
   const currentStep = Math.min(totalSteps, Math.max(1, task.pathIndex + 1));
   return `${currentStep}/${totalSteps} tiles`;
-}
-
-function resourceLabel(resourceType: string): string {
-  return resourceType.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
 }
 
 function getTransportInspectorModel(

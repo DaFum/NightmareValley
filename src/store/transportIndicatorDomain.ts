@@ -18,7 +18,7 @@ export function getTransportIndicatorModel(state: WorldState, ownerId: string): 
   }).length;
   const queued = state.transport.queuedJobCount ?? 0;
   const situation = getSettlementSituationSnapshot(state, ownerId).transport;
-  const detail = `${situation.detail} ${situation.action}`;
+  const detail = `${situation.detail} ${situation.action}`.trim();
 
   return {
     active,

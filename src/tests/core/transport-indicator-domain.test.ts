@@ -1,9 +1,10 @@
 import { getTransportIndicatorModel } from '../../store/transportIndicatorDomain';
-import { useGameStore, player1Id } from '../../store/game.store';
+import { player1Id } from '../../store/game.store';
+import { createWorld } from '../../game/world/world.state';
 
 describe('transportIndicatorDomain', () => {
   it('surfaces the transport next step, not only active and queued counts', () => {
-    const world = structuredClone(useGameStore.getState().gameState);
+    const world = createWorld(1234, 12, 12, player1Id);
     world.transport.queuedJobCount = 16;
     world.transport.activeCarrierTasks = {};
 

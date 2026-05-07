@@ -124,6 +124,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       {upgradeCost ? (
         <div className="cost-row">
           {Object.entries(upgradeCost.resources).map(([resource, amount]) => {
+            const requiredAmount = amount ?? 0;
             const imgSrc = imageMap[`resources/${resource}.png`];
             return (
               <span key={resource} className="resource-pill" title={resource}>
@@ -133,7 +134,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
                 <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                {inventory[resource as ResourceType] ?? 0}/{amount}
+                {inventory[resource as ResourceType] ?? 0}/{requiredAmount}
               </span>
             );
           })}
@@ -473,7 +474,7 @@ function resourceShortLabel(resource: ResourceType): string {
     case 'graveCoal':
       return 'Coal';
     case 'veinIronOre':
-      return 'Ore';
+      return 'Iron Ore';
     case 'veinIronBar':
       return 'Bars';
     case 'tormentInstrument':
@@ -481,7 +482,7 @@ function resourceShortLabel(resource: ResourceType): string {
     case 'haloGoldBar':
       return 'Gold';
     case 'cathedralGoldOre':
-      return 'Ore';
+      return 'Gold Ore';
     case 'sinewTimber':
       return 'Timber';
     default:
@@ -521,4 +522,3 @@ function InventoryBlock({ title, inventory }: InventoryBlockProps) {
     </section>
   );
 }
-

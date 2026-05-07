@@ -200,14 +200,18 @@ export function GameStage() {
         lastToolFeedbackKeyRef.current = '';
         clearPlacementFeedback();
       }
-      return;
+    } else {
+      const key = `${feedback.tone}|${feedback.label}|${feedback.detail}`;
+      if (key !== lastToolFeedbackKeyRef.current) {
+        lastToolFeedbackKeyRef.current = key;
+        setPlacementFeedback(feedback);
+      }
     }
 
-    const key = `${feedback.tone}|${feedback.label}|${feedback.detail}`;
-    if (key !== lastToolFeedbackKeyRef.current) {
-      lastToolFeedbackKeyRef.current = key;
-      setPlacementFeedback(feedback);
-    }
+    return () => {
+      clearPlacementFeedback();
+      lastToolFeedbackKeyRef.current = '';
+    };
   }, [
     clearPlacementFeedback,
     gameState,

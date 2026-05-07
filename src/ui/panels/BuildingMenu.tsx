@@ -375,7 +375,7 @@ function resourceShortLabel(resource: ResourceType): string {
     case 'graveCoal':
       return 'Coal';
     case 'veinIronOre':
-      return 'Ore';
+      return 'Iron Ore';
     case 'veinIronBar':
       return 'Bars';
     case 'tormentInstrument':
@@ -383,7 +383,7 @@ function resourceShortLabel(resource: ResourceType): string {
     case 'haloGoldBar':
       return 'Gold';
     case 'cathedralGoldOre':
-      return 'Ore';
+      return 'Gold Ore';
     case 'sinewTimber':
       return 'Timber';
     default:
