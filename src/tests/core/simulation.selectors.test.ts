@@ -1,4 +1,4 @@
-import { canAffordBuildingForPlayer, canAffordUpgradeForBuilding, canPlaceBuildingForPlayerAtTile, getInventoryForCostChecks } from '../../store/simulation.selectors';
+import { canAffordBuildingForPlayer, canAffordUpgradeForBuilding, canPlaceBuildingForPlayerAtTile, getInventoryForCostChecks, getPlacementValidation } from '../../store/simulation.selectors';
 import { useGameStore } from '../../store/game.store';
 
 describe('simulation selectors', () => {
@@ -32,5 +32,58 @@ describe('simulation selectors', () => {
     expect(canPlaceBuildingForPlayerAtTile(world, playerId, placeableTile!.id, 'organHarvester')).toBe(true);
     expect(canAffordBuildingForPlayer(world, playerId, 'organHarvester')).toBe(true);
     expect(canAffordUpgradeForBuilding(world, firstBuildingId)).toBe(true);
+  });
+
+  it('returns player-facing placement reasons for unowned, occupied, and terrain-blocked tiles', () => {
+    const world = structuredClone(useGameStore.getState().gameState);
+    const [playerId] = Object.keys(world.players);
+    const occupiedTile = Object.values(world.territory.tiles).find((tile) => tile.ownerId === playerId && tile.buildingId);
+
+    world.territory.tiles.unowned_test = {
+      id: 'unowned_test',
+      position: { x: 99, y: 98 },
+      terrain: 'scarredEarth',
+      ownerId: 'enemy',
+      footfall: 0,
+      tier: 'grass',
+    };
+    world.territory.tiles.terrain_test = {
+      id: 'terrain_test',
+      position: { x: 99, y: 99 },
+      terrain: 'ribMountain',
+      ownerId: playerId,
+      footfall: 0,
+      tier: 'grass',
+    };
+    world.territory.tileIndex = {
+      ...world.territory.tileIndex,
+      '99,98': 'unowned_test',
+      '99,99': 'terrain_test',
+    };
+
+    const unownedTile = world.territory.tiles.unowned_test;
+    const wrongTerrainTile = world.territory.tiles.terrain_test;
+
+    expect(occupiedTile).toBeDefined();
+
+    const occupied = getPlacementValidation(world, playerId, 'organHarvester', occupiedTile!.position.x, occupiedTile!.position.y);
+    const unowned = getPlacementValidation(world, playerId, 'organHarvester', unownedTile.position.x, unownedTile.position.y);
+    const terrainBlocked = getPlacementValidation(world, playerId, 'organHarvester', wrongTerrainTile.position.x, wrongTerrainTile.position.y);
+
+    expect(occupied).toEqual(expect.objectContaining({
+      ok: false,
+      reasonCode: 'occupied',
+      message: 'Clear the existing structure before building here.',
+    }));
+    expect(unowned).toEqual(expect.objectContaining({
+      ok: false,
+      reasonCode: 'not_owner',
+      message: 'Claim this tile with a Spire of Jurisdiction before building here.',
+    }));
+    expect(terrainBlocked).toEqual(expect.objectContaining({
+      ok: false,
+      reasonCode: 'terrain_blocked',
+      message: expect.stringContaining('Build on'),
+    }));
   });
 });

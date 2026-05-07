@@ -1,4 +1,4 @@
-import { getBottleneckAction, getEconomyBottlenecks, getEconomyPlanSnapshot, getEconomyRecommendation } from '../../game/economy/economy.planner';
+import { getBottleneckAction, getEconomyBottlenecks, getEconomyPlanSnapshot, getEconomyRecommendation, getSettlementSituationSnapshot } from '../../game/economy/economy.planner';
 import { EconomySimulationState } from '../../game/core/economy.simulation';
 import { BuildingType, ResourceInventory } from '../../game/core/economy.types';
 
@@ -189,5 +189,101 @@ describe('economy planner', () => {
       kind: 'missingWorker',
       label: 'Sepulcher Quarry needs workers',
     })).toContain('hire');
+  });
+
+  it('explains why queued transport stalls when no carriers are available', () => {
+    const state = makeState({
+      vault: building('vault', 'vaultOfDigestiveStone', {
+        outputBuffer: { toothPlanks: 80, sepulcherStone: 55 },
+      }),
+      quarry: building('quarry', 'sepulcherQuarry'),
+    }) as any;
+    state.transport.queuedJobCount = 4;
+    state.transport.networkStress = 7;
+
+    const snapshot = getSettlementSituationSnapshot(state, 'p1');
+
+    expect(snapshot.status).toBe('warn');
+    expect(snapshot.transport.headline).toBe('No carriers can answer queued jobs');
+    expect(snapshot.transport.action).toContain('hire');
+    expect(snapshot.topIssues[0]).toEqual(expect.objectContaining({
+      kind: 'transport',
+      tone: 'warn',
+    }));
+  });
+
+  it('marks staffing bottlenecks as settlement interventions', () => {
+    const state = makeState({
+      vault: building('vault', 'vaultOfDigestiveStone', {
+        outputBuffer: { toothPlanks: 80, sepulcherStone: 55 },
+      }),
+      quarry: building('quarry', 'sepulcherQuarry', {
+        assignedWorkers: [],
+      }),
+    }) as any;
+    state.workers = {
+      carrier: {
+        id: 'carrier',
+        type: 'burdenThrall',
+        ownerId: 'p1',
+        position: { x: 0, y: 0 },
+        isIdle: true,
+        morale: 100,
+        infection: 0,
+        scars: 0,
+      },
+    };
+    state.players.p1.workers = ['carrier'];
+
+    const snapshot = getSettlementSituationSnapshot(state, 'p1');
+
+    expect(snapshot.status).toBe('warn');
+    expect(snapshot.primaryAction.label).toContain('needs workers');
+  });
+
+  it('prioritizes active raids over routine economy advice', () => {
+    const state = makeState({
+      vault: building('vault', 'vaultOfDigestiveStone', {
+        integrity: 26,
+        outputBuffer: { toothPlanks: 80, sepulcherStone: 55 },
+      }),
+      spire: building('spire', 'spireOfJurisdiction', {
+        assignedWorkers: ['soldier'],
+      }),
+    }) as any;
+    state.workers = {
+      soldier: {
+        id: 'soldier',
+        type: 'warInfant',
+        ownerId: 'p1',
+        position: { x: 0, y: 0 },
+        isIdle: false,
+        morale: 100,
+        infection: 0,
+        scars: 0,
+      },
+    };
+    state.players.p1.workers = ['soldier'];
+    state.military = {
+      difficulty: 'hard',
+      enemyPressure: 82,
+      nextAttackAge: 600,
+      activeRaid: {
+        id: 'raid_1',
+        strength: 18,
+        health: 45,
+        startedAtAge: 100,
+      },
+    };
+
+    const snapshot = getSettlementSituationSnapshot(state, 'p1');
+
+    expect(snapshot.status).toBe('danger');
+    expect(snapshot.military.headline).toBe('Attack in progress');
+    expect(snapshot.primaryAction.label).toBe('Defend the vault');
+    expect(snapshot.topIssues[0]).toEqual(expect.objectContaining({
+      kind: 'military',
+      tone: 'danger',
+    }));
   });
 });

@@ -1,8 +1,58 @@
 import { WorldState } from '../game/world/world.types';
-import { BuildingType, ResourceInventory } from '../game/core/economy.types';
+import { BuildingType, ResourceInventory, TerrainType } from '../game/core/economy.types';
 import { canAffordBuilding, canAffordUpgrade } from '../game/economy/production.logic';
 import { canPlaceBuildingFootprint, isTileBuildableForPlayer } from '../game/core/economy.simulation';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
+import { TileId } from '../game/core/entity.ids';
+
+export type PlacementValidationReason =
+  | 'invalid_footprint'
+  | 'out_of_bounds'
+  | 'not_owner'
+  | 'occupied'
+  | 'terrain_blocked';
+
+export type PlacementValidationResult = {
+  ok: boolean;
+  message: string;
+  width: number;
+  height: number;
+  allowedTerrain: TerrainType[];
+  tileId?: TileId;
+  reasonCode?: PlacementValidationReason;
+};
+
+const TERRAIN_LABELS: Record<TerrainType, string> = {
+  scarredEarth: 'Scarred earth',
+  weepingForest: 'Forest',
+  ribMountain: 'Rib mountain',
+  placentaLake: 'Placenta lake',
+  scarPath: 'Scar path',
+  occupiedScar: 'Occupied scar',
+  ashBog: 'Ash bog',
+  cathedralRock: 'Cathedral rock',
+};
+
+function formatTerrainList(terrain: TerrainType[]): string {
+  return terrain.map((entry) => TERRAIN_LABELS[entry] ?? entry).join(', ');
+}
+
+function placementReasonMessage(reason: PlacementValidationReason, allowedTerrain: TerrainType[]): string {
+  switch (reason) {
+    case 'invalid_footprint':
+      return 'Placement footprint is invalid.';
+    case 'out_of_bounds':
+      return 'Move the cursor back over known ground.';
+    case 'not_owner':
+      return 'Claim this tile with a Spire of Jurisdiction before building here.';
+    case 'occupied':
+      return 'Clear the existing structure before building here.';
+    case 'terrain_blocked':
+      return `Build on ${formatTerrainList(allowedTerrain)}.`;
+    default:
+      return 'This tile cannot accept the selected building.';
+  }
+}
 
 export function getInventoryForCostChecks(state: WorldState, ownerId: string): ResourceInventory {
   const player = state.players[ownerId];
@@ -69,4 +119,58 @@ export function canPlaceBuildingForPlayerFootprint(
   const width = definition.widthTiles ?? 1;
   const height = definition.heightTiles ?? 1;
   return canPlaceBuildingFootprint(state.territory, ownerId, originX, originY, buildingType, width, height).ok;
+}
+
+export function getPlacementValidation(
+  state: WorldState,
+  ownerId: string,
+  buildingType: BuildingType,
+  originX: number,
+  originY: number,
+): PlacementValidationResult {
+  const definition = BUILDING_DEFINITIONS[buildingType];
+  const width = definition?.widthTiles ?? 1;
+  const height = definition?.heightTiles ?? 1;
+  const allowedTerrain = definition?.allowedTerrain ?? [];
+
+  if (!definition) {
+    return {
+      ok: false,
+      reasonCode: 'invalid_footprint',
+      message: 'Placement footprint is invalid.',
+      width,
+      height,
+      allowedTerrain,
+    };
+  }
+
+  const result = canPlaceBuildingFootprint(
+    state.territory,
+    ownerId,
+    originX,
+    originY,
+    buildingType,
+    width,
+    height,
+  );
+
+  if (result.ok) {
+    return {
+      ok: true,
+      tileId: result.tileId,
+      message: 'Ready to build.',
+      width,
+      height,
+      allowedTerrain,
+    };
+  }
+
+  return {
+    ok: false,
+    reasonCode: result.reason,
+    message: placementReasonMessage(result.reason, allowedTerrain),
+    width,
+    height,
+    allowedTerrain,
+  };
 }

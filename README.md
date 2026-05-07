@@ -50,6 +50,7 @@ Playable slice:
 - The default game starts from a deterministic seeded map with a player vault, starter roads, stocked warehouse resources, workers, and hostile territory on the far edge.
 - Build categories are `Basic`, `Processing`, `Storage`, `Military`, and `Road`. Place buildings only on owned valid terrain; road tools build or clear scar paths tile by tile.
 - The top HUD controls pause plus `1x`, `2x`, and `4x` simulation speeds.
+- The Settlement Brief summarizes the next campaign order, live economy bottlenecks, transport blockers, carrier load, defense strength, and enemy pressure.
 - `spireOfJurisdiction` buildings expand and defend territory. `pitOfWarBirth` and spires can recruit `warInfant` soldiers when the vault has the required supplies.
 - The Military panel shows enemy pressure, soldiers, spire defense, raid timing, vault integrity, and a recruit action.
 - Campaign victory now requires the full industry chain, stored rations/tools, a war pit, a jurisdiction spire, enough controlled territory, enough defense strength, and at least one repelled raid.
