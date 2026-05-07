@@ -208,10 +208,6 @@ export function GameStage() {
       }
     }
 
-    return () => {
-      clearPlacementFeedback();
-      lastToolFeedbackKeyRef.current = '';
-    };
   }, [
     clearPlacementFeedback,
     gameState,
@@ -221,6 +217,11 @@ export function GameStage() {
     selectedBuildingToPlace,
     setPlacementFeedback,
   ]);
+
+  useEffect(() => () => {
+    clearPlacementFeedback();
+    lastToolFeedbackKeyRef.current = '';
+  }, [clearPlacementFeedback]);
 
   const handlePointerDown = useSelectionInput({
     world,
