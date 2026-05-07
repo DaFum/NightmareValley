@@ -7,7 +7,7 @@ import { canPlaceBuilding } from '../game/entities/buildings/building.placement'
 import { getTileAt } from '../game/map/map.query';
 import { deriveBuildingStatus, deriveProductionBuildingStatus, getProductionStatus } from '../game/entities/buildings/building.status';
 import { getUpgradeCost } from '../game/economy/production.logic';
-import { getInventoryForCostChecks } from './simulation.selectors';
+import { selectAuthoritativeInventory } from './simulation.selectors';
 import { canAffordBuilding } from '../game/economy/production.logic';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
 
@@ -69,7 +69,7 @@ export function getBuildingAffordability(
   ownerId: string,
   buildingType: BuildingType,
 ): { canAfford: boolean; inventory: ResourceInventory; missing: Array<{ resource: ResourceType; required: number; available: number }> } {
-  const inventory = getInventoryForCostChecks(state, ownerId);
+  const inventory = selectAuthoritativeInventory(state, ownerId);
   const affordability = getBuildingAffordabilityFromInventory(inventory, buildingType);
 
   return {

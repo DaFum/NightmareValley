@@ -1,7 +1,9 @@
 
+import { isDevFeatureEnabled } from '../devFeatures'
+
 export default function NotFoundRoute(): JSX.Element {
 	const currentPath = typeof window === 'undefined' ? '/' : window.location.pathname
-	const debugEnabled = __DEV__
+	const debugEnabled = isDevFeatureEnabled('debugRoute')
 
 	return (
 		<main className="not-found-route" role="main">

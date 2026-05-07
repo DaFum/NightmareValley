@@ -1,8 +1,18 @@
 import { TerritoryState } from '../../core/game.types';
 import { getTileAt } from '../../map/map.query';
 
+let warned = false;
+
+function warnLegacyUsage() {
+	if (__DEV__ && !warned) {
+		warned = true;
+		console.warn('[deprecated] building.placement#canPlaceBuilding is a legacy helper. Use store/simulation.selectors + core simulation checks for new call sites.');
+	}
+}
+
 /** @deprecated Use simulation selectors + core isTileBuildableForPlayer for authoritative placement checks. */
 export function canPlaceBuilding(territory: TerritoryState, tx: number, ty: number, width = 1, height = 1) {
+	warnLegacyUsage();
 	if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) return { ok: false, reason: 'invalid_footprint' };
 	let originTileId: string | undefined;
 	for (let y = ty; y < ty + height; y++) {
@@ -15,5 +25,4 @@ export function canPlaceBuilding(territory: TerritoryState, tx: number, ty: numb
 	}
 	return { ok: true, tileId: originTileId! } as const;
 }
-
 

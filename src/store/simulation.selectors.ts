@@ -23,6 +23,9 @@ export function getInventoryForCostChecks(state: WorldState, ownerId: string): R
   return hasVault ? (merged as ResourceInventory) : player.stock;
 }
 
+/** Canonical selector for warehouse-authoritative affordability checks. */
+export const selectAuthoritativeInventory = getInventoryForCostChecks;
+
 export function canAffordBuildingForPlayer(state: WorldState, ownerId: string, buildingType: BuildingType): boolean {
   return canAffordBuilding(getInventoryForCostChecks(state, ownerId), buildingType);
 }
