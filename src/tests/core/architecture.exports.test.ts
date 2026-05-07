@@ -4,6 +4,7 @@ import path from 'node:path';
 const repoRoot = path.resolve(__dirname, '../../..');
 const TARGET_DIRS = ['src/game/core', 'src/game/economy', 'src/game/entities', 'src/game/iso'] as const;
 const BASELINE_PATH = path.join(repoRoot, 'src/tests/core/fixtures/unused-exports-baseline.json');
+const targetImportFilesCache = new Map<string, string[]>();
 
 function resolveModuleFile(base: string): string | undefined {
   const candidates = [`${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')];
@@ -16,11 +17,16 @@ function resolveTargetImportFiles(importFile: string): string[] {
 
 function resolveTargetImportFilesWithDepth(importFile: string, depth: number, seen: Set<string>): string[] {
   if (depth > 3 || seen.has(importFile)) return [];
+  const cacheKey = `${importFile}:${depth}`;
+  const cached = targetImportFilesCache.get(cacheKey);
+  if (cached) return cached;
   seen.add(importFile);
 
   const relImport = path.relative(repoRoot, importFile).replace(/\\/g, '/');
   if (TARGET_DIRS.some((dir) => relImport.startsWith(`${dir}/`))) {
-    return [importFile];
+    const resolved = [importFile];
+    targetImportFilesCache.set(cacheKey, resolved);
+    return resolved;
   }
 
   const code = fs.readFileSync(importFile, 'utf8');
@@ -43,7 +49,9 @@ function resolveTargetImportFilesWithDepth(importFile: string, depth: number, se
     resolvedTargets.push(...resolveTargetImportFilesWithDepth(resolved, depth + 1, seen));
   }
 
-  return [...new Set(resolvedTargets)];
+  const resolved = [...new Set(resolvedTargets)];
+  targetImportFilesCache.set(cacheKey, resolved);
+  return resolved;
 }
 
 

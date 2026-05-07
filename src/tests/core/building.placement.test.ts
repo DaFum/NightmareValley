@@ -1,8 +1,29 @@
-import { placeBuilding, EconomySimulationState } from "../../game/core/economy.simulation";
+import { canPlaceBuildingFootprint, placeBuilding, EconomySimulationState } from "../../game/core/economy.simulation";
 import { BuildingInstance } from "../../game/core/game.types";
 import { isConstructed } from "../../game/entities/buildings/building.types";
 
 describe("placeBuilding", () => {
+  it("rejects non-integer footprint origins", () => {
+    const result = canPlaceBuildingFootprint(
+      {
+        tiles: {
+          tile_0_0: {
+            id: "tile_0_0",
+            position: { x: 0, y: 0 },
+            terrain: "scarredEarth",
+            ownerId: "p1",
+          },
+        },
+        tileIndex: { "0,0": "tile_0_0" },
+      } as any,
+      "p1",
+      0.5,
+      0,
+    );
+
+    expect(result).toEqual({ ok: false, reason: "invalid_footprint" });
+  });
+
   it("newly placed building starts with level 0 and constructionProgress 0", () => {
     const tileId = "tile_0_0";
     const state: EconomySimulationState = {

@@ -90,12 +90,12 @@ export function canPlaceBuildingFootprint(
   buildingType?: BuildingType,
   width = 1,
   height = 1,
-): { ok: true; tileId: string } | { ok: false; reason: 'invalid_footprint' | 'out_of_bounds' | 'not_owner' | 'occupied' | 'terrain_blocked' } {
-  if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+): { ok: true; tileId: TileId } | { ok: false; reason: 'invalid_footprint' | 'out_of_bounds' | 'not_owner' | 'occupied' | 'terrain_blocked' } {
+  if (!Number.isInteger(originX) || !Number.isInteger(originY) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
     return { ok: false, reason: 'invalid_footprint' };
   }
 
-  let originTileId: string | undefined;
+  let originTileId: TileId | undefined;
   for (let y = originY; y < originY + height; y++) {
     for (let x = originX; x < originX + width; x++) {
       const tile = getTileAt(territory, x, y);

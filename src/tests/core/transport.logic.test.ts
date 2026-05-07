@@ -84,7 +84,16 @@ describe("transport.logic", () => {
     expect(sorted.map((b) => b.id)).toEqual(["near", "far"]);
   });
 
-  it("uses Manhattan distance consistently for transport latency metrics", () => {
+  it("computes Manhattan distance between grid positions", () => {
+    const a = { x: 0, y: 0 };
+    const b = { x: 3, y: 4 };
+
+    const distance = gridManhattanDistance(a, b);
+
+    expect(distance).toBe(7);
+  });
+
+  it("uses Manhattan distance for transport latency metrics", () => {
     const state: EconomySimulationState = {
       tick: 0,
       ageOfTeeth: 0,
@@ -121,7 +130,6 @@ describe("transport.logic", () => {
       state,
       { ...DEFAULT_SIMULATION_CONFIG, carrierBaseSpeed: 2 }
     );
-    expect(gridManhattanDistance({ x: 0, y: 0 }, { x: 3, y: 4 })).toBe(7);
     expect(state.transport.averageLatencySec).toBe(3.5);
   });
 
