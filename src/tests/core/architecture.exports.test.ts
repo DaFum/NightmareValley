@@ -5,6 +5,48 @@ const repoRoot = path.resolve(__dirname, '../../..');
 const TARGET_DIRS = ['src/game/core', 'src/game/economy', 'src/game/entities', 'src/game/iso'] as const;
 const BASELINE_PATH = path.join(repoRoot, 'src/tests/core/fixtures/unused-exports-baseline.json');
 
+function resolveModuleFile(base: string): string | undefined {
+  const candidates = [`${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')];
+  return candidates.find((candidate) => fs.existsSync(candidate));
+}
+
+function resolveTargetImportFiles(importFile: string): string[] {
+  return resolveTargetImportFilesWithDepth(importFile, 0, new Set<string>());
+}
+
+function resolveTargetImportFilesWithDepth(importFile: string, depth: number, seen: Set<string>): string[] {
+  if (depth > 3 || seen.has(importFile)) return [];
+  seen.add(importFile);
+
+  const relImport = path.relative(repoRoot, importFile).replace(/\\/g, '/');
+  if (TARGET_DIRS.some((dir) => relImport.startsWith(`${dir}/`))) {
+    return [importFile];
+  }
+
+  const code = fs.readFileSync(importFile, 'utf8');
+  const reexports = [
+    ...code.matchAll(/export\s+\*\s+from\s+['"]([^'"]+)['"]/g),
+    ...code.matchAll(/export\s+(?:type\s+)?\{[^}]+\}\s+from\s+['"]([^'"]+)['"]/g),
+  ];
+  const resolvedTargets: string[] = [];
+  for (const m of reexports) {
+    const spec = m[1];
+    if (!spec.startsWith('.')) continue;
+    const base = path.resolve(path.dirname(importFile), spec);
+    const resolved = resolveModuleFile(base);
+    if (!resolved) continue;
+    const rel = path.relative(repoRoot, resolved).replace(/\\/g, '/');
+    if (TARGET_DIRS.some((dir) => rel.startsWith(`${dir}/`))) {
+      resolvedTargets.push(resolved);
+      continue;
+    }
+    resolvedTargets.push(...resolveTargetImportFilesWithDepth(resolved, depth + 1, seen));
+  }
+
+  return [...new Set(resolvedTargets)];
+}
+
+
 function walk(dir: string): string[] {
   const out: string[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -36,11 +78,11 @@ function collectUnusedFunctionExports(): string[] {
       if (!spec.startsWith('.')) continue;
 
       const base = path.resolve(path.dirname(runtimeFile), spec);
-      const resolved = [base, `${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')].find((p) => fs.existsSync(p));
+      const resolved = resolveModuleFile(base);
       if (!resolved) continue;
 
-      const relImport = path.relative(repoRoot, resolved).replace(/\\/g, '/');
-      if (!TARGET_DIRS.some((dir) => relImport.startsWith(`${dir}/`))) continue;
+      const targetImportFiles = resolveTargetImportFiles(resolved);
+      if (targetImportFiles.length === 0) continue;
 
       const named = clause.match(/\{([^}]+)\}/);
       if (!named) continue;
@@ -48,7 +90,11 @@ function collectUnusedFunctionExports(): string[] {
         const part = raw.trim();
         if (!part) continue;
         const [left] = part.split(/\s+as\s+/i);
-        used.add(`${relImport}::${left.trim()}`);
+        const symbol = left.trim();
+        for (const targetFile of targetImportFiles) {
+          const relImport = path.relative(repoRoot, targetFile).replace(/\\/g, '/');
+          used.add(`${relImport}::${symbol}`);
+        }
       }
     }
   }
@@ -63,6 +109,9 @@ describe('architecture export usage guard', () => {
     const unusedNow = collectUnusedFunctionExports();
 
     const newlyUnused = unusedNow.filter((symbol) => !baselineSet.has(symbol));
+    const baselineNoLongerUnused = baseline.filter((symbol) => !unusedNow.includes(symbol));
+
     expect(newlyUnused).toEqual([]);
+    expect(baselineNoLongerUnused).toEqual([]);
   });
 });

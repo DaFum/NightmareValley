@@ -345,7 +345,7 @@ export function getTransportPriority(
   return config.defaultTransportPriority + deliveryBonus;
 }
 
-export function makeTransportSignature(job: TransportJob): string {
+function makeTransportSignature(job: TransportJob): string {
   return `${job.fromBuildingId}->${job.toBuildingId}:${job.resourceType}`;
 }
 
@@ -468,7 +468,7 @@ export function findBestJobForCarrier(
 // CARRIER MOVEMENT
 // =========================
 
-export function getTileAtPosition(territory: TerritoryState, pos: Position): MapTile | undefined {
+function getTileAtPosition(territory: TerritoryState, pos: Position): MapTile | undefined {
   if (!territory) return undefined;
   // Use existing tileIndex when available; lazily build it when missing
   if (!territory.tileIndex) {
@@ -481,7 +481,7 @@ export function getTileAtPosition(territory: TerritoryState, pos: Position): Map
   return id ? territory.tiles[id] : undefined;
 }
 
-export function validateFootfallThresholds(thresholds: Record<string, number>): void {
+function validateFootfallThresholds(thresholds: Record<string, number>): void {
   if (!(thresholds.dirt <= thresholds.cobble && thresholds.cobble <= thresholds.paved)) {
     console.error(
       `[transport.logic] footfallTierThresholds are misordered: expected dirt (${thresholds.dirt}) <= cobble (${thresholds.cobble}) <= paved (${thresholds.paved})`

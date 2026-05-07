@@ -1,5 +1,5 @@
 import { DEFAULT_SIMULATION_CONFIG } from "../../game/economy/balancing.constants";
-import { advanceCarrierMovement, canTransportBetweenBuildings, findBestJobForCarrier, findTargetBuildingsForResource, generateTransportJobs, gridManhattanDistance, updateTransportMetrics } from "../../game/economy/transport.logic";
+import { advanceCarrierMovement, canTransportBetweenBuildings, findBestJobForCarrier, findTargetBuildingsForResource, generateTransportJobs, gridManhattanDistance, updateTransportMetrics } from "../../game/transport";
 import { EconomySimulationState } from "../../game/core/economy.simulation";
 
 describe("transport.logic", () => {

@@ -1,4 +1,4 @@
-import { advanceCarrierMovement } from "../../game/economy/transport.logic";
+import { advanceCarrierMovement } from "../../game/transport";
 import { EconomySimulationState, createId } from "../../game/core/economy.simulation";
 import { DEFAULT_SIMULATION_CONFIG } from "../../game/economy/balancing.constants";
 import { WORKER_DEFINITIONS } from "../../game/core/economy.data";

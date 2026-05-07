@@ -1,8 +1,7 @@
 import { WorldState } from '../game/world/world.types';
 import { BuildingType, ResourceInventory } from '../game/core/economy.types';
 import { canAffordBuilding, canAffordUpgrade } from '../game/economy/production.logic';
-import { isTileBuildableForPlayer } from '../game/core/economy.simulation';
-import { getTileAt } from '../game/map/map.query';
+import { canPlaceBuildingFootprint, isTileBuildableForPlayer } from '../game/core/economy.simulation';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
 
 export function getInventoryForCostChecks(state: WorldState, ownerId: string): ResourceInventory {
@@ -69,13 +68,5 @@ export function canPlaceBuildingForPlayerFootprint(
   if (!definition) return false;
   const width = definition.widthTiles ?? 1;
   const height = definition.heightTiles ?? 1;
-
-  for (let y = originY; y < originY + height; y++) {
-    for (let x = originX; x < originX + width; x++) {
-      const tile = getTileAt(state.territory, x, y);
-      if (!tile || !isTileBuildableForPlayer(tile, ownerId, buildingType)) return false;
-    }
-  }
-
-  return true;
+  return canPlaceBuildingFootprint(state.territory, ownerId, originX, originY, buildingType, width, height).ok;
 }

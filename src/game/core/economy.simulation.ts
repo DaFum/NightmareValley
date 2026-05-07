@@ -8,13 +8,14 @@ import {
   MapTile,
 } from "./game.types";
 import { BuildingType, WorkerType, ResourceType, ResourceInventory } from "./economy.types";
-import { TransportState } from "../economy/transport.logic";
+import { TransportState } from "../transport";
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
 import { removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
 import { isConstructed } from "../entities/buildings/building.types";
 import { expandTerritoryFromInfluence } from "../map/map.territory";
+import { getTileAt } from "../map/map.query";
 import { deepClone } from "../../lib/deep-clone";
 import { clamp } from "../../lib/math";
 
@@ -29,7 +30,7 @@ import {
   advanceCarrierMovement,
   decayFootfall,
   updateTransportMetrics
-} from "../economy/transport.logic";
+} from "../transport";
 
 export interface EconomySimulationState {
   tick: number;
@@ -79,6 +80,34 @@ export function isTileBuildableForPlayer(
   const isFree = !tile.buildingId;
 
   return isOwned && terrainAllowed && isFree;
+}
+
+export function canPlaceBuildingFootprint(
+  territory: TerritoryState,
+  playerId: OwnerId,
+  originX: number,
+  originY: number,
+  buildingType?: BuildingType,
+  width = 1,
+  height = 1,
+): { ok: true; tileId: string } | { ok: false; reason: 'invalid_footprint' | 'out_of_bounds' | 'not_owner' | 'occupied' | 'terrain_blocked' } {
+  if (!Number.isFinite(width) || !Number.isFinite(height) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+    return { ok: false, reason: 'invalid_footprint' };
+  }
+
+  let originTileId: string | undefined;
+  for (let y = originY; y < originY + height; y++) {
+    for (let x = originX; x < originX + width; x++) {
+      const tile = getTileAt(territory, x, y);
+      if (!tile) return { ok: false, reason: 'out_of_bounds' };
+      if (tile.ownerId !== playerId) return { ok: false, reason: 'not_owner' };
+      if (tile.buildingId) return { ok: false, reason: 'occupied' };
+      if (buildingType && !BUILDING_DEFINITIONS[buildingType].allowedTerrain.includes(tile.terrain)) return { ok: false, reason: 'terrain_blocked' };
+      if (x === originX && y === originY) originTileId = tile.id;
+    }
+  }
+
+  return { ok: true, tileId: originTileId! };
 }
 
 // =========================
