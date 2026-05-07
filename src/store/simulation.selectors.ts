@@ -33,11 +33,38 @@ const TERRAIN_LABELS: Record<TerrainType, string> = {
   cathedralRock: 'Cathedral rock',
 };
 
-function formatTerrainList(terrain: TerrainType[]): string {
-  return terrain.map((entry) => TERRAIN_LABELS[entry] ?? entry).join(', ');
+function formatTerrainSentence(terrain: TerrainType[]): string {
+  const labels = terrain.map((entry) => TERRAIN_LABELS[entry] ?? entry);
+  if (labels.length <= 1) return labels[0] ?? 'valid terrain';
+  if (labels.length === 2) return `${labels[0]} or ${labels[1]}`;
+  return `${labels.slice(0, -1).join(', ')}, or ${labels[labels.length - 1]}`;
 }
 
-function placementReasonMessage(reason: PlacementValidationReason, allowedTerrain: TerrainType[]): string {
+function getFirstFootprintTileTerrain(
+  state: WorldState,
+  originX: number,
+  originY: number,
+  width: number,
+  height: number,
+  allowedTerrain: TerrainType[],
+): TerrainType | undefined {
+  const allowed = new Set(allowedTerrain);
+  for (let dy = 0; dy < height; dy++) {
+    for (let dx = 0; dx < width; dx++) {
+      const tileId = state.territory.tileIndex?.[`${originX + dx},${originY + dy}`];
+      const terrain = tileId ? state.territory.tiles[tileId]?.terrain : undefined;
+      if (terrain && !allowed.has(terrain)) return terrain;
+    }
+  }
+  return undefined;
+}
+
+function placementReasonMessage(
+  reason: PlacementValidationReason,
+  allowedTerrain: TerrainType[],
+  buildingName: string,
+  blockingTerrain?: TerrainType,
+): string {
   switch (reason) {
     case 'invalid_footprint':
       return 'Placement footprint is invalid.';
@@ -48,7 +75,10 @@ function placementReasonMessage(reason: PlacementValidationReason, allowedTerrai
     case 'occupied':
       return 'Clear the existing structure before building here.';
     case 'terrain_blocked':
-      return `Build on ${formatTerrainList(allowedTerrain)}.`;
+      if (blockingTerrain) {
+        return `This footprint includes ${TERRAIN_LABELS[blockingTerrain] ?? blockingTerrain}. ${buildingName} needs ${formatTerrainSentence(allowedTerrain)}.`;
+      }
+      return `${buildingName} needs ${formatTerrainSentence(allowedTerrain)}.`;
     default:
       return 'This tile cannot accept the selected building.';
   }
@@ -168,7 +198,14 @@ export function getPlacementValidation(
   return {
     ok: false,
     reasonCode: result.reason,
-    message: placementReasonMessage(result.reason, allowedTerrain),
+    message: placementReasonMessage(
+      result.reason,
+      allowedTerrain,
+      definition.name,
+      result.reason === 'terrain_blocked'
+        ? getFirstFootprintTileTerrain(state, originX, originY, width, height, allowedTerrain)
+        : undefined,
+    ),
     width,
     height,
     allowedTerrain,

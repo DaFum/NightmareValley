@@ -69,7 +69,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
           <span className="panel-kicker">Building</span>
           <h2>{def.name}</h2>
         </div>
-        <button className="hud-button" onClick={clearSelection}>Close</button>
+        <button className="hud-button" onClick={clearSelection} aria-label="Close building inspector">Close</button>
       </div>
 
       <p className="inspector-panel__description">{def.description}</p>

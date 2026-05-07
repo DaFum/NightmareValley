@@ -241,6 +241,24 @@ describe('economy planner', () => {
     expect(snapshot.primaryAction.label).toContain('needs workers');
   });
 
+  it('deduplicates repeated settlement issues with the same action copy', () => {
+    const state = makeState({
+      vaultA: building('vaultA', 'vaultOfDigestiveStone', {
+        level: 0,
+        constructionProgress: 0.4,
+      }),
+      vaultB: building('vaultB', 'vaultOfDigestiveStone', {
+        level: 0,
+        constructionProgress: 0.5,
+      }),
+    }) as any;
+
+    const snapshot = getSettlementSituationSnapshot(state, 'p1');
+    const labels = snapshot.topIssues.map((issue) => issue.label);
+
+    expect(labels.filter((label) => label === 'Vault of Digestive Stone is still under construction')).toHaveLength(1);
+  });
+
   it('prioritizes active raids over routine economy advice', () => {
     const state = makeState({
       vault: building('vault', 'vaultOfDigestiveStone', {

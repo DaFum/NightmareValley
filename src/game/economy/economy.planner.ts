@@ -618,6 +618,30 @@ function issueToneRank(tone: SettlementSituationIssue['tone']): number {
   return tone === 'danger' ? 0 : 1;
 }
 
+function getIssueFingerprint(issue: SettlementSituationIssue): string {
+  return [
+    issue.kind,
+    issue.tone,
+    issue.label,
+    issue.action,
+    issue.resourceType ?? '',
+  ].join('|');
+}
+
+function dedupeSituationIssues(issues: SettlementSituationIssue[]): SettlementSituationIssue[] {
+  const seen = new Set<string>();
+  const uniqueIssues: SettlementSituationIssue[] = [];
+
+  for (const issue of issues) {
+    const fingerprint = getIssueFingerprint(issue);
+    if (seen.has(fingerprint)) continue;
+    seen.add(fingerprint);
+    uniqueIssues.push(issue);
+  }
+
+  return uniqueIssues;
+}
+
 function getSituationHeadline(status: SettlementSituationTone): string {
   switch (status) {
     case 'danger':
@@ -672,6 +696,7 @@ export function getSettlementSituationSnapshot(state: WorldState, ownerId?: stri
   }
 
   topIssues.sort((a, b) => issueToneRank(a.tone) - issueToneRank(b.tone));
+  const uniqueTopIssues = dedupeSituationIssues(topIssues);
 
   let status: SettlementSituationTone = 'good';
   if (military.tone === 'danger') status = 'danger';
@@ -680,8 +705,8 @@ export function getSettlementSituationSnapshot(state: WorldState, ownerId?: stri
 
   const primaryAction = military.tone === 'danger'
     ? { label: 'Defend the vault', detail: military.action }
-    : topIssues[0]
-      ? { label: topIssues[0].label, detail: topIssues[0].action }
+    : uniqueTopIssues[0]
+      ? { label: uniqueTopIssues[0].label, detail: uniqueTopIssues[0].action }
       : {
         label: recommendation.label,
         detail: recommendation.reason,
@@ -697,7 +722,7 @@ export function getSettlementSituationSnapshot(state: WorldState, ownerId?: stri
     economy,
     transport,
     military,
-    topIssues: topIssues.slice(0, 5),
+    topIssues: uniqueTopIssues.slice(0, 5),
   };
 }
 

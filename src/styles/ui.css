@@ -245,16 +245,17 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
 
 .top-hud__economy {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 14px;
-  flex: 1 1 320px;
-  width: fit-content;
-  max-width: calc(100vw - 44px);
+  flex: 1 1 min(760px, calc(100vw - 44px));
+  width: auto;
+  max-width: min(920px, calc(100vw - 44px));
 }
 
 .top-hud__label {
   display: grid;
   gap: 8px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -975,10 +976,10 @@ body.ui--tool-active .game-layout__debug-panel {
 /* ── Resource Bar ──────────────────────────────────────────────── */
 .resource-strip {
   display: grid;
-  grid-template-columns: repeat(9, minmax(54px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(66px, 1fr));
   gap: 7px;
   min-width: 0;
-  width: fit-content;
+  width: 100%;
 }
 
 .resource-chip {
@@ -986,6 +987,7 @@ body.ui--tool-active .game-layout__debug-panel {
   grid-template-columns: 24px auto;
   gap: 3px;
   min-width: 0;
+  min-height: 48px;
   padding: 5px 8px;
   border: 1px solid rgba(227, 220, 211, 0.08);
   background: rgba(0, 0, 0, 0.32);
@@ -1706,12 +1708,16 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .hud-button {
-    min-height: 36px;
+    min-height: 40px;
     white-space: nowrap;
   }
 
+  .hud-segment .hud-button {
+    min-width: 40px;
+  }
+
   .resource-strip {
-    grid-template-columns: repeat(3, minmax(72px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .population-chip {

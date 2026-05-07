@@ -89,4 +89,27 @@ describe('ui.store autosave preference', () => {
     expect(useUIStore.getState().roadRemovalMode).toBe(true);
     expect(useUIStore.getState().activePanel).toBeNull();
   });
+
+  it('clears stale placement feedback when the active build tool changes', async () => {
+    const { useUIStore } = await loadUIStore();
+
+    useUIStore.getState().setPlacementFeedback({
+      tone: 'warn',
+      label: 'Cannot place Sepulcher Quarry',
+      detail: 'Claim this tile with a Spire of Jurisdiction before building here.',
+    });
+    expect(useUIStore.getState().placementFeedback?.label).toBe('Cannot place Sepulcher Quarry');
+
+    useUIStore.getState().selectBuildingToPlace('sepulcherQuarry');
+    expect(useUIStore.getState().placementFeedback).toBeNull();
+
+    useUIStore.getState().setPlacementFeedback({
+      tone: 'warn',
+      label: 'Road blocked',
+      detail: 'Roads need owned empty ground.',
+    });
+    useUIStore.getState().setRoadPlacementMode(true);
+
+    expect(useUIStore.getState().placementFeedback).toBeNull();
+  });
 });

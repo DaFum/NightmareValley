@@ -1,17 +1,26 @@
 import { create } from 'zustand';
 import { BuildingType } from '../game/core/economy.types';
 
+export type PlacementFeedback = {
+  tone: 'active' | 'warn';
+  label: string;
+  detail: string;
+};
+
 export interface UIStore {
   activePanel: 'buildingMenu' | 'inspector' | null;
   selectedBuildingToPlace: BuildingType | null;
   roadPlacementMode: boolean;
   roadRemovalMode: boolean;
+  placementFeedback: PlacementFeedback | null;
   togglePanel: (panel: 'buildingMenu' | 'inspector') => void;
   selectBuildingToPlace: (type: BuildingType | null) => void;
   setRoadPlacementMode: (value: boolean) => void;
   setRoadRemovalMode: (value: boolean) => void;
   toggleRoadPlacementMode: () => void;
   toggleRoadRemovalMode: () => void;
+  setPlacementFeedback: (feedback: PlacementFeedback | null) => void;
+  clearPlacementFeedback: () => void;
   focusMode: boolean;
   minimalHud: boolean;
   guideOpen: boolean;
@@ -52,6 +61,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
   selectedBuildingToPlace: null,
   roadPlacementMode: false,
   roadRemovalMode: false,
+  placementFeedback: null,
   focusMode: readStoredFlag('ui:focus'),
   minimalHud: readStoredFlag('ui:minimalHud', readStoredFlag('ui:hudHidden')),
   guideOpen: readStoredFlag('ui:guideOpen', true),
@@ -65,6 +75,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
       selectedBuildingToPlace: panel !== 'buildingMenu' ? null : get().selectedBuildingToPlace,
       roadPlacementMode: panel !== 'buildingMenu' ? false : get().roadPlacementMode,
       roadRemovalMode: panel !== 'buildingMenu' ? false : get().roadRemovalMode,
+      placementFeedback: null,
     });
   },
 
@@ -74,6 +85,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
       selectedBuildingToPlace: type,
       roadPlacementMode: false,
       roadRemovalMode: false,
+      placementFeedback: null,
     });
   },
 
@@ -83,6 +95,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
       roadPlacementMode: value,
       roadRemovalMode: value ? false : get().roadRemovalMode,
       selectedBuildingToPlace: value ? null : get().selectedBuildingToPlace,
+      placementFeedback: null,
     });
   },
 
@@ -92,6 +105,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
       roadRemovalMode: value,
       roadPlacementMode: value ? false : get().roadPlacementMode,
       selectedBuildingToPlace: value ? null : get().selectedBuildingToPlace,
+      placementFeedback: null,
     });
   },
 
@@ -101,6 +115,14 @@ export const useUIStore = create<UIStore>((set, get) => ({
 
   toggleRoadRemovalMode: () => {
     get().setRoadRemovalMode(!get().roadRemovalMode);
+  },
+
+  setPlacementFeedback: (feedback) => {
+    set({ placementFeedback: feedback });
+  },
+
+  clearPlacementFeedback: () => {
+    set({ placementFeedback: null });
   },
 
   setFocusMode: (value) => {
