@@ -30,4 +30,14 @@ describe('transportIndicatorDomain', () => {
     expect(model.detail).toContain('Hire more carriers');
     expect(model.title).toContain('Transport queue is backing up');
   });
+
+  it('falls back to queuedJobCount when job records are unavailable', () => {
+    const world = createWorld(5678, 12, 12, player1Id);
+    world.transport.queuedJobCount = 5;
+    world.transport.jobs = {};
+
+    const model = getTransportIndicatorModel(world, player1Id);
+
+    expect(model.summary).toBe('Active 0 · Queued 5');
+  });
 });
