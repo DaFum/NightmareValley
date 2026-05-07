@@ -1399,6 +1399,10 @@ body.ui--tool-active .game-layout__debug-panel {
   padding-right: 4px;
 }
 
+.building-list--tools {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+
 .building-list::-webkit-scrollbar { width: 4px; }
 .building-list::-webkit-scrollbar-track { background: transparent; }
 .building-list::-webkit-scrollbar-thumb {
@@ -1461,6 +1465,17 @@ body.ui--tool-active .game-layout__debug-panel {
   height: 44px;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.7));
+}
+
+.building-option__tool-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(158, 20, 35, 0.7);
+  background: rgba(158, 20, 35, 0.16);
+  color: var(--bone);
+  font: 800 18px/1 var(--font-body);
 }
 
 .building-option__name {
@@ -2861,4 +2876,93 @@ body.ui--tool-active .game-layout__debug-panel {
   .shortcut-row kbd {
     min-width: 2.75rem;
   }
+}
+
+.military-panel {
+  width: min(34rem, calc(100vw - 2rem));
+  display: grid;
+  gap: 0.75rem;
+}
+
+.military-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.military-panel__header h2 {
+  margin: 0.1rem 0 0;
+  font-size: 1rem;
+}
+
+.military-panel__pressure {
+  min-width: 3rem;
+  border-radius: 6px;
+  padding: 0.35rem 0.55rem;
+  text-align: center;
+  border: 1px solid var(--econ-idle-border);
+  background: var(--econ-idle-bg);
+}
+
+.military-panel__pressure--medium {
+  border-color: var(--econ-warn-border);
+  background: var(--econ-warn-bg);
+}
+
+.military-panel__pressure--high {
+  border-color: rgba(255, 110, 110, 0.45);
+  background: rgba(255, 70, 70, 0.12);
+}
+
+.military-panel__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.military-panel__stats div {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.45rem;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.military-panel__stats dt {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.military-panel__stats dd {
+  margin: 0.1rem 0 0;
+  font-weight: 700;
+}
+
+.military-panel__raid,
+.military-panel__note {
+  margin: 0;
+  border-radius: 6px;
+  padding: 0.55rem;
+  background: var(--econ-warn-bg);
+  border: 1px solid var(--econ-warn-border);
+}
+
+.military-panel__raid {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.military-panel__recruit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.military-panel__costs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
 }

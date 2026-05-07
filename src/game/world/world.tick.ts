@@ -1,12 +1,14 @@
 import { WorldState } from './world.types';
-import { placeBuilding, simulateTick, syncStockFromVaults } from '../core/economy.simulation';
+import { placeBuilding, simulateTick } from '../core/economy.simulation';
 import { DEFAULT_SIMULATION_CONFIG, SimulationConfig } from '../economy/balancing.constants';
 import { applyScheduledWorldEvents } from '../events/events.logic';
 import { AiAction } from '../ai/ai.types';
 import { runAiTick } from '../ai/ai.tick';
 import { MapTile, PlayerState } from '../core/game.types';
-import { BuildingType } from '../core/economy.types';
+import { BuildingType, ResourceInventory, ResourceType } from '../core/economy.types';
 import { BUILDING_DEFINITIONS } from '../core/economy.data';
+import { processMilitaryTick } from '../military';
+import { canAffordBuilding } from '../economy/production.logic';
 
 const AI_BUILDING_ALIASES: Record<string, BuildingType> = {
 	milestone_grinder: 'fieldOfMouths',
@@ -20,6 +22,13 @@ function getPrimaryPlayer(state: WorldState): PlayerState | undefined {
 	if (prioritized) return state.players[prioritized];
 	const sortedIds = [...playerIds].sort((a, b) => a.localeCompare(b));
 	return state.players[sortedIds[0]];
+}
+
+function getDefendedPlayerId(state: WorldState): string | undefined {
+	const playerIds = Object.keys(state.players);
+	if (playerIds.length === 0) return undefined;
+	const nonAi = playerIds.find((id) => id !== state.aiOwnerId);
+	return nonAi ?? playerIds[0];
 }
 
 function adjacentPositions(position: { x: number; y: number }) {
@@ -85,6 +94,27 @@ function findAiBuildTileId(state: WorldState, ownerId: string, buildingType: Bui
 	return null;
 }
 
+function getOwnerInventoryForBuild(state: WorldState, ownerId: string): ResourceInventory {
+	const player = state.players[ownerId];
+	if (!player) return {};
+
+	// Warehouse-first invariant: AI build affordability uses vault output buffers,
+	// not the derived player.stock view.
+	const merged: ResourceInventory = {};
+	let hasVault = false;
+	for (const buildingId of player.buildings) {
+		const building = state.buildings[buildingId];
+		if (!building || building.type !== 'vaultOfDigestiveStone') continue;
+		hasVault = true;
+		for (const [resource, amount] of Object.entries(building.outputBuffer)) {
+			const key = resource as ResourceType;
+			merged[key] = (merged[key] ?? 0) + (amount ?? 0);
+		}
+	}
+
+	return hasVault ? merged : player.stock;
+}
+
 function canClaimFrontierTile(state: WorldState, ownerId: string, tile: MapTile | undefined): tile is MapTile {
 	if (!tile || tile.ownerId || tile.buildingId) return false;
 	const ownedTileIds = state.players[ownerId]?.territoryTileIds ?? [];
@@ -106,6 +136,7 @@ function applyAiActions(state: WorldState, ownerId: string | undefined, actions:
 			const buildingType = resolveActionBuildingType(action);
 			const tileId = buildingType ? findAiBuildTileId(next, ownerId, buildingType) : null;
 			if (!buildingType || !tileId) continue;
+			if (!canAffordBuilding(getOwnerInventoryForBuild(next, ownerId), buildingType)) continue;
 
 			try {
 				const placed = placeBuilding(next, ownerId, buildingType, tileId);
@@ -184,12 +215,15 @@ export function tickWorld(
 	};
 
 	const appliedAi = applyAiActions(merged, aiPlayer?.id, aiResult.actions);
-	return applyScheduledWorldEvents({
+	const withAi: WorldState = {
 		...appliedAi.state,
 		ai: {
 			state: aiResult.state,
 			lastActions: aiResult.actions,
 			appliedActions: appliedAi.appliedActions,
 		},
-	});
+	};
+	const defendedPlayerId = getDefendedPlayerId(withAi);
+	const withMilitary = defendedPlayerId ? processMilitaryTick(withAi, defendedPlayerId, safeDelta) : withAi;
+	return applyScheduledWorldEvents(withMilitary);
 }

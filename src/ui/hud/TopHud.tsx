@@ -40,7 +40,7 @@ export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudPr
           <div className="hud-segment" aria-label="Simulation speed">
             <button className={`hud-button ${tickRate === 1 ? 'active' : ''}`} onClick={() => setTickRate(1)}>1x</button>
             <button className={`hud-button ${tickRate === 2 ? 'active' : ''}`} onClick={() => setTickRate(2)}>2x</button>
-            <button className={`hud-button ${tickRate === 5 ? 'active' : ''}`} onClick={() => setTickRate(5)}>5x</button>
+            <button className={`hud-button ${tickRate === 4 ? 'active' : ''}`} onClick={() => setTickRate(4)}>4x</button>
           </div>
           <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={toggleFocusMode} title="Increase world contrast">Focus</button>
           <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} onClick={toggleMinimalHud} title={minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels'}>{minimalHud ? 'Full HUD' : 'Minimal'}</button>

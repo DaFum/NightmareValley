@@ -134,7 +134,8 @@ src/game/
 ├── camera/
 ├── render/
 ├── events/
-└── ai/
+├── ai/
+└── military/
 ```
 
 ---
@@ -179,7 +180,7 @@ src/game/world/
 * `world.state.ts` — Initialisierung und Struktur des globalen World-State.
 * `world.generator.ts` — Erzeugung von Startwelt oder Testwelten.
 * `world.metrics.ts` — Kennzahlen wie Population, Transportlast, Produktion.
-* `world.tick.ts` — orchestriert einen vollständigen Welt-Tick.
+* `world.tick.ts` — orchestriert einen vollständigen Welt-Tick: Wirtschaft, Transport, Konstruktion, AI, Militärdruck, Events und Sieg-/Niederlagenregeln.
 
 ---
 
@@ -451,6 +452,21 @@ src/game/events/
 
 ---
 
+## game/military
+
+```text
+src/game/military/
+├── index.ts
+├── military.types.ts
+└── military.logic.ts
+```
+
+* `military.types.ts` — Runtime-State für Difficulty, Feinddruck, Raid-Timer und aktive Angriffe.
+* `military.logic.ts` — deterministische Defense-Metriken, Raid-Spawn, tickbasierter Kampf und Vault-Schaden.
+* `index.ts` — öffentlicher Export für World-Tick, Debug-Route und UI.
+
+---
+
 ## game/ai
 
 ```text
@@ -510,7 +526,7 @@ src/pixi/layers/
 
 * `IsoTerrainLayer.tsx` — Boden- und Terrainsprites.
 * `IsoWaterLayer.tsx` — Wasser- und Flüssigkeitsdarstellung.
-* `IsoTerritoryLayer.tsx` — Gebietstönung und Besitzanzeige.
+* `IsoTerritoryLayer.tsx` — Gebietstönung und Besitzanzeige für Spieler- und Feindgebiet.
 * `IsoRoadLayer.tsx` — Straßen und Verbindungen.
 * `IsoBuildingLayer.tsx` — Gebäude.
 * `IsoWorkerLayer.tsx` — Arbeiter und bewegte Einheiten.
@@ -700,12 +716,12 @@ src/ui/panels/
 └── EventLogPanel.tsx
 ```
 
-* `BuildingMenu.tsx` — Auswahlmenü für Bauoptionen.
+* `BuildingMenu.tsx` — Auswahlmenü für Basic, Processing, Storage, Military und Road.
 * `InspectorPanel.tsx` — Container für Detailansichten.
 * `BuildingInspector.tsx` — Gebäudedetails.
 * `WorkerInspector.tsx` — Workerdetails.
 * `EconomyPanel.tsx` — Wirtschaft und Produktionsübersicht.
-* `MilitaryPanel.tsx` — militärische Infos.
+* `MilitaryPanel.tsx` — militärische Infos, Feinddruck, Raid-Timer, Verteidigungswerte und Rekrutierung.
 * `MapDebugPanel.tsx` — Debugdaten zur Karte.
 * `EventLogPanel.tsx` — chronologisches Eventlog.
 
@@ -719,7 +735,7 @@ src/ui/dialogs/
 ```
 
 * `PauseMenuDialog.tsx` — Pausemenü.
-* `SettingsDialog.tsx` — Optionen und Konfiguration.
+* `SettingsDialog.tsx` — Optionen, Difficulty und Simulationsgeschwindigkeit.
 * `VictoryDialog.tsx` — Sieg/Niederlage/Endbildschirm.
 
 ## ui/shared

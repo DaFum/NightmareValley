@@ -9,34 +9,46 @@ import { getInventoryForCostChecks } from '../../store/simulation.selectors';
 import { getBuildingAffordabilityFromInventory, listBuildingDomainEntries } from '../../store/buildingDomain';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
 
-type BuildCategory = 'campaign' | 'foundations' | 'food' | 'industry' | 'advanced';
+type BuildCategory = 'basic' | 'processing' | 'storage' | 'military' | 'road';
 
 const CATEGORY_LABELS: Record<BuildCategory, string> = {
-  campaign: 'Campaign',
-  foundations: 'Foundations',
-  food: 'Food',
-  industry: 'Industry',
-  advanced: 'Advanced',
+  basic: 'Basic',
+  processing: 'Processing',
+  storage: 'Storage',
+  military: 'Military',
+  road: 'Road',
 };
 
 const CATEGORY_BUILDINGS: Record<BuildCategory, BuildingType[]> = {
-  campaign: [
+  basic: [
+    'organHarvester',
+    'seedOfTheHowlingRoot',
     'sepulcherQuarry',
     'wombWell',
     'shoreOfHooks',
-    'refectoryOfSalt',
     'fieldOfMouths',
+  ],
+  processing: [
+    'millOfGnashing',
     'dustCathedralMill',
     'ovenOfLastBread',
+    'styOfConsumption',
+    'houseOfFlensing',
     'coalWound',
     'ironVeinPit',
+    'goldCatacomb',
     'bloodSmeltery',
+    'haloLiquefier',
     'instrumentCrucible',
+    'bladeVestry',
+    'skinStitchery',
+    'refectoryOfSalt',
+    'fatRenderer',
+    'ashPress',
   ],
-  foundations: ['organHarvester', 'millOfGnashing', 'sepulcherQuarry', 'vaultOfDigestiveStone', 'seedOfTheHowlingRoot'],
-  food: ['wombWell', 'shoreOfHooks', 'fieldOfMouths', 'dustCathedralMill', 'ovenOfLastBread', 'styOfConsumption', 'houseOfFlensing'],
-  industry: ['coalWound', 'ironVeinPit', 'goldCatacomb', 'bloodSmeltery', 'haloLiquefier', 'instrumentCrucible', 'bladeVestry'],
-  advanced: ['skinStitchery', 'pitOfWarBirth', 'spireOfJurisdiction', 'refectoryOfSalt', 'fatRenderer', 'ashPress'],
+  storage: ['vaultOfDigestiveStone'],
+  military: ['pitOfWarBirth', 'spireOfJurisdiction'],
+  road: [],
 };
 
 const terrainLabel: Record<string, string> = {
@@ -87,7 +99,7 @@ export function BuildingMenu() {
       sinewTimber: inventory.sinewTimber ?? 0,
     };
   }));
-  const [category, setCategory] = useState<BuildCategory>('campaign');
+  const [category, setCategory] = useState<BuildCategory>('basic');
 
   if (!economySnapshot.hasPlayer) return null;
 
@@ -182,6 +194,40 @@ export function BuildingMenu() {
             ))}
           </div>
 
+          {category === 'road' ? (
+            <div className="building-list building-list--tools">
+              <button
+                onClick={toggleRoadPlacementMode}
+                className={`building-option ${roadPlacementMode ? 'selected' : ''}`}
+                aria-pressed={roadPlacementMode}
+                title="Place scar paths on owned buildable tiles"
+              >
+                <span className="building-option__header">
+                  <span className="building-option__tool-icon" aria-hidden="true">+</span>
+                  <span className="building-option__name">Place scar path</span>
+                </span>
+                <span className="building-option__description">
+                  Draw the logistics network carriers use between vaults and workplaces.
+                </span>
+                <span className="building-option__terrain">Owned land, empty buildable tiles.</span>
+              </button>
+              <button
+                onClick={toggleRoadRemovalMode}
+                className={`building-option ${roadRemovalMode ? 'selected' : ''}`}
+                aria-pressed={roadRemovalMode}
+                title="Remove scar paths from owned road tiles"
+              >
+                <span className="building-option__header">
+                  <span className="building-option__tool-icon" aria-hidden="true">-</span>
+                  <span className="building-option__name">Clear scar path</span>
+                </span>
+                <span className="building-option__description">
+                  Remove road tiles when rerouting the network. Disconnected buildings stop receiving goods.
+                </span>
+                <span className="building-option__terrain">Owned scar path tiles.</span>
+              </button>
+            </div>
+          ) : (
           <div className="building-list">
             {buildingsToRender.map(def => {
               const affordability = getBuildingAffordabilityFromInventory(inventory, def.type);
@@ -238,6 +284,7 @@ export function BuildingMenu() {
               );
             })}
           </div>
+          )}
         </div>
       )}
     </div>
@@ -284,7 +331,7 @@ function getToolHint({
     return {
       tone: '',
       label: 'Choose a building',
-      detail: 'Campaign tab follows the main production chain; other tabs expose optional economy branches.',
+      detail: 'Basic starts extraction, Processing turns goods into higher-tier materials, Military expands and defends.',
     };
   }
 

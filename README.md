@@ -46,6 +46,22 @@ Route behavior:
 - `/debug` is loaded lazily and only available in development builds (`__DEV__`/`NODE_ENV !== "production"`).
 - Unknown paths render the Not Found route with recovery actions.
 
+Playable slice:
+- The default game starts from a deterministic seeded map with a player vault, starter roads, stocked warehouse resources, workers, and hostile territory on the far edge.
+- Build categories are `Basic`, `Processing`, `Storage`, `Military`, and `Road`. Place buildings only on owned valid terrain; road tools build or clear scar paths tile by tile.
+- The top HUD controls pause plus `1x`, `2x`, and `4x` simulation speeds.
+- `spireOfJurisdiction` buildings expand and defend territory. `pitOfWarBirth` and spires can recruit `warInfant` soldiers when the vault has the required supplies.
+- The Military panel shows enemy pressure, soldiers, spire defense, raid timing, vault integrity, and a recruit action.
+- Development `/debug` includes seed, tick, world metrics, pathing, transport, AI, and military diagnostics.
+
+Basic play loop:
+1. Build or staff extraction buildings for timber, stone, water, fish, and grain.
+2. Connect workplaces to the vault with roads so carriers can move goods.
+3. Add processing buildings for planks, bone dust, bread, iron bars, and blades.
+4. Upgrade key buildings from the inspector once the vault can afford the cost.
+5. Build spires to expand territory, recruit soldiers, and survive raid pressure.
+6. Win by meeting the campaign economy/territory conditions; lose if the vault is destroyed.
+
 Provider behavior:
 - `RootLayout` composes `AppProviders` for the whole app shell.
 - `AppProviders` exposes `errorFallback`, `onError`, and `enableStoreBootstrap` for runtime wiring.

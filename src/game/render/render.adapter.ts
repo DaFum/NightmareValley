@@ -37,6 +37,8 @@ export function mapTerrainToIsoTiles(
       screenX: sx,
       screenY: sy,
       textureKey: `terrain_${mapTile.terrain}_${variant}`,
+      terrain: mapTile.terrain,
+      ownerId: mapTile.ownerId,
       chunkId: "0,0", // simplified
       resourceDeposit: mapTile.resourceDeposit,
       footfall: mapTile.footfall,

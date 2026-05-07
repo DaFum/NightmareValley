@@ -117,4 +117,43 @@ describe('tickWorld AI integration', () => {
     expect(Object.values(next.buildings).some((building) => building.type === 'fieldOfMouths')).toBe(true);
     expect(next.territory.tiles.owned.buildingId).toBeDefined();
   });
+
+  it('applies AI actions to aiOwnerId when a hostile owner is configured', () => {
+    const world = makeAiWorld();
+    const enemyId = 'enemy_1';
+    world.aiOwnerId = enemyId;
+    world.players[enemyId] = {
+      id: enemyId,
+      name: 'Hostile Choir',
+      stock: { toothPlanks: 20, sepulcherStone: 20 },
+      buildings: ['enemyVault'],
+      workers: [],
+      territoryTileIds: ['enemyOwned'],
+      populationLimit: 20,
+      doctrine: 'war',
+      dread: 0,
+      holinessDebt: 0,
+    };
+    world.buildings.enemyVault = {
+      ...world.buildings.vault1,
+      id: 'enemyVault',
+      ownerId: enemyId,
+      position: { x: 10, y: 10 },
+      outputBuffer: { toothPlanks: 20, sepulcherStone: 20 },
+    };
+    world.territory.tiles.enemyOwned = tile('enemyOwned', 10, 10, enemyId);
+    world.territory.tiles.enemyFrontier = tile('enemyFrontier', 10, 11);
+    world.territory.tileIndex = {
+      ...world.territory.tileIndex,
+      '10,10': 'enemyOwned',
+      '10,11': 'enemyFrontier',
+    };
+
+    const next = tickWorld(world, 1);
+
+    expect(next.ai?.lastActions.some((action) => action.type === 'build' || action.type === 'expand')).toBe(true);
+    expect(next.players[player1Id].territoryTileIds).not.toContain('enemyOwned');
+    expect(next.players[player1Id].territoryTileIds).not.toContain('enemyFrontier');
+    expect(Object.values(next.buildings).filter((building) => building.ownerId === player1Id)).toHaveLength(1);
+  });
 });
