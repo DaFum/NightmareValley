@@ -24,6 +24,41 @@ describe("placeBuilding", () => {
     expect(result).toEqual({ ok: false, reason: "invalid_footprint" });
   });
 
+  it("returns the first blocking terrain when a footprint is terrain-blocked", () => {
+    const result = canPlaceBuildingFootprint(
+      {
+        tiles: {
+          tile_0_0: {
+            id: "tile_0_0",
+            position: { x: 0, y: 0 },
+            terrain: "scarredEarth",
+            ownerId: "p1",
+          },
+          tile_1_0: {
+            id: "tile_1_0",
+            position: { x: 1, y: 0 },
+            terrain: "placentaLake",
+            ownerId: "p1",
+          },
+        },
+        tileIndex: { "0,0": "tile_0_0", "1,0": "tile_1_0" },
+      } as any,
+      "p1",
+      0,
+      0,
+      "organHarvester",
+      2,
+      1,
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      reason: "terrain_blocked",
+      blockingTerrain: "placentaLake",
+      blockingTileId: "tile_1_0",
+    });
+  });
+
   it("newly placed building starts with level 0 and constructionProgress 0", () => {
     const tileId = "tile_0_0";
     const state: EconomySimulationState = {

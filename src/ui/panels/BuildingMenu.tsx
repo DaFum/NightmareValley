@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useUIStore } from '../../store/ui.store';
+import { useUIStore, type PlacementFeedback } from '../../store/ui.store';
 import { useGameStore, player1Id } from '../../store/game.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
@@ -308,7 +308,7 @@ function getToolHint({
   isOpen: boolean;
   roadPlacementMode: boolean;
   roadRemovalMode: boolean;
-  placementFeedback: { tone: 'active' | 'warn'; label: string; detail: string } | null;
+  placementFeedback: PlacementFeedback | null;
   selectedBuildingToPlace: BuildingType | null;
 }) {
   if (placementFeedback) return placementFeedback;

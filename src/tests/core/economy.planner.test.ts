@@ -259,6 +259,41 @@ describe('economy planner', () => {
     expect(labels.filter((label) => label === 'Vault of Digestive Stone is still under construction')).toHaveLength(1);
   });
 
+  it('counts settlement economy problems before truncating displayed bottlenecks', () => {
+    const buildings: Record<string, any> = {};
+    for (let index = 0; index < 10; index++) {
+      buildings[`oven_${index}`] = building(`oven_${index}`, 'ovenOfLastBread', {
+        assignedWorkers: [`ovenWorker_${index}`],
+        inputBuffer: {},
+      });
+      buildings[`mill_${index}`] = building(`mill_${index}`, 'millOfGnashing', {
+        assignedWorkers: [`millWorker_${index}`],
+        inputBuffer: { sinewTimber: 2 },
+        outputBuffer: { toothPlanks: 6 },
+      });
+    }
+    const state = makeState(buildings) as any;
+
+    const snapshot = getSettlementSituationSnapshot(state, 'p1');
+
+    expect(snapshot.economy.bottlenecks).toHaveLength(8);
+    expect(snapshot.economy.starvedBuildings).toBe(10);
+    expect(snapshot.economy.blockedBuildings).toBe(10);
+  });
+
+  it('summarizes transport as idle when legacy snapshots omit transport state', () => {
+    const state = makeState({
+      vault: building('vault', 'vaultOfDigestiveStone'),
+    }) as any;
+    delete state.transport;
+
+    const snapshot = getSettlementSituationSnapshot(state, 'p1');
+
+    expect(snapshot.transport.queuedJobs).toBe(0);
+    expect(snapshot.transport.busyCarriers).toBe(0);
+    expect(snapshot.transport.networkStress).toBe(0);
+  });
+
   it('prioritizes active raids over routine economy advice', () => {
     const state = makeState({
       vault: building('vault', 'vaultOfDigestiveStone', {

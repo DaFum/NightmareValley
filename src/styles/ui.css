@@ -55,6 +55,12 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   flex-direction: column;
   gap: 0.5rem;
   align-items: flex-start;
+  max-height: calc(100dvh - 10rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.25rem;
+  padding-bottom: 5rem;
+  scrollbar-gutter: stable;
 }
 
 .game-layout__debug-panel {
@@ -657,7 +663,8 @@ body.ui--minimal .production-chain,
 body.ui--minimal .warehouse-panel,
 body.ui--minimal .economy-panel,
 body.ui--minimal .content-codex,
-body.ui--minimal .build-dock {
+body.ui--minimal .military-panel,
+body.ui--minimal .game-layout__debug-panel {
   display: none;
 }
 
@@ -667,7 +674,9 @@ body.ui--guide-open .selection-status,
 body.ui--guide-open .production-chain,
 body.ui--guide-open .warehouse-panel,
 body.ui--guide-open .economy-panel,
-body.ui--guide-open .content-codex {
+body.ui--guide-open .content-codex,
+body.ui--guide-open .military-panel,
+body.ui--guide-open .game-layout__debug-panel {
   display: none;
 }
 
@@ -680,6 +689,9 @@ body.ui--build-menu-open .economy-panel,
 body.ui--build-menu-open .content-codex,
 body.ui--build-menu-open .tactical-map,
 body.ui--build-menu-open .selection-status,
+body.ui--build-menu-open .military-panel,
+body.ui--build-menu-open .top-hud__economy,
+body.ui--build-menu-open .top-hud__pulse,
 body.ui--build-menu-open .game-layout__debug-panel {
   display: none;
 }
@@ -694,6 +706,9 @@ body.ui--tool-active .content-codex,
 body.ui--tool-active .build-menu-panel,
 body.ui--tool-active .tactical-map,
 body.ui--tool-active .selection-status,
+body.ui--tool-active .military-panel,
+body.ui--tool-active .top-hud__economy,
+body.ui--tool-active .top-hud__pulse,
 body.ui--tool-active .game-layout__debug-panel {
   display: none;
 }
@@ -1120,8 +1135,10 @@ body.ui--tool-active .game-layout__debug-panel {
 
 /* ── Build Dock ────────────────────────────────────────────────── */
 .build-dock {
-  position: relative;
-  z-index: 25;
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 140;
   display: flex;
   align-items: flex-end;
   gap: 12px;
@@ -1324,12 +1341,16 @@ body.ui--tool-active .game-layout__debug-panel {
 }
 
 .build-menu-panel {
-  position: relative;
+  box-sizing: border-box;
+  position: fixed;
+  left: 24px;
+  bottom: 96px;
   width: min(760px, calc(100vw - 150px));
   max-height: min(46vh, 440px);
   overflow: hidden;
   padding: 14px;
   display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: 12px;
   z-index: 30;
   background: rgba(12, 8, 10, 0.96);
@@ -1399,6 +1420,7 @@ body.ui--tool-active .game-layout__debug-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -1748,7 +1770,10 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .build-dock {
-    width: 100%;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
     flex-wrap: wrap;
     align-items: stretch;
     overflow-x: auto;
@@ -1776,7 +1801,10 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .build-menu-panel {
-    width: calc(100vw - 24px);
+    left: 12px;
+    right: 12px;
+    bottom: 148px;
+    width: auto;
     max-height: 48vh;
   }
 

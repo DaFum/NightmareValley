@@ -7,7 +7,7 @@ import {
   Position,
   MapTile,
 } from "./game.types";
-import { BuildingType, WorkerType, ResourceType, ResourceInventory } from "./economy.types";
+import { BuildingType, WorkerType, ResourceType, ResourceInventory, TerrainType } from "./economy.types";
 import { TransportState } from "../transport";
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "./economy.data";
 import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
@@ -90,7 +90,7 @@ export function canPlaceBuildingFootprint(
   buildingType?: BuildingType,
   width = 1,
   height = 1,
-): { ok: true; tileId: TileId } | { ok: false; reason: 'invalid_footprint' | 'out_of_bounds' | 'not_owner' | 'occupied' | 'terrain_blocked' } {
+): { ok: true; tileId: TileId } | { ok: false; reason: 'invalid_footprint' | 'out_of_bounds' | 'not_owner' | 'occupied' } | { ok: false; reason: 'terrain_blocked'; blockingTerrain: TerrainType; blockingTileId: TileId } {
   if (!Number.isInteger(originX) || !Number.isInteger(originY) || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
     return { ok: false, reason: 'invalid_footprint' };
   }
@@ -102,7 +102,14 @@ export function canPlaceBuildingFootprint(
       if (!tile) return { ok: false, reason: 'out_of_bounds' };
       if (tile.ownerId !== playerId) return { ok: false, reason: 'not_owner' };
       if (tile.buildingId) return { ok: false, reason: 'occupied' };
-      if (buildingType && !BUILDING_DEFINITIONS[buildingType].allowedTerrain.includes(tile.terrain)) return { ok: false, reason: 'terrain_blocked' };
+      if (buildingType && !BUILDING_DEFINITIONS[buildingType].allowedTerrain.includes(tile.terrain)) {
+        return {
+          ok: false,
+          reason: 'terrain_blocked',
+          blockingTerrain: tile.terrain,
+          blockingTileId: tile.id,
+        };
+      }
       if (x === originX && y === originY) originTileId = tile.id;
     }
   }

@@ -9,7 +9,7 @@ import { useUIStore } from '../../store/ui.store';
 import { useIsoPointer } from './useIsoPointer';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordBuildingForPlayer, getPlacementValidation } from '../../store/simulation.selectors';
-import { canPlaceRoadForPlayer, isRemovableRoadTile } from '../../game/entities/roads/road.api';
+import { canPlaceRoadForPlayer, isRemovableRoadTile, type RoadPlacementReason } from '../../game/entities/roads/road.api';
 
 interface SelectionInputOptions {
   world: IsoRenderWorld;
@@ -66,11 +66,11 @@ export function useSelectionInput({
     const hit = resolveIsoHitRef.current(event.global.x, event.global.y);
     const tileRef = resolvePointerToTile(gameState, event.global.x, event.global.y, centerX + cameraX, centerY + cameraY, zoom);
     const tileId = tileRef?.tile.id ?? hit.tileId;
+    const tile = tileId ? gameState.territory.tiles[tileId] : undefined;
 
     if (selectedBuildingToPlace) {
       const definition = BUILDING_DEFINITIONS[selectedBuildingToPlace];
       const label = definition?.name ?? selectedBuildingToPlace;
-      const tile = tileRef?.tile ?? (tileId ? gameState.territory.tiles[tileId] : undefined);
 
       if (!tile) {
         setPlacementFeedback({
@@ -131,7 +131,6 @@ export function useSelectionInput({
     }
 
     if (roadPlacementMode) {
-      const tile = tileRef?.tile ?? (tileId ? gameState.territory.tiles[tileId] : undefined);
       if (!tile) {
         setPlacementFeedback({
           tone: 'warn',
@@ -163,7 +162,6 @@ export function useSelectionInput({
     }
 
     if (roadRemovalMode) {
-      const tile = tileRef?.tile ?? (tileId ? gameState.territory.tiles[tileId] : undefined);
       if (!tile || tile.ownerId !== player1Id) {
         setPlacementFeedback({
           tone: 'warn',
@@ -236,7 +234,7 @@ export function useSelectionInput({
 
 export default useSelectionInput;
 
-function getRoadPlacementMessage(reason: string): string {
+function getRoadPlacementMessage(reason: RoadPlacementReason): string {
   switch (reason) {
     case 'out_of_bounds':
       return 'Move the cursor back over known ground.';
@@ -250,6 +248,7 @@ function getRoadPlacementMessage(reason: string): string {
     case 'unowned':
       return 'Claim this tile before building a road here.';
     default:
+      const _exhaustive: never = reason;
       return 'This tile cannot accept a road.';
   }
 }

@@ -12,4 +12,19 @@ describe('placement flow', () => {
     expect(hook).toMatch(/if \(placed\) \{\s*clearPlacementFeedback\(\);\s*selectBuildingToPlace\(null\);\s*\} else \{\s*setPlacementFeedback\(/);
     expect(hook).not.toMatch(/placeBuildingAt\([^)]*\);\s*selectBuildingToPlace\(/);
   });
+
+  it('resolves the clicked tile once for all placement tool branches', () => {
+    const hook = readFileSync(join(process.cwd(), 'src/pixi/hooks/useSelectionInput.ts'), 'utf8');
+
+    expect(hook.match(/const tile = tileId \? gameState\.territory\.tiles\[tileId\] : undefined;/g) ?? []).toHaveLength(1);
+    expect(hook).not.toContain('const tile = tileRef?.tile ?? (tileId ? gameState.territory.tiles[tileId] : undefined);');
+  });
+
+  it('uses an exhaustive typed road placement reason for player-facing road feedback', () => {
+    const hook = readFileSync(join(process.cwd(), 'src/pixi/hooks/useSelectionInput.ts'), 'utf8');
+
+    expect(hook).toContain("type RoadPlacementReason");
+    expect(hook).toContain('function getRoadPlacementMessage(reason: RoadPlacementReason): string');
+    expect(hook).toContain('const _exhaustive: never = reason;');
+  });
 });

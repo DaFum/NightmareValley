@@ -90,7 +90,7 @@ describe('ui.store autosave preference', () => {
     expect(useUIStore.getState().activePanel).toBeNull();
   });
 
-  it('clears stale placement feedback when the active build tool changes', async () => {
+  it('clears stale placement feedback when selecting a building tool', async () => {
     const { useUIStore } = await loadUIStore();
 
     useUIStore.getState().setPlacementFeedback({
@@ -98,10 +98,13 @@ describe('ui.store autosave preference', () => {
       label: 'Cannot place Sepulcher Quarry',
       detail: 'Claim this tile with a Spire of Jurisdiction before building here.',
     });
-    expect(useUIStore.getState().placementFeedback?.label).toBe('Cannot place Sepulcher Quarry');
 
     useUIStore.getState().selectBuildingToPlace('sepulcherQuarry');
     expect(useUIStore.getState().placementFeedback).toBeNull();
+  });
+
+  it('clears stale placement feedback when enabling road placement mode', async () => {
+    const { useUIStore } = await loadUIStore();
 
     useUIStore.getState().setPlacementFeedback({
       tone: 'warn',

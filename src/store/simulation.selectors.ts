@@ -40,25 +40,6 @@ function formatTerrainSentence(terrain: TerrainType[]): string {
   return `${labels.slice(0, -1).join(', ')}, or ${labels[labels.length - 1]}`;
 }
 
-function getFirstFootprintTileTerrain(
-  state: WorldState,
-  originX: number,
-  originY: number,
-  width: number,
-  height: number,
-  allowedTerrain: TerrainType[],
-): TerrainType | undefined {
-  const allowed = new Set(allowedTerrain);
-  for (let dy = 0; dy < height; dy++) {
-    for (let dx = 0; dx < width; dx++) {
-      const tileId = state.territory.tileIndex?.[`${originX + dx},${originY + dy}`];
-      const terrain = tileId ? state.territory.tiles[tileId]?.terrain : undefined;
-      if (terrain && !allowed.has(terrain)) return terrain;
-    }
-  }
-  return undefined;
-}
-
 function placementReasonMessage(
   reason: PlacementValidationReason,
   allowedTerrain: TerrainType[],
@@ -202,9 +183,7 @@ export function getPlacementValidation(
       result.reason,
       allowedTerrain,
       definition.name,
-      result.reason === 'terrain_blocked'
-        ? getFirstFootprintTileTerrain(state, originX, originY, width, height, allowedTerrain)
-        : undefined,
+      result.reason === 'terrain_blocked' ? result.blockingTerrain : undefined,
     ),
     width,
     height,

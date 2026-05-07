@@ -106,6 +106,12 @@ export function GameLayout({
   const setRoadPlacementMode = useUIStore((state) => state.setRoadPlacementMode);
   const setRoadRemovalMode = useUIStore((state) => state.setRoadRemovalMode);
   const clearSelection = useSelectionStore((state) => state.clearSelection);
+  const clearActiveTools = React.useCallback(() => {
+    selectBuildingToPlace(null);
+    setRoadPlacementMode(false);
+    setRoadRemovalMode(false);
+    clearSelection();
+  }, [clearSelection, selectBuildingToPlace, setRoadPlacementMode, setRoadRemovalMode]);
   const outcome = React.useMemo(
     () => evaluateGameOutcome(useGameStore.getState().gameState, player1Id),
     [outcomeCheckBucket]
@@ -116,8 +122,9 @@ export function GameLayout({
   React.useEffect(() => {
     if (outcome.kind !== 'in-progress') {
       setRunning(false);
+      clearActiveTools();
     }
-  }, [outcome.kind, setRunning]);
+  }, [clearActiveTools, outcome.kind, setRunning]);
 
   React.useEffect(() => {
     const toolActive = !!(selectedBuildingToPlace || roadPlacementMode || roadRemovalMode);
@@ -179,11 +186,14 @@ export function GameLayout({
           setSettingsOpen(false);
         } else if (menuOpen) {
           setMenuOpen(false);
+        } else if (selectedBuildingToPlace || roadPlacementMode || roadRemovalMode) {
+          clearActiveTools();
+        } else if (activePanel === 'buildingMenu') {
+          togglePanel('buildingMenu');
+        } else if (guideOpen) {
+          toggleGuideOpen();
         } else {
-          selectBuildingToPlace(null);
-          setRoadPlacementMode(false);
-          setRoadRemovalMode(false);
-          clearSelection();
+          clearActiveTools();
         }
       }
     };
@@ -191,11 +201,13 @@ export function GameLayout({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
-    clearSelection,
+    activePanel,
+    clearActiveTools,
+    guideOpen,
     menuOpen,
-    selectBuildingToPlace,
-    setRoadPlacementMode,
-    setRoadRemovalMode,
+    roadPlacementMode,
+    roadRemovalMode,
+    selectedBuildingToPlace,
     settingsOpen,
     shortcutsOpen,
     toggleGuideOpen,
@@ -211,22 +223,25 @@ export function GameLayout({
     setSettingsOpen(false);
     setShortcutsOpen(false);
     setDismissedVictory(false);
+    clearActiveTools();
     resetGame();
-  }, [resetGame]);
+  }, [clearActiveTools, resetGame]);
 
   const handleResumeSavedRun = React.useCallback(() => {
     if (loadSavedGame()) {
       setDismissedVictory(false);
       setResumePromptDismissed(true);
+      clearActiveTools();
     }
-  }, [loadSavedGame]);
+  }, [clearActiveTools, loadSavedGame]);
 
   const handleStartFreshRun = React.useCallback(() => {
     clearSavedGame();
     setAutosaveEnabled(false);
     setResumePromptDismissed(true);
+    clearActiveTools();
     resetGame();
-  }, [clearSavedGame, resetGame, setAutosaveEnabled]);
+  }, [clearActiveTools, clearSavedGame, resetGame, setAutosaveEnabled]);
 
   const handleScenarioChange = React.useCallback((profile: typeof activeScenario) => {
     setDismissedVictory(false);
