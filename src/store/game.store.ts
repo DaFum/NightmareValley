@@ -15,7 +15,7 @@ import { WorldState } from '../game/world/world.types';
 import { BuildingType, ResourceInventory, WorkerType } from "../game/core/economy.types";
 import { BuildingInstance, Position, WorkerInstance } from "../game/core/game.types";
 import { loadInitialMap } from "../game/map/map.loader";
-import { createTransportJob, buildingAcceptsResource } from "../game/economy/transport.logic";
+import { createTransportJob, buildingAcceptsResource } from "../game/transport";
 import { deepClone } from "../lib/deep-clone";
 import {
   clampTickRate,

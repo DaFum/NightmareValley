@@ -6,7 +6,7 @@ import { BuildingType, ResourceType } from '../../game/core/economy.types';
 import { BuildingInstance } from '../../game/core/game.types';
 import { DEFAULT_SIMULATION_CONFIG } from '../../game/economy/balancing.constants';
 import { getBottleneckAction, getEconomyPlanSnapshot } from '../../game/economy/economy.planner';
-import { getTransportRouteDiagnostic } from '../../game/economy/transport.logic';
+import { getTransportRouteDiagnostic } from '../../game/transport';
 import { getProductionStatus } from '../../game/entities/buildings/building.status';
 import type { EconomySimulationState } from '../../game/core/economy.simulation';
 

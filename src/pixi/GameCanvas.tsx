@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { LocalStage as Stage } from './LocalStage';
+// Use our local stage wrapper explicitly; this is not @pixi/react's upstream Stage.
+import { LocalStage } from './LocalStage';
 import { GameStage } from './GameStage';
 import { PixiAppProvider } from './PixiAppProvider';
 
@@ -25,9 +26,9 @@ export function GameCanvas() {
   return (
     <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
       <PixiAppProvider>
-        <Stage width={size.width} height={size.height} options={{ backgroundColor: 0x1a1a24, antialias: false, preserveDrawingBuffer: preserveBuffer }}>
+        <LocalStage width={size.width} height={size.height} options={{ backgroundColor: 0x1a1a24, antialias: false, preserveDrawingBuffer: preserveBuffer }}>
           <GameStage />
-        </Stage>
+        </LocalStage>
       </PixiAppProvider>
     </div>
   );

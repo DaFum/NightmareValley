@@ -1,2 +1,1 @@
-export {}
-
+export { createTransportJob, generateTransportJobs } from "../economy/transport.logic";

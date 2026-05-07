@@ -1,4 +1,4 @@
-import { decayFootfall, recomputeTierFromFootfall } from "../../game/economy/transport.logic";
+import { decayFootfall, recomputeTierFromFootfall } from "../../game/transport";
 import { EconomySimulationState } from "../../game/core/economy.simulation";
 import { MapTile, TerritoryState } from "../../game/core/game.types";
 import { DEFAULT_SIMULATION_CONFIG } from "../../game/economy/balancing.constants";
