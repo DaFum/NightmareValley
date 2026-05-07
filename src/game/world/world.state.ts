@@ -3,10 +3,14 @@ import { generateInitialWorld } from './world.generator';
 
 export type WorldPreset = 'tiny' | 'standard' | 'large';
 
+const WORLD_SIZE_TINY = { width: 40, height: 40 } as const;
+const WORLD_SIZE_STANDARD = { width: 64, height: 64 } as const;
+const WORLD_SIZE_LARGE = { width: 96, height: 96 } as const;
+
 const WORLD_PRESET_SIZES: Record<WorldPreset, { width: number; height: number }> = {
-	tiny: { width: 40, height: 40 },
-	standard: { width: 64, height: 64 },
-	large: { width: 96, height: 96 },
+	tiny: WORLD_SIZE_TINY,
+	standard: WORLD_SIZE_STANDARD,
+	large: WORLD_SIZE_LARGE,
 };
 
 export function createWorld(seed?: number, width = 64, height = 64, playerId = "player_1"): WorldState {

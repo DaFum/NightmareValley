@@ -1,6 +1,5 @@
 import { Job, WorkerInstance } from '../game/core/game.types';
 import { getWorkerDef, listWorkerTypes } from '../game/entities/workers/worker.data';
-import { assignJob, clearJob } from '../game/entities/workers/worker.jobs';
 import { planPath } from '../game/entities/workers/worker.pathing';
 import { workerStatus } from '../game/entities/workers/worker.status';
 import { createWorker } from '../game/entities/workers/worker.types';
@@ -19,12 +18,13 @@ export function getWorkerInspectorModel(worker: WorkerInstance | null | undefine
 
 // Pure projection helper: returns a simulated assigned worker instance.
 export function projectAssignedWorker(worker: WorkerInstance, job: Job): WorkerInstance {
-  return assignJob(worker, job);
+  return { ...worker, currentJob: job, isIdle: false };
 }
 
 // Pure projection helper: returns a simulated cleared worker instance.
 export function projectClearedWorker(worker: WorkerInstance): WorkerInstance {
-  return clearJob(worker);
+  const { currentJob, ...rest } = worker;
+  return { ...rest, path: [], isIdle: true };
 }
 
 export function planWorkerRoute(grid: any, from: { x: number; y: number }, to: { x: number; y: number }) {

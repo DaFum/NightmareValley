@@ -34,7 +34,7 @@ export type AiDecisionTelemetry<T> = {
 };
 
 export function normalizeScore(score: number): number {
-	if (!Number.isFinite(score)) return 0;
+	if (Number.isNaN(score)) return 0;
 	return Math.max(0, Math.min(1, score));
 }
 
