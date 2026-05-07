@@ -8,6 +8,18 @@ type WorkerInspectorProps = {
   workerId: string;
 };
 
+function buildTaskBuildings(
+  activeTask: ReturnType<typeof useGameStore.getState>['gameState']['transport']['activeCarrierTasks'][string] | undefined,
+  pickupBuilding: ReturnType<typeof useGameStore.getState>['gameState']['buildings'][string] | undefined,
+  dropoffBuilding: ReturnType<typeof useGameStore.getState>['gameState']['buildings'][string] | undefined,
+) {
+  if (!activeTask) return {};
+  return {
+    [activeTask.pickupBuildingId]: pickupBuilding,
+    [activeTask.dropoffBuildingId]: dropoffBuilding,
+  };
+}
+
 export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX.Element | null {
   const { worker, homeBuilding, activeTask, pickupBuilding, dropoffBuilding } = useGameStore(
     useShallow((state) => {
@@ -28,12 +40,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
 
   if (!worker) return null;
 
-  const taskBuildings = activeTask
-    ? {
-      [activeTask.pickupBuildingId]: pickupBuilding,
-      [activeTask.dropoffBuildingId]: dropoffBuilding,
-    }
-    : {};
+  const taskBuildings = buildTaskBuildings(activeTask, pickupBuilding, dropoffBuilding);
 
   const workerModel = getWorkerInspectorModel(worker, activeTask, taskBuildings);
   const def = workerModel?.definition || { name: 'Unknown Worker', description: 'No definition found.' };
