@@ -23,6 +23,9 @@ export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudPr
   const toggleFocusMode = useUIStore(state => state.toggleFocusMode);
   const toggleMinimalHud = useUIStore(state => state.toggleMinimalHud);
   const toggleGuideOpen = useUIStore(state => state.toggleGuideOpen);
+  const hudDensityLabel = minimalHud ? 'HUD Minimal' : 'HUD Full';
+  const hudDensityTitle = minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels';
+  const hudDensityAriaLabel = `${hudDensityLabel}. ${hudDensityTitle}`;
 
   return (
     <div className="top-hud-container">
@@ -43,7 +46,7 @@ export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudPr
             <button className={`hud-button ${tickRate === 4 ? 'active' : ''}`} onClick={() => setTickRate(4)}>4x</button>
           </div>
           <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={toggleFocusMode} title="Increase world contrast">Focus</button>
-          <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} onClick={toggleMinimalHud} title={minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels'}>{minimalHud ? 'Full HUD' : 'Minimal'}</button>
+          <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} aria-label={hudDensityAriaLabel} onClick={toggleMinimalHud} title={hudDensityTitle}>{hudDensityLabel}</button>
           <button className={`hud-button ${guideOpen ? 'active' : ''}`} aria-pressed={guideOpen} onClick={toggleGuideOpen} title={guideOpen ? 'Hide game guide' : 'Show game guide'}>Guide</button>
           <button className="hud-button" onClick={onOpenShortcuts} title="Show keyboard controls">Keys</button>
           <button className="hud-button" onClick={onOpenSettings}>Settings</button>
