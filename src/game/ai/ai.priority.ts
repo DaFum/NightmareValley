@@ -23,3 +23,26 @@ export function chooseHighest<T>(items: T[], scoreFn: (t: T) => number): T | nul
 	return best;
 }
 
+export type ScoredCandidate<T> = {
+	item: T;
+	score: number;
+};
+
+export type AiDecisionTelemetry<T> = {
+	candidates: Array<ScoredCandidate<T>>;
+	chosen: ScoredCandidate<T> | null;
+};
+
+export function normalizeScore(score: number): number {
+	if (!Number.isFinite(score)) return 0;
+	return Math.max(0, Math.min(1, score));
+}
+
+export function evaluateHighestPriority<T>(
+	items: T[],
+	scoreFn: (item: T) => number
+): AiDecisionTelemetry<T> {
+	const candidates = items.map((item) => ({ item, score: normalizeScore(scoreFn(item)) }));
+	const chosen = chooseHighest(candidates, (candidate) => candidate.score) ?? null;
+	return { candidates, chosen };
+}

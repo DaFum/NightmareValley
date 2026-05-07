@@ -243,3 +243,9 @@ export function mapEconomyStateToIsoWorld(
     workers: mapWorkersToIsoWorkers(state),
   };
 }
+
+export function mapEconomyStateToIsoWorldSnapshot(
+  state: EconomySimulationState
+): Pick<IsoRenderWorld, "tiles" | "buildings" | "workers"> {
+  return mapEconomyStateToIsoWorld(state);
+}

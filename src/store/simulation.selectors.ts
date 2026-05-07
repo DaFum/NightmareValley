@@ -2,25 +2,24 @@ import { WorldState } from '../game/world/world.types';
 import { BuildingType, ResourceInventory } from '../game/core/economy.types';
 import { canAffordBuilding, canAffordUpgrade } from '../game/economy/production.logic';
 import { isTileBuildableForPlayer } from '../game/core/economy.simulation';
+import { getTileAt } from '../game/map/map.query';
+import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
 
 export function getInventoryForCostChecks(state: WorldState, ownerId: string): ResourceInventory {
   const player = state.players[ownerId];
   if (!player) return {} as ResourceInventory;
 
   const merged: Record<string, number> = {};
-  let hasVault = false;
 
   for (const buildingId of player.buildings) {
     const building = state.buildings[buildingId];
     if (building?.type !== 'vaultOfDigestiveStone') continue;
-    hasVault = true;
     for (const [resource, amount] of Object.entries(building.outputBuffer)) {
       merged[resource] = (merged[resource] ?? 0) + (amount ?? 0);
     }
   }
 
-  // Warehouse-first contract: when vaults exist, affordability must use vault buffers only.
-  return hasVault ? (merged as ResourceInventory) : player.stock;
+  return merged as ResourceInventory;
 }
 
 /** Canonical selector for warehouse-authoritative affordability checks. */
@@ -45,4 +44,26 @@ export function canPlaceBuildingForPlayerAtTile(
   const tile = state.territory.tiles[tileId];
   if (!tile) return false;
   return isTileBuildableForPlayer(tile, ownerId, buildingType);
+}
+
+export function canPlaceBuildingForPlayerFootprint(
+  state: WorldState,
+  ownerId: string,
+  buildingType: BuildingType,
+  originX: number,
+  originY: number,
+): boolean {
+  const definition = BUILDING_DEFINITIONS[buildingType];
+  if (!definition) return false;
+  const width = definition.widthTiles ?? 1;
+  const height = definition.heightTiles ?? 1;
+
+  for (let y = originY; y < originY + height; y++) {
+    for (let x = originX; x < originX + width; x++) {
+      const tile = getTileAt(state.territory, x, y);
+      if (!tile || !isTileBuildableForPlayer(tile, ownerId, buildingType)) return false;
+    }
+  }
+
+  return true;
 }

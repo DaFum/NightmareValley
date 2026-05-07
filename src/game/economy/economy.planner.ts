@@ -30,6 +30,23 @@ export type EconomyRecommendation = {
   objective?: GameObjective;
 };
 
+export function getEconomyRecommendationUtilityBonus(
+  recommendation: EconomyRecommendation,
+  actionTags: string[]
+): number {
+  if (!actionTags.length) return 1;
+
+  if (recommendation.buildingType && actionTags.includes(`build:${recommendation.buildingType}`)) {
+    return 1.35;
+  }
+
+  if (recommendation.resourceType && actionTags.includes(`resource:${recommendation.resourceType}`)) {
+    return 1.2;
+  }
+
+  return 1;
+}
+
 export type EconomyPlanSnapshot = {
   nextObjective?: GameObjective;
   recommendation: EconomyRecommendation;
