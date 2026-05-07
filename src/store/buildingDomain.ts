@@ -1,13 +1,11 @@
 import { BuildingType, ResourceInventory, ResourceType } from '../game/core/economy.types';
-import { EconomySimulationState, isTileBuildableForPlayer } from '../game/core/economy.simulation';
+import { EconomySimulationState } from '../game/core/economy.simulation';
 import { WorldState } from '../game/world/world.types';
 import { listBuildings } from '../game/entities/buildings/building.data';
-import { calcFootprint } from '../game/entities/buildings/building.footprints';
-import { canPlaceBuilding } from '../game/entities/buildings/building.placement';
-import { getTileAt } from '../game/map/map.query';
 import { deriveBuildingStatus, deriveProductionBuildingStatus, getProductionStatus } from '../game/entities/buildings/building.status';
 import { getUpgradeCost } from '../game/economy/production.logic';
 import { selectAuthoritativeInventory } from './simulation.selectors';
+import { canPlaceBuildingForPlayerFootprint } from './simulation.selectors';
 import { canAffordBuilding } from '../game/economy/production.logic';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
 
@@ -25,14 +23,7 @@ export function canPreviewPlaceBuilding(
   const def = BUILDING_DEFINITIONS[buildingType];
   if (!def) return false;
 
-  const footprint = calcFootprint(def, originX, originY);
-  const basePlacement = canPlaceBuilding(state.territory, originX, originY, def.widthTiles ?? 1, def.heightTiles ?? 1);
-  if (!basePlacement.ok) return false;
-
-  return footprint.every(({ x, y }) => {
-    const tile = getTileAt(state.territory, x, y);
-    return !!tile && isTileBuildableForPlayer(tile, ownerId, buildingType);
-  });
+  return canPlaceBuildingForPlayerFootprint(state as WorldState, ownerId, buildingType, originX, originY);
 }
 
 export function getBuildingPanelStatus(state: EconomySimulationState, buildingId: string) {

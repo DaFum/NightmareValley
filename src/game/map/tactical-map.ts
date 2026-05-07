@@ -1,5 +1,8 @@
 import type { TerrainType } from '../core/economy.types';
-import { getEconomyPlanSnapshot } from '../economy/economy.planner';
+import {
+  getEconomyRecommendation,
+  getEconomyRecommendationUtilityBonus,
+} from '../economy/economy.planner';
 import type { WorldState } from '../world/world.types';
 
 export type TacticalMapPointKind = 'building' | 'road' | 'worker';
@@ -163,10 +166,12 @@ export function projectTacticalPoint(
 
 export function createTacticalMapBrief(state: WorldState, ownerId: string): TacticalMapBrief {
   const summary = createTacticalMapSummary(state, ownerId);
-  const plan = getEconomyPlanSnapshot(state, ownerId);
+  const recommendation = getEconomyRecommendation(state, ownerId);
+  const actionTags = [`build:${recommendation.buildingType ?? 'none'}`, `resource:${recommendation.resourceType ?? 'none'}`];
+  const utilityBonus = getEconomyRecommendationUtilityBonus(recommendation, actionTags);
   return {
-    nextLabel: plan.recommendation.label,
-    nextReason: plan.recommendation.reason,
+    nextLabel: recommendation.label,
+    nextReason: `${recommendation.reason} (priority x${utilityBonus.toFixed(2)})`,
     markerCopy: `${summary.counts.buildings} buildings, ${summary.counts.roads} roads, ${summary.counts.activeCarriers} active carriers`,
   };
 }
