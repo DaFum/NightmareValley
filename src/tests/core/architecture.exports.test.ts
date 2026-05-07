@@ -7,26 +7,25 @@ const BASELINE_PATH = path.join(repoRoot, 'src/tests/core/fixtures/unused-export
 const targetImportFilesCache = new Map<string, string[]>();
 
 function resolveModuleFile(base: string): string | undefined {
-  const candidates = [`${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')];
+  const candidates = [`${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts'), path.join(base, 'index.tsx')];
   return candidates.find((candidate) => fs.existsSync(candidate));
 }
 
 function resolveTargetImportFiles(importFile: string): string[] {
-  return resolveTargetImportFilesWithDepth(importFile, 0, new Set<string>());
+  const cached = targetImportFilesCache.get(importFile);
+  if (cached) return cached;
+  const resolved = resolveTargetImportFilesWithDepth(importFile, 0, new Set<string>());
+  targetImportFilesCache.set(importFile, resolved);
+  return resolved;
 }
 
 function resolveTargetImportFilesWithDepth(importFile: string, depth: number, seen: Set<string>): string[] {
   if (depth > 3 || seen.has(importFile)) return [];
-  const cacheKey = `${importFile}:${depth}`;
-  const cached = targetImportFilesCache.get(cacheKey);
-  if (cached) return cached;
   seen.add(importFile);
 
   const relImport = path.relative(repoRoot, importFile).replace(/\\/g, '/');
   if (TARGET_DIRS.some((dir) => relImport.startsWith(`${dir}/`))) {
-    const resolved = [importFile];
-    targetImportFilesCache.set(cacheKey, resolved);
-    return resolved;
+    return [importFile];
   }
 
   const code = fs.readFileSync(importFile, 'utf8');
@@ -46,12 +45,10 @@ function resolveTargetImportFilesWithDepth(importFile: string, depth: number, se
       resolvedTargets.push(resolved);
       continue;
     }
-    resolvedTargets.push(...resolveTargetImportFilesWithDepth(resolved, depth + 1, seen));
+    resolvedTargets.push(...resolveTargetImportFilesWithDepth(resolved, depth + 1, new Set(seen)));
   }
 
-  const resolved = [...new Set(resolvedTargets)];
-  targetImportFilesCache.set(cacheKey, resolved);
-  return resolved;
+  return [...new Set(resolvedTargets)];
 }
 
 
