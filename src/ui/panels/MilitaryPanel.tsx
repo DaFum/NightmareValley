@@ -164,11 +164,11 @@ export default function MilitaryPanel(): JSX.Element | null {
               <span
                 key={resource}
                 className={`resource-pill ${current >= (amount ?? 0) ? 'resource-pill--ready' : 'resource-pill--short'}`}
-                title={`${resourceShortLabel(resource as ResourceType)}: ${amount} required, ${current} available`}
+                title={`${resourceShortLabel(resource as ResourceType)}: ${current}/${amount ?? 0}`}
               >
                 {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
                 <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                <span className="resource-pill__amount">{amount} {resourceShortLabel(resource as ResourceType)} {current >= (amount ?? 0) ? '✓' : 'short'} {current}</span>
+                <span className="resource-pill__amount">{current}/{amount}</span>
               </span>
             );
           })}
@@ -280,4 +280,3 @@ function resourceShortLabel(resource: ResourceType): string {
       return resource.replace(/([A-Z])/g, ' $1');
   }
 }
-
