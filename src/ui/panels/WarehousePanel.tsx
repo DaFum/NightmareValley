@@ -1,23 +1,27 @@
 import { useMemo } from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import { useGameStore, player1Id } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
+import { getResourceLedger } from '../../store/resourceSummaryDomain';
+import { resourceLabel } from '../../store/economy.utils';
 
 type VaultEntry = {
   resource: ResourceType;
   stored: number;
+  available: number;
+  reserved: number;
   inTransit: number;
   inTransitOut: number;
 };
 
 export default function WarehousePanel(): JSX.Element | null {
-  const { buildings, transport } = useGameStore(
-    useShallow((s) => ({
-      buildings: s.gameState.buildings,
-      transport: s.gameState.transport,
-    }))
-  );
+  const gameState = useGameStore((s) => s.gameState);
+  const { buildings, transport } = useMemo(() => ({
+    buildings: gameState.buildings,
+    transport: gameState.transport,
+  }), [gameState]);
+
+  const ledger = useMemo(() => getResourceLedger(gameState, player1Id), [gameState]);
 
   const entries = useMemo((): VaultEntry[] => {
     const stored: Partial<Record<ResourceType, number>> = {};
@@ -56,24 +60,26 @@ export default function WarehousePanel(): JSX.Element | null {
       .map((resource) => ({
         resource,
         stored: stored[resource] ?? 0,
+        available: ledger[resource].available,
+        reserved: ledger[resource].reserved,
         inTransit: inTransitIn[resource] ?? 0,
         inTransitOut: inTransitOut[resource] ?? 0,
       }))
       .filter((e) => e.stored > 0 || e.inTransit > 0 || e.inTransitOut > 0)
       .sort((a, b) => (b.stored + b.inTransit + b.inTransitOut) - (a.stored + a.inTransit + a.inTransitOut));
-  }, [buildings, transport.activeCarrierTasks]);
+  }, [buildings, ledger, transport.activeCarrierTasks]);
 
   if (entries.length === 0) return null;
 
   return (
     <section className="warehouse-panel macabre-panel" aria-label="Vault inventory">
       <h3 className="warehouse-panel__title">Vault</h3>
-      <p className="warehouse-panel__note">Build and upgrade checks spend from this output buffer.</p>
+      <p className="warehouse-panel__note">Authoritative vault storage: available excludes reserved outgoing deliveries.</p>
       <div className="warehouse-panel__grid">
-        {entries.map(({ resource, stored, inTransit, inTransitOut }) => {
+        {entries.map(({ resource, stored, available, reserved, inTransit, inTransitOut }) => {
           const imgSrc = imageMap[`resources/${resource}.png`];
           return (
-            <div key={resource} className="warehouse-entry" title={resource}>
+            <div key={resource} className="warehouse-entry" title={`${resourceLabel(resource)}: ${available} available, ${reserved} reserved, ${inTransit} incoming, ${inTransitOut} outgoing`}>
               <div className="warehouse-entry__icon">
                 {imgSrc ? (
                   <img src={imgSrc} alt="" aria-hidden="true" />
@@ -83,7 +89,10 @@ export default function WarehousePanel(): JSX.Element | null {
                   </span>
                 )}
               </div>
-              <span className="warehouse-entry__count">{stored}</span>
+              <span className="warehouse-entry__count">{available}</span>
+              {reserved > 0 && (
+                <span className="warehouse-entry__transit warehouse-entry__transit--reserved" title={`${stored} stored, ${reserved} reserved`}>r{reserved}</span>
+              )}
               {inTransit > 0 && (
                 <span className="warehouse-entry__transit" title="Incoming">+{inTransit}</span>
               )}

@@ -64,6 +64,11 @@ describe('workerDomain selectors', () => {
     expect(haulingModel?.transport?.route).toBe('Organ Harvester -> Vault of Digestive Stone');
     expect(haulingModel?.transport?.progress).toBe('2/3 tiles');
     expect(haulingModel?.transport?.carrying).toBe('2 Sinew Timber');
+    expect(haulingModel?.transport?.source).toBe('Organ Harvester');
+    expect(haulingModel?.transport?.target).toBe('Vault of Digestive Stone');
+    expect(haulingModel?.transport?.resource).toBe('Sinew Timber');
+    expect(haulingModel?.transport?.amount).toBe(2);
+    expect(haulingModel?.transport?.remainingDistance).toBe(1);
     expect(haulingModel?.transport?.idleReason).toBeNull();
   });
 

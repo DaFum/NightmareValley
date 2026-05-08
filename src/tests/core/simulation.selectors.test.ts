@@ -86,4 +86,18 @@ describe('simulation selectors', () => {
       message: 'This footprint includes Rib mountain. Organ Harvester needs Scarred earth or Forest.',
     }));
   });
+
+  it('returns logistics distance details for valid building placement', () => {
+    const world = structuredClone(useGameStore.getState().gameState);
+    const [playerId] = Object.keys(world.players);
+    const placeableTile = Object.values(world.territory.tiles).find((tile) => tile.ownerId === playerId && !tile.buildingId);
+
+    expect(placeableTile).toBeDefined();
+
+    const validation = getPlacementValidation(world, playerId, 'organHarvester', placeableTile!.position.x, placeableTile!.position.y);
+
+    expect(validation.ok).toBe(true);
+    expect(validation.nearestVaultDistance).toEqual(expect.any(Number));
+    expect(validation.logisticsHint).toContain('nearest vault');
+  });
 });

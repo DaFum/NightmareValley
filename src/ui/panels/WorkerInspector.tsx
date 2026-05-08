@@ -84,8 +84,13 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
           <h3>Transport</h3>
           <dl className="inspector-stats worker-transport__stats">
             <div><dt>Delivery State</dt><dd>{transport.deliveryState}</dd></div>
+            <div><dt>Source</dt><dd>{transport.source ?? 'none'}</dd></div>
+            <div><dt>Target</dt><dd>{transport.target ?? 'none'}</dd></div>
+            <div><dt>Resource</dt><dd>{transport.resource ?? 'none'}</dd></div>
+            <div><dt>Amount</dt><dd>{transport.amount ?? 0}</dd></div>
             <div><dt>Route</dt><dd>{transport.route}</dd></div>
             <div><dt>Progress</dt><dd>{transport.progress}</dd></div>
+            <div><dt>ETA</dt><dd>{transport.eta ?? 'none'}</dd></div>
           </dl>
           <p className="inspector-note">{transport.idleReason ?? transport.detail}</p>
           {transport.idleReason ? (

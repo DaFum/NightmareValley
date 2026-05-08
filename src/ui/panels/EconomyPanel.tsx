@@ -11,6 +11,9 @@ import { getTransportRouteDiagnostic } from '../../game/transport';
 import { getProductionStatus } from '../../game/entities/buildings/building.status';
 import type { EconomySimulationState } from '../../game/core/economy.simulation';
 import type { WorldState } from '../../game/world/world.types';
+import { getLogisticsSummaryModel } from '../../store/logisticsDomain';
+import { getResourceLedger } from '../../store/resourceSummaryDomain';
+import { resourceLabel } from '../../store/economy.utils';
 
 const fmt1 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 const fmtPct = new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 0 });
@@ -31,6 +34,8 @@ type BuildingRow = {
 
 type ResourceFlow = {
   resource: ResourceType;
+  available: number;
+  reserved: number;
   inBuffer: number;
   outBuffer: number;
   inTransit: number;
@@ -137,6 +142,7 @@ export default function EconomyPanel(): JSX.Element | null {
   }, [ageOfTeeth, buildings, players, territory, tick, transport, workers, worldPulse]);
 
   const resourceFlows = useMemo((): ResourceFlow[] => {
+    const ledger = getResourceLedger({ buildings, workers, transport, players, territory, ageOfTeeth, tick, worldPulse, military } as WorldState, player1Id);
     const inBuffer: Partial<Record<ResourceType, number>> = {};
     const outBuffer: Partial<Record<ResourceType, number>> = {};
 
@@ -170,6 +176,8 @@ export default function EconomyPanel(): JSX.Element | null {
     return Array.from(allRes)
       .map((resource) => ({
         resource,
+        available: ledger[resource].available,
+        reserved: ledger[resource].reserved,
         inBuffer: inBuffer[resource] ?? 0,
         outBuffer: outBuffer[resource] ?? 0,
         inTransit: inTransitMap[resource] ?? 0,
@@ -177,7 +185,7 @@ export default function EconomyPanel(): JSX.Element | null {
       .filter((r) => r.outBuffer > 0 || r.inTransit > 0)
       .sort((a, b) => (b.outBuffer + b.inTransit) - (a.outBuffer + a.inTransit))
       .slice(0, 8);
-  }, [buildings, transport.activeCarrierTasks]);
+  }, [ageOfTeeth, buildings, military, players, territory, tick, transport, workers, worldPulse]);
 
   const activeCarrierRoutes = useMemo((): ActiveCarrierRoute[] => (
     Object.entries(transport.activeCarrierTasks)
@@ -210,13 +218,18 @@ export default function EconomyPanel(): JSX.Element | null {
     [ageOfTeeth, buildings, military, players, territory, tick, transport, workers, worldPulse]
   );
 
+  const logisticsSummary = useMemo(
+    () => getLogisticsSummaryModel({ buildings, workers, transport, players, territory, ageOfTeeth, tick, worldPulse, military } as WorldState, player1Id),
+    [ageOfTeeth, buildings, military, players, territory, tick, transport, workers, worldPulse]
+  );
+
   const carriers = Object.values(workers).filter(
     (w) => w.type === 'burdenThrall' && w.ownerId === player1Id
   );
   const totalCarriers = carriers.length;
   const busyCarriers = totalCarriers - carriers.filter((w) => w.isIdle).length;
   const idleCarriers = carriers.filter((w) => w.isIdle).length;
-  const queuedJobs = transport.queuedJobCount ?? 0;
+  const queuedJobs = logisticsSummary.queuedJobs;
   const stress = fmt1.format(transport.networkStress);
   const latency = fmt1.format(transport.averageLatencySec);
   const ageStr = fmt1.format(ageOfTeeth);
@@ -290,14 +303,17 @@ export default function EconomyPanel(): JSX.Element | null {
             <h3 className="economy-panel__section-title">Transport</h3>
             <dl className="econ-stat-grid">
               <div><dt>Carriers</dt><dd>{busyCarriers}/{totalCarriers} busy</dd></div>
-              <div><dt>Idle carriers</dt><dd>{idleCarriers}/{totalCarriers}</dd></div>
+              <div><dt>Free carriers</dt><dd>{logisticsSummary.availableCarriers}/{totalCarriers}</dd></div>
               <div><dt>Queued jobs</dt><dd>{queuedJobs}</dd></div>
+              <div><dt>Blocked</dt><dd>{logisticsSummary.blockedJobs}</dd></div>
               <div><dt>Avg latency</dt><dd>{latency}s</dd></div>
               <div><dt>Net stress</dt><dd>{stress}</dd></div>
             </dl>
-            <p className={`econ-transport-advice econ-transport-advice--${situationSnapshot.transport.tone}`}>
-              <strong>{situationSnapshot.transport.headline}</strong>
-              <span>{situationSnapshot.transport.action}</span>
+            <p className={`econ-transport-advice econ-transport-advice--${logisticsSummary.tone}`}>
+              <strong>{logisticsSummary.whyIdle}</strong>
+              <span>{logisticsSummary.recommendation}</span>
+              {logisticsSummary.nextRequestedDelivery ? <small>Next: {logisticsSummary.nextRequestedDelivery}</small> : null}
+              {logisticsSummary.lastCompletedDelivery ? <small>Last: {logisticsSummary.lastCompletedDelivery}</small> : null}
             </p>
             <div className="econ-carrier-task-list" aria-label="Carrier tasks">
               <h4>Carrier tasks</h4>
@@ -313,7 +329,7 @@ export default function EconomyPanel(): JSX.Element | null {
                     onClick={() => selectWorker(route.workerId)}
                   >
                     <span>{route.phase}</span>
-                    <strong>{route.amount} {route.resource}</strong>
+                    <strong>{route.amount} {resourceLabel(route.resource)}</strong>
                     <small>
                       {route.pickupName} -&gt; {route.dropoffName} ({route.progress})
                     </small>
@@ -331,8 +347,9 @@ export default function EconomyPanel(): JSX.Element | null {
               ) : (
                 resourceFlows.map((r) => (
                   <div key={r.resource} className="econ-resource-row">
-                    <span className="econ-resource-row__name">{r.resource}</span>
-                    <span className="econ-resource-row__out" title="In output buffers">{r.outBuffer}</span>
+                    <span className="econ-resource-row__name" title={resourceLabel(r.resource)}>{resourceLabel(r.resource)}</span>
+                    <span className="econ-resource-row__out" title="Available in vault">{r.available}</span>
+                    {r.reserved > 0 && <span className="econ-resource-row__transit" title="Reserved outgoing">r{r.reserved}</span>}
                     {r.inTransit > 0 && (
                       <span className="econ-resource-row__transit" title="In transit">+{r.inTransit} ↗</span>
                     )}

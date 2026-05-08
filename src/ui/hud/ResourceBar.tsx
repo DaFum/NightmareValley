@@ -1,9 +1,9 @@
 import React from 'react';
-import { useShallow } from 'zustand/react/shallow';
 import { player1Id, useGameStore } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
 import { CONTENT_CATALOG } from '../../game/core/content.catalog';
+import { getResourceLedger } from '../../store/resourceSummaryDomain';
 
 const resourceFileByLabel: Record<string, string> = {
   Teeth: 'resources/toothPlanks.png',
@@ -52,38 +52,21 @@ const DISPLAY_RESOURCES: DisplayResource[] = [
 type ResourceSnapshot = Record<ResourceType, number>;
 
 export function ResourceBar() {
-  const resourceSnapshot = useGameStore(
-    useShallow((state) => {
-      const player = state.gameState.players[player1Id] ?? Object.values(state.gameState.players)[0];
-      const stock = player?.stock ?? {};
-
-      return {
-        queuedJobs: state.gameState.transport.queuedJobCount ?? 0,
-        trendBucket: Math.floor(state.gameState.ageOfTeeth / 5),
-        toothPlanks: stock.toothPlanks ?? 0,
-        sepulcherStone: stock.sepulcherStone ?? 0,
-        marrowGrain: stock.marrowGrain ?? 0,
-        boneDust: stock.boneDust ?? 0,
-        amnioticWater: stock.amnioticWater ?? 0,
-        eyelessFish: stock.eyelessFish ?? 0,
-        brainSalt: stock.brainSalt ?? 0,
-        funeralLoaf: stock.funeralLoaf ?? 0,
-        tormentInstrument: stock.tormentInstrument ?? 0,
-      };
-    })
-  );
-  const { queuedJobs, trendBucket } = resourceSnapshot;
+  const gameState = useGameStore((state) => state.gameState);
+  const ledger = React.useMemo(() => getResourceLedger(gameState, player1Id), [gameState]);
+  const queuedJobs = gameState.transport.queuedJobCount ?? 0;
+  const trendBucket = Math.floor(gameState.ageOfTeeth / 5);
   const values = React.useMemo(() => ({
-    toothPlanks: resourceSnapshot.toothPlanks,
-    sepulcherStone: resourceSnapshot.sepulcherStone,
-    marrowGrain: resourceSnapshot.marrowGrain,
-    boneDust: resourceSnapshot.boneDust,
-    amnioticWater: resourceSnapshot.amnioticWater,
-    eyelessFish: resourceSnapshot.eyelessFish,
-    brainSalt: resourceSnapshot.brainSalt,
-    funeralLoaf: resourceSnapshot.funeralLoaf,
-    tormentInstrument: resourceSnapshot.tormentInstrument,
-  } as ResourceSnapshot), [resourceSnapshot]);
+    toothPlanks: ledger.toothPlanks.available,
+    sepulcherStone: ledger.sepulcherStone.available,
+    marrowGrain: ledger.marrowGrain.available,
+    boneDust: ledger.boneDust.available,
+    amnioticWater: ledger.amnioticWater.available,
+    eyelessFish: ledger.eyelessFish.available,
+    brainSalt: ledger.brainSalt.available,
+    funeralLoaf: ledger.funeralLoaf.available,
+    tormentInstrument: ledger.tormentInstrument.available,
+  } as ResourceSnapshot), [ledger]);
   const trendRef = React.useRef<{ bucket: number; values: ResourceSnapshot } | null>(null);
   const [trendPerMin, setTrendPerMin] = React.useState<TrendMap>({});
 
@@ -117,6 +100,7 @@ export function ResourceBar() {
           key={resource.label}
           label={resource.label}
           value={values[resource.key] ?? 0}
+          ledgerEntry={ledger[resource.key]}
           trendPerMin={trendPerMin[resource.key] ?? 0}
           queuedJobs={queuedJobs}
           tone={resource.tone}
@@ -129,18 +113,19 @@ export function ResourceBar() {
 type ResourceChipProps = {
   label: string;
   value: number;
+  ledgerEntry: ReturnType<typeof getResourceLedger>[ResourceType];
   trendPerMin: number;
   queuedJobs: number;
   tone: ResourceTone;
 };
 
-const ResourceChip = React.memo(function ResourceChip({ label, value, trendPerMin, queuedJobs, tone }: ResourceChipProps) {
+const ResourceChip = React.memo(function ResourceChip({ label, value, ledgerEntry, trendPerMin, queuedJobs, tone }: ResourceChipProps) {
   const image = imageMap[resourceFileByLabel[label]];
   const formattedValue = compactNumberFormatter.format(value);
   const trendLabel = `${signedCompactFormatter.format(trendPerMin)}/m`;
   const trendClass = trendPerMin >= 0 ? 'resource-chip__trend--up' : 'resource-chip__trend--down';
   const catalogTooltip = CONTENT_CATALOG.resources.find((entry) => entry.label === label || entry.type === label)?.tooltip;
-  const tooltip = `${catalogTooltip ?? label} Stock ${exactNumberFormatter.format(value)}. Trend ${trendLabel}. Delivery queue ${queuedJobs}.`;
+  const tooltip = `${catalogTooltip ?? label}. Available in vault ${exactNumberFormatter.format(value)}. Reserved ${exactNumberFormatter.format(ledgerEntry.reserved)}. In transit ${exactNumberFormatter.format(ledgerEntry.inTransit)}. Input buffers ${exactNumberFormatter.format(ledgerEntry.inInputBuffers)}. Output buffers ${exactNumberFormatter.format(ledgerEntry.inOutputBuffers)}. Trend ${trendLabel}. Delivery queue ${queuedJobs}.`;
 
   return (
     <div

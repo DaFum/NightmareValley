@@ -7,13 +7,27 @@ export type PlacementFeedback = {
   detail: string;
 };
 
+export type LeftRailPanel =
+  | 'brief'
+  | 'map'
+  | 'economy'
+  | 'defense'
+  | 'warehouse'
+  | 'chain'
+  | 'omens'
+  | 'guide'
+  | 'codex';
+
 export interface UIStore {
   activePanel: 'buildingMenu' | 'inspector' | null;
+  leftPanel: LeftRailPanel | null;
   selectedBuildingToPlace: BuildingType | null;
   roadPlacementMode: boolean;
   roadRemovalMode: boolean;
   placementFeedback: PlacementFeedback | null;
   togglePanel: (panel: 'buildingMenu' | 'inspector') => void;
+  setLeftPanel: (panel: LeftRailPanel | null) => void;
+  toggleLeftPanel: (panel: LeftRailPanel) => void;
   selectBuildingToPlace: (type: BuildingType | null) => void;
   setRoadPlacementMode: (value: boolean) => void;
   setRoadRemovalMode: (value: boolean) => void;
@@ -58,6 +72,7 @@ function writeStoredFlag(key: string, value: boolean) {
 
 export const useUIStore = create<UIStore>((set, get) => ({
   activePanel: null,
+  leftPanel: 'brief',
   selectedBuildingToPlace: null,
   roadPlacementMode: false,
   roadRemovalMode: false,
@@ -77,6 +92,14 @@ export const useUIStore = create<UIStore>((set, get) => ({
       roadRemovalMode: panel !== 'buildingMenu' ? false : get().roadRemovalMode,
       placementFeedback: null,
     });
+  },
+
+  setLeftPanel: (panel) => {
+    set({ leftPanel: panel });
+  },
+
+  toggleLeftPanel: (panel) => {
+    set({ leftPanel: get().leftPanel === panel ? null : panel });
   },
 
   selectBuildingToPlace: (type) => {

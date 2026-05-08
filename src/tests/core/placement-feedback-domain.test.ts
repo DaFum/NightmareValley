@@ -77,8 +77,9 @@ describe('placementFeedbackDomain', () => {
     expect(ready).toEqual(expect.objectContaining({
       tone: 'active',
       label: 'Ready to place Organ Harvester',
-      detail: 'Click to build here. Costs will be deducted from vault output storage.',
     }));
+    expect(ready.detail).toContain('Distance to nearest vault');
+    expect(ready.detail).toContain('road required');
   });
 
   it('returns warn feedback when placing road on unowned terrain', () => {

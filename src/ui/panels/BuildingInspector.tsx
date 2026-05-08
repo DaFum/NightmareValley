@@ -10,6 +10,11 @@ import imageMap from '../../pixi/utils/vite-asset-loader';
 import { getInventoryForCostChecks, canAffordUpgradeForBuilding } from '../../store/simulation.selectors';
 import { getBuildingPanelStatus } from '../../store/buildingDomain';
 import { resourceShortLabel } from './resourceLabels';
+import { getLogisticsSummaryModel } from '../../store/logisticsDomain';
+import { getResourceLedger } from '../../store/resourceSummaryDomain';
+import { getBuildingRoadDetails } from '../../store/roadLogisticsDomain';
+import { getWorkerHireButtonState } from '../../store/hiringDomain';
+import { resourceLabel } from '../../store/economy.utils';
 
 type BuildingInspectorProps = {
   buildingId: string;
@@ -47,6 +52,9 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       panelStatus: getBuildingPanelStatus(gameState, building.id),
       inventory: getInventoryForCostChecks(gameState, building.ownerId),
       canUpgrade: canAffordUpgradeForBuilding(gameState, building.id),
+      logistics: getLogisticsSummaryModel(gameState, building.ownerId),
+      ledger: getResourceLedger(gameState, building.ownerId),
+      roadDetails: getBuildingRoadDetails(gameState, building.ownerId, building),
     };
   }, [building, gameState]);
 
@@ -79,6 +87,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
 
   const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', label: 'Idle', detail: 'No status available.' } as const;
   const { upgradeCost, inventory, canUpgrade, upgradeTitle } = upgradeControl;
+  const roadDetails = panelDerived?.roadDetails;
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
@@ -102,7 +111,12 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         <div><dt>Level</dt><dd>{building.level}/{def.maxLevel}</dd></div>
         <div><dt>Integrity</dt><dd>{Math.round(building.integrity)}%</dd></div>
         <div><dt>Status</dt><dd title={productionStatus.detail}>{productionStatus.label}</dd></div>
-        <div><dt>Road</dt><dd>{building.connectedToRoad ? 'connected' : 'missing'}</dd></div>
+        <div>
+          <dt>Road</dt>
+          <dd title={roadDetails?.warning ?? roadDetails?.connectedNetwork}>
+            {roadDetails ? `${roadDetails.status}${roadDetails.distanceToNearestVault != null ? ` · ${roadDetails.distanceToNearestVault} tiles` : ''}` : (building.connectedToRoad ? 'connected' : 'missing')}
+          </dd>
+        </div>
         <div><dt>Workers</dt><dd>{building.assignedWorkers.length}</dd></div>
         <div><dt>Corruption</dt><dd>{Math.round(building.corruption ?? 0)}%</dd></div>
       </dl>
@@ -110,8 +124,19 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         {productionStatus.detail}
       </p>
 
-      <InventoryBlock title="Input" inventory={building.inputBuffer} />
-      <InventoryBlock title="Output" inventory={building.outputBuffer} />
+      {building.type === 'vaultOfDigestiveStone' ? (
+        <StorageInspectorSection
+          outputBuffer={building.outputBuffer}
+          ledger={panelDerived?.ledger}
+          logistics={panelDerived?.logistics}
+          roadDetails={roadDetails}
+        />
+      ) : (
+        <>
+          <InventoryBlock title="Input" inventory={building.inputBuffer} />
+          <InventoryBlock title="Output" inventory={building.outputBuffer} />
+        </>
+      )}
 
       <div className="inspector-actions">
         <button className="hud-button" onClick={() => toggleBuildingActive(building.id)}>
@@ -146,7 +171,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
                 <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                {inventory[resource as ResourceType] ?? 0}/{requiredAmount}
+                <span className="resource-pill__amount">{formatCostAvailability(resource as ResourceType, requiredAmount, inventory[resource as ResourceType] ?? 0)}</span>
               </span>
             );
           })}
@@ -180,6 +205,60 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         onTogglePause={(r) => togglePausedInput(building.id, r)}
       />
     </aside>
+  );
+}
+
+type StorageInspectorSectionProps = {
+  outputBuffer: ResourceInventory;
+  ledger?: ReturnType<typeof getResourceLedger>;
+  logistics?: ReturnType<typeof getLogisticsSummaryModel>;
+  roadDetails?: ReturnType<typeof getBuildingRoadDetails>;
+};
+
+function StorageInspectorSection({ outputBuffer, ledger, logistics, roadDetails }: StorageInspectorSectionProps) {
+  const entries = Object.entries(outputBuffer)
+    .filter(([, amount]) => (amount ?? 0) > 0)
+    .sort(([, a], [, b]) => (b ?? 0) - (a ?? 0));
+
+  return (
+    <section className="inventory-block storage-inspector">
+      <h3>Storage Role</h3>
+      <p className="inspector-note">
+        Authoritative warehouse. Build, upgrade, and hiring checks spend from this vault output storage.
+      </p>
+      <dl className="inspector-stats storage-inspector__stats">
+        <div><dt>Carriers free</dt><dd>{logistics ? `${logistics.availableCarriers}/${logistics.totalCarriers}` : 'unknown'}</dd></div>
+        <div><dt>Incoming</dt><dd>{logistics?.debugJobs.filter((job) => job.target.includes('Vault')).length ?? 0}</dd></div>
+        <div><dt>Outgoing</dt><dd>{logistics?.debugJobs.filter((job) => job.source.includes('Vault')).length ?? 0}</dd></div>
+        <div><dt>Road network</dt><dd>{roadDetails?.connectedNetwork ?? 'unknown'}</dd></div>
+      </dl>
+      <p className={`inspector-note inspector-note--status inspector-note--${logistics?.tone ?? 'idle'}`}>
+        {logistics?.whyIdle ?? 'Storage state unavailable.'} {logistics?.recommendation ?? ''}
+      </p>
+      <h3>Available Resources</h3>
+      {entries.length ? (
+        <div className="storage-ledger">
+          {entries.map(([resource, stored]) => {
+            const resourceType = resource as ResourceType;
+            const ledgerEntry = ledger?.[resourceType];
+            const imgSrc = imageMap[`resources/${resource}.png`];
+            return (
+              <div key={resource} className="storage-ledger__row" title={`${resourceLabel(resourceType)}: ${stored ?? 0} stored, ${ledgerEntry?.reserved ?? 0} reserved, ${ledgerEntry?.inTransit ?? 0} in transit`}>
+                <span className="storage-ledger__name">
+                  {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
+                  {resourceShortLabel(resourceType)}
+                </span>
+                <span>Available <strong>{ledgerEntry?.available ?? stored ?? 0}</strong></span>
+                <span>Reserved <strong>{ledgerEntry?.reserved ?? 0}</strong></span>
+                <span>Transit <strong>{ledgerEntry?.inTransit ?? 0}</strong></span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="inspector-note">Storage empty. Produce or deliver resources into the vault.</p>
+      )}
+    </section>
   );
 }
 
@@ -300,11 +379,17 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
           const hireCost = getWorkerHireCost(workerType);
           const vacant = maxCount - current;
           const canAfford = canAffordWorker(inventory, workerType);
-          const canHire = !!player && vacant > 0 && !atPopCap && canAfford;
+          const missingCosts = getMissingCostEntries(inventory, hireCost.resources);
+          const hireButton = getWorkerHireButtonState({
+            workerName: workerDef?.name ?? workerType,
+            current,
+            max: maxCount,
+            atPopulationCap: atPopCap || !player,
+            canAfford,
+            missingCosts,
+          });
+          const canHire = !!player && !hireButton.disabled;
           const autoHire = building.autoHire?.[workerType] ?? false;
-          const costLabel = Object.entries(hireCost.resources)
-            .map(([resource, amount]) => `${resourceShortLabel(resource as ResourceType)} ${inventory[resource as ResourceType] ?? 0}/${amount ?? 0}`)
-            .join(', ');
 
           return (
             <div key={workerType} className="worker-hire-row">
@@ -324,11 +409,11 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                     <span
                       key={resource}
                       className={`resource-pill ${short ? 'resource-pill--short' : 'resource-pill--ready'}`}
-                      title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount ?? 0}`}
+                      title={`${resourceShortLabel(resource as ResourceType)}: ${amount ?? 0} required, ${currentAmount} available`}
                     >
                       {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
                       <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                      {currentAmount}/{amount ?? 0}
+                      <span className="resource-pill__amount">{formatCostAvailability(resource as ResourceType, amount ?? 0, currentAmount)}</span>
                     </span>
                   );
                 })}
@@ -337,17 +422,17 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                 className="hud-button worker-hire-row__btn"
                 onClick={() => onHire(workerType)}
                 disabled={!canHire}
-                title={atPopCap ? 'Population limit reached' : canAfford ? `Hire ${workerDef?.name ?? workerType}` : `Vault is short: ${costLabel}.`}
+                title={hireButton.title}
               >
-                Hire
+                {hireButton.label}
               </button>
               <button
                 className={`hud-button worker-hire-row__btn ${autoHire ? 'active' : ''}`}
                 onClick={() => onToggleAutoHire(workerType)}
                 aria-pressed={autoHire}
-                title={`${autoHire ? 'Disable' : 'Enable'} automatic hiring for ${workerDef?.name ?? workerType}`}
+                title={`${autoHire ? 'Disable' : 'Enable'} automatic hiring for ${workerDef?.name ?? workerType} when resources and capacity are available.`}
               >
-                Auto
+                {autoHire ? 'Auto on' : 'Auto'}
               </button>
             </div>
           );
@@ -469,6 +554,11 @@ function getUpgradeTitle({
       .join(', ')}.`;
   }
   return 'Upgrade unavailable in the current state.';
+}
+
+function formatCostAvailability(resource: ResourceType, required: number, available: number): string {
+  const ready = available >= required ? '✓' : 'short';
+  return `${required} ${resourceShortLabel(resource)} ${ready} ${available}`;
 }
 
 type InventoryBlockProps = {

@@ -5,6 +5,7 @@ import FpsCounter from './FpsCounter';
 import TransportIndicator from './TransportIndicator';
 import { useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
+import { getSimulationStatusModel } from '../../store/simulationStatusDomain';
 
 export type TopHudProps = {
   onOpenMenu?: () => void;
@@ -19,13 +20,15 @@ export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudPr
   const setTickRate = useGameStore(state => state.setTickRate);
   const focusMode = useUIStore(state => state.focusMode);
   const minimalHud = useUIStore(state => state.minimalHud);
-  const guideOpen = useUIStore(state => state.guideOpen);
+  const leftPanel = useUIStore(state => state.leftPanel);
+  const setLeftPanel = useUIStore(state => state.setLeftPanel);
   const toggleFocusMode = useUIStore(state => state.toggleFocusMode);
   const toggleMinimalHud = useUIStore(state => state.toggleMinimalHud);
   const toggleGuideOpen = useUIStore(state => state.toggleGuideOpen);
   const hudDensityLabel = minimalHud ? 'HUD Minimal' : 'HUD Full';
   const hudDensityTitle = minimalHud ? 'Show secondary HUD panels' : 'Collapse secondary HUD panels';
   const hudDensityAriaLabel = `${hudDensityLabel}. ${hudDensityTitle}`;
+  const simulationStatus = getSimulationStatusModel(isRunning, tickRate);
 
   return (
     <div className="top-hud-container">
@@ -39,26 +42,57 @@ export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudPr
         </section>
 
         <nav className="hud-controls" aria-label="Game controls">
-          <button className={`hud-button hud-button--primary ${isRunning ? 'active' : ''}`} aria-pressed={isRunning} onClick={togglePlayPause}>{isRunning ? 'Pause' : 'Play'}</button>
+          <div className={`status-chip status-chip--${isRunning ? 'good' : 'warn'} status-chip--simulation`} title={simulationStatus.tooltip} aria-label={simulationStatus.tooltip}>
+            <span>Simulation</span>
+            <strong>{simulationStatus.label}</strong>
+            <small>Space toggles pause</small>
+          </div>
+          <button
+            className={`hud-button hud-button--primary ${simulationStatus.pausePressed ? 'active' : ''}`}
+            aria-pressed={simulationStatus.pausePressed}
+            aria-label={simulationStatus.pauseAriaLabel}
+            title={simulationStatus.pauseAriaLabel}
+            onClick={togglePlayPause}
+          >
+            {simulationStatus.pauseLabel}
+          </button>
           <div className="hud-segment" aria-label="Simulation speed">
-            <button className={`hud-button ${tickRate === 1 ? 'active' : ''}`} onClick={() => setTickRate(1)}>1x</button>
-            <button className={`hud-button ${tickRate === 2 ? 'active' : ''}`} onClick={() => setTickRate(2)}>2x</button>
-            <button className={`hud-button ${tickRate === 4 ? 'active' : ''}`} onClick={() => setTickRate(4)}>4x</button>
+            {[1, 2, 4].map((rate) => (
+              <button
+                key={rate}
+                className={`hud-button ${tickRate === rate ? 'active' : ''}`}
+                onClick={() => setTickRate(rate)}
+                aria-pressed={tickRate === rate}
+                aria-label={simulationStatus.speedAriaLabels[rate as 1 | 2 | 4]}
+                title={simulationStatus.speedAriaLabels[rate as 1 | 2 | 4]}
+              >
+                {rate}x
+              </button>
+            ))}
           </div>
           <button className={`hud-button ${focusMode ? 'active' : ''}`} aria-pressed={focusMode} onClick={toggleFocusMode} title="Increase world contrast">Focus</button>
           <button className={`hud-button ${minimalHud ? 'active' : ''}`} aria-pressed={minimalHud} aria-label={hudDensityAriaLabel} onClick={toggleMinimalHud} title={hudDensityTitle}>{hudDensityLabel}</button>
-          <button className={`hud-button ${guideOpen ? 'active' : ''}`} aria-pressed={guideOpen} onClick={toggleGuideOpen} title={guideOpen ? 'Hide game guide' : 'Show game guide'}>Guide</button>
+          <button
+            className={`hud-button ${leftPanel === 'guide' ? 'active' : ''}`}
+            aria-pressed={leftPanel === 'guide'}
+            onClick={() => {
+              toggleGuideOpen();
+              setLeftPanel('guide');
+            }}
+            title="Show game guide in the left rail"
+          >
+            Guide
+          </button>
           <button className="hud-button" onClick={onOpenShortcuts} title="Show keyboard controls">Keys</button>
           <button className="hud-button" onClick={onOpenSettings}>Settings</button>
           <button className="hud-button" onClick={onOpenMenu}>Menu</button>
           <FpsCounter />
           <TransportIndicator />
+          <div className="status-chip status-chip--pulse" aria-label="World pulse" title="World pulse tempo and raid rhythm">
+            <span>Pulse</span>
+            <WorldPulseBar />
+          </div>
         </nav>
-
-        <section className="macabre-panel hud-panel top-hud__pulse" aria-label="World pulse">
-          <span className="top-hud__kicker">Pulse of the World</span>
-          <WorldPulseBar />
-        </section>
       </div>
     </div>
   );

@@ -85,4 +85,21 @@ describe('getProductionStatus', () => {
 
     expect(getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG).kind).toBe('idle');
   });
+
+  it('describes vaults as storage instead of production buildings without recipes', () => {
+    const building = makeBuilding('vaultOfDigestiveStone', {
+      assignedWorkers: ['w1', 'w2', 'w3'],
+      outputBuffer: { toothPlanks: 12, sepulcherStone: 7 },
+    });
+    const state = makeState(building, 'burdenThrall');
+    state.workers.w2 = { id: 'w2', type: 'burdenThrall', ownerId: 'p1', position: building.position, isIdle: true } as any;
+    state.workers.w3 = { id: 'w3', type: 'fleshMason', ownerId: 'p1', position: building.position, isIdle: true } as any;
+
+    const status = getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG);
+
+    expect(status.kind).toBe('idle');
+    expect(status.label).toBe('Storage idle');
+    expect(status.detail).toContain('storage hub');
+    expect(status.detail).not.toContain('active recipe');
+  });
 });

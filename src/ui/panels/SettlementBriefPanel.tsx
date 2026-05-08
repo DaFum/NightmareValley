@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
 import { getSettlementSituationSnapshot } from '../../game/economy/economy.planner';
@@ -17,6 +17,7 @@ const scenarioLabels: Record<GameScenarioProfile, string> = {
 };
 
 export default function SettlementBriefPanel(): JSX.Element {
+  const [showSecondaryGoals, setShowSecondaryGoals] = useState(false);
   const selectBuilding = useSelectionStore((state) => state.selectBuilding);
   const {
     activeScenario,
@@ -124,14 +125,27 @@ export default function SettlementBriefPanel(): JSX.Element {
         </ul>
       )}
 
-      <ol className="settlement-brief__goals" aria-label="Suggested build order">
-        {brief.goals.map((goal) => (
-          <li key={goal.label} className={goal.done ? 'done' : ''}>
-            <span aria-hidden="true">{goal.done ? 'OK' : '--'}</span>
-            {goal.label}
-          </li>
-        ))}
-      </ol>
+      <div className="settlement-brief__goal-toggle">
+        <button
+          type="button"
+          className="hud-button"
+          onClick={() => setShowSecondaryGoals((value) => !value)}
+          aria-expanded={showSecondaryGoals}
+        >
+          {showSecondaryGoals ? 'Hide secondary goals' : 'Show secondary goals'}
+        </button>
+      </div>
+
+      {showSecondaryGoals ? (
+        <ol className="settlement-brief__goals" aria-label="Suggested build order">
+          {brief.goals.map((goal) => (
+            <li key={goal.label} className={goal.done ? 'done' : ''}>
+              <span aria-hidden="true">{goal.done ? 'Done' : 'Next'}</span>
+              {goal.label}
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </section>
   );
 }

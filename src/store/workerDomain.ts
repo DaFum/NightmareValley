@@ -13,8 +13,15 @@ export type WorkerTransportInspectorModel = {
   deliveryState: 'Idle' | 'Heading to pickup' | 'Delivering';
   detail: string;
   route: string;
+  source: string | null;
+  target: string | null;
+  resource: string | null;
+  amount: number | null;
   carrying: string;
   progress: string;
+  currentStep: number | null;
+  remainingDistance: number | null;
+  eta: string | null;
   idleReason: string | null;
 };
 
@@ -49,8 +56,15 @@ function getTransportInspectorModel(
       deliveryState: 'Idle',
       detail: 'Waiting for the next reachable transport job.',
       route: 'No active route',
+      source: null,
+      target: null,
+      resource: null,
+      amount: null,
       carrying: 'Nothing',
       progress: 'No active route',
+      currentStep: null,
+      remainingDistance: null,
+      eta: null,
       idleReason: worker.isIdle
         ? 'No active transport task is assigned. This worker will claim the next reachable queued job from connected roads.'
         : 'No active transport task is assigned, but this worker is still finishing movement or local work.',
@@ -59,8 +73,12 @@ function getTransportInspectorModel(
 
   const pickupName = getBuildingName(buildings, activeTask.pickupBuildingId);
   const dropoffName = getBuildingName(buildings, activeTask.dropoffBuildingId);
-  const amountAndResource = `${activeTask.amount} ${resourceLabel(activeTask.resourceType)}`;
+  const formattedResource = resourceLabel(activeTask.resourceType);
+  const amountAndResource = `${activeTask.amount} ${formattedResource}`;
   const headingToPickup = activeTask.phase === 'toPickup';
+  const totalSteps = activeTask.path.length;
+  const currentStep = totalSteps <= 0 ? 0 : Math.min(totalSteps, Math.max(1, activeTask.pathIndex + 1));
+  const remainingDistance = Math.max(0, totalSteps - currentStep);
 
   return {
     deliveryState: headingToPickup ? 'Heading to pickup' : 'Delivering',
@@ -68,8 +86,15 @@ function getTransportInspectorModel(
       ? `Walking to ${pickupName} to collect ${amountAndResource}.`
       : `Carrying ${amountAndResource} to ${dropoffName}.`,
     route: `${pickupName} -> ${dropoffName}`,
+    source: pickupName,
+    target: dropoffName,
+    resource: formattedResource,
+    amount: activeTask.amount,
     carrying: headingToPickup ? 'Nothing' : amountAndResource,
     progress: getTaskProgress(activeTask),
+    currentStep,
+    remainingDistance,
+    eta: remainingDistance > 0 ? `${remainingDistance} tile${remainingDistance === 1 ? '' : 's'} remaining` : 'Arriving',
     idleReason: null,
   };
 }

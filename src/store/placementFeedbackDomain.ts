@@ -73,7 +73,7 @@ export function getBuildingPlacementToolFeedback(
   return {
     tone: 'active',
     label: `Ready to place ${name}`,
-    detail: 'Click to build here. Costs will be deducted from vault output storage.',
+    detail: `Click to build here. Costs use vault output storage. ${validation.logisticsHint ?? 'Road required after build.'}`,
   };
 }
 

@@ -97,6 +97,25 @@ export function getProductionStatus(
     return { kind: 'idle', label: 'Idle', detail: `${buildingName} has no definition.` };
   }
 
+  if (definition.type === 'vaultOfDigestiveStone') {
+    if (!hasAssignedWorkersForBuilding(state, building)) {
+      return {
+        kind: 'missingWorker',
+        label: 'Needs carriers',
+        detail: `${buildingName} needs assigned workers before it can dispatch storage deliveries.`,
+      };
+    }
+
+    const storedUnits = Object.values(building.outputBuffer ?? {}).reduce((sum, amount) => sum + (amount ?? 0), 0);
+    return {
+      kind: 'idle',
+      label: storedUnits > 0 ? 'Storage idle' : 'Storage empty',
+      detail: storedUnits > 0
+        ? `${buildingName} is the storage hub. Idle means no reachable building is currently requesting these resources.`
+        : `${buildingName} is the storage hub, but no resources are stored yet.`,
+    };
+  }
+
   if (!hasAssignedWorkersForBuilding(state, building)) {
     return { kind: 'missingWorker', label: 'Needs workers', detail: `${buildingName} has unfilled worker slots.` };
   }
