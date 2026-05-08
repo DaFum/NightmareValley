@@ -68,6 +68,17 @@ describe('placeRoadTile', () => {
     expect(next.buildings.b1.connectedToRoad).toBe(true);
   });
 
+  it('connects an adjacent building when the player clicks an existing road tile', () => {
+    const state = makeState({
+      t1: makeTile('t1', 0, 0, { terrain: 'scarPath', tier: 'dirt' }),
+    });
+
+    const next = placeRoadTile(state, 'p1', 't1');
+
+    expect(next.territory.tiles.t1.terrain).toBe('scarPath');
+    expect(next.buildings.b1.connectedToRoad).toBe(true);
+  });
+
   it('rejects unowned, occupied, and invalid terrain tiles', () => {
     expect(() => placeRoadTile(makeState({ t1: makeTile('t1', 0, 0, { ownerId: 'p2' }) }), 'p1', 't1')).toThrow(
       /unowned/

@@ -8,6 +8,7 @@ import { RECIPES } from '../../economy/recipes.data';
 import { canStoreRecipeOutputs, chooseRecipeForBuilding } from '../../economy/production.logic';
 import { hasAssignedWorkersForBuilding, requiresRoad, type EconomySimulationState } from '../../core/economy.simulation';
 import { hasEnoughResources } from '../../economy/stockpile.logic';
+import { getTileAt } from '../../map/map.query';
 
 export function deriveBuildingStatus(b: BuildingInstance | undefined): BuildingStatus {
 	if (!b || !b.isActive) return 'disabled';
@@ -21,6 +22,7 @@ export type ProductionStatusKind =
   | 'underConstruction'
   | 'roadDisconnected'
   | 'missingWorker'
+  | 'missingDeposit'
   | 'missingInput'
   | 'outputFull'
   | 'working'
@@ -38,6 +40,7 @@ const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
   underConstruction: 'underConstruction',
   roadDisconnected: 'blocked',
   missingWorker: 'idle',
+  missingDeposit: 'blocked',
   missingInput: 'blocked',
   outputFull: 'blocked',
   working: 'working',
@@ -46,6 +49,28 @@ const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
 
 function resourceLabel(resourceType: ResourceType): string {
   return resourceType.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
+}
+
+const RENEWABLE_EXTRACTION_RESOURCES = new Set<ResourceType>(['pigFleshMass']);
+const EXTRACTION_SEARCH_RADIUS = 2;
+
+function extractionNeedsDeposit(resourceType: ResourceType, renewable?: boolean): boolean {
+  return !renewable && !RENEWABLE_EXTRACTION_RESOURCES.has(resourceType);
+}
+
+function hasNearbyExtractionDeposit(
+  state: EconomySimulationState,
+  building: BuildingInstance,
+  resourceType: ResourceType,
+): boolean {
+  for (let dy = -EXTRACTION_SEARCH_RADIUS; dy <= EXTRACTION_SEARCH_RADIUS; dy++) {
+    for (let dx = -EXTRACTION_SEARCH_RADIUS; dx <= EXTRACTION_SEARCH_RADIUS; dx++) {
+      const tile = getTileAt(state.territory, building.position.x + dx, building.position.y + dy);
+      if ((tile?.resourceDeposit?.[resourceType] ?? 0) > 0) return true;
+    }
+  }
+
+  return false;
 }
 
 export function getProductionStatus(
@@ -86,6 +111,17 @@ export function getProductionStatus(
           kind: 'outputFull',
           label: 'Output full',
           detail: `${buildingName} cannot store more ${resourceLabel(definition.extraction.resource)}.`,
+          resourceType: definition.extraction.resource,
+        };
+      }
+      if (
+        extractionNeedsDeposit(definition.extraction.resource, definition.extraction.renewable) &&
+        !hasNearbyExtractionDeposit(state, building, definition.extraction.resource)
+      ) {
+        return {
+          kind: 'missingDeposit',
+          label: 'No deposit',
+          detail: `${buildingName} needs a nearby ${resourceLabel(definition.extraction.resource)} deposit.`,
           resourceType: definition.extraction.resource,
         };
       }

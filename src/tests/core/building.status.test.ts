@@ -62,4 +62,27 @@ describe('getProductionStatus', () => {
 
     expect(getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG).kind).toBe(expectedKind);
   });
+
+  it('reports a missing deposit when extraction has no reachable resource tile', () => {
+    const building = makeBuilding('sepulcherQuarry', {
+      assignedWorkers: ['w1'],
+      progressSec: 0,
+    });
+    const state = makeState(building, 'graveToothBreaker');
+
+    const status = getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG);
+
+    expect(status.kind).toBe('missingDeposit');
+    expect(status.detail).toContain('nearby Sepulcher Stone deposit');
+  });
+
+  it('keeps renewable extraction readable without requiring a deposit tile', () => {
+    const building = makeBuilding('seedOfTheHowlingRoot', {
+      assignedWorkers: ['w1'],
+      progressSec: 0,
+    });
+    const state = makeState(building, 'rootCantor');
+
+    expect(getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG).kind).toBe('idle');
+  });
 });

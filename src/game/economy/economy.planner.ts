@@ -2,6 +2,7 @@ import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { BuildingType, ResourceType } from '../core/economy.types';
 import { aggregateVaultInventory, CampaignObjectiveMetric, GameObjective, getCampaignObjectives } from '../core/victory.rules';
 import { getMilitaryMetrics } from '../military';
+import { getTileAt } from '../map/map.query';
 import { WorldState } from '../world/world.types';
 import {
   DEFAULT_SIMULATION_CONFIG,
@@ -17,6 +18,7 @@ import { RECIPES } from './recipes.data';
 
 export type EconomyBottleneckKind =
   | 'missingWorker'
+  | 'missingDeposit'
   | 'missingInput'
   | 'outputFull'
   | 'roadDisconnected'
@@ -136,6 +138,8 @@ export function getBottleneckAction(bottleneck: EconomyBottleneck): string {
   switch (bottleneck.kind) {
     case 'missingWorker':
       return 'Inspect the building and hire or auto-hire the missing worker.';
+    case 'missingDeposit':
+      return 'Place the extractor near a matching deposit or build the matching resource chain elsewhere.';
     case 'missingInput':
       return bottleneck.resourceType
         ? `Build or connect the ${resourceLabel(bottleneck.resourceType)} supply chain.`
@@ -216,6 +220,27 @@ function getProducers(): Producer[] {
 }
 
 const PRODUCERS = getProducers();
+const RENEWABLE_EXTRACTION_RESOURCES = new Set<ResourceType>(['pigFleshMass']);
+const EXTRACTION_SEARCH_RADIUS = 2;
+
+function extractionNeedsDeposit(resourceType: ResourceType, renewable?: boolean): boolean {
+  return !renewable && !RENEWABLE_EXTRACTION_RESOURCES.has(resourceType);
+}
+
+function hasNearbyExtractionDeposit(state: WorldState, buildingId: string, resourceType: ResourceType): boolean {
+  const building = state.buildings[buildingId];
+  if (!building) return false;
+  if (!state.territory?.tiles) return false;
+
+  for (let dy = -EXTRACTION_SEARCH_RADIUS; dy <= EXTRACTION_SEARCH_RADIUS; dy++) {
+    for (let dx = -EXTRACTION_SEARCH_RADIUS; dx <= EXTRACTION_SEARCH_RADIUS; dx++) {
+      const tile = getTileAt(state.territory, building.position.x + dx, building.position.y + dy);
+      if ((tile?.resourceDeposit?.[resourceType] ?? 0) > 0) return true;
+    }
+  }
+
+  return false;
+}
 
 function findProducer(resourceType: ResourceType): Producer | undefined {
   return PRODUCERS.find((producer) => producer.resourceType === resourceType);
@@ -296,6 +321,21 @@ function collectEconomyBottlenecks(state: WorldState, ownerId?: string): Economy
         buildingName,
         kind: 'missingWorker',
         label: `${buildingName} needs workers`,
+      });
+    }
+
+    if (
+      definition.extraction &&
+      extractionNeedsDeposit(definition.extraction.resource, definition.extraction.renewable) &&
+      !hasNearbyExtractionDeposit(state, building.id, definition.extraction.resource)
+    ) {
+      bottlenecks.push({
+        buildingId: building.id,
+        buildingType: building.type,
+        buildingName,
+        kind: 'missingDeposit',
+        resourceType: definition.extraction.resource,
+        label: `${buildingName} has no nearby ${resourceLabel(definition.extraction.resource)} deposit`,
       });
     }
 
