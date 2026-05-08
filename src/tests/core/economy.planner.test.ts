@@ -309,7 +309,7 @@ describe('economy planner', () => {
 
     expect(snapshot.economy.bottlenecks).toHaveLength(8);
     expect(snapshot.economy.starvedBuildings).toBe(10);
-    expect(snapshot.economy.blockedBuildings).toBe(20);
+    expect(snapshot.economy.blockedBuildings).toBe(10);
   });
 
   it('summarizes transport as idle when legacy snapshots omit transport state', () => {

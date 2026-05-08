@@ -484,7 +484,7 @@ function getEconomyActivity(state: WorldState, ownerId?: string): SettlementSitu
   return {
     workingBuildings,
     starvedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').length,
-    blockedBuildings: allBottlenecks.filter((bottleneck) => KIND_TO_BUILDING_STATUS[bottleneck.kind] === 'blocked').length,
+    blockedBuildings: allBottlenecks.filter((bottleneck) => KIND_TO_BUILDING_STATUS[bottleneck.kind] === 'blocked' && bottleneck.kind !== 'missingInput').length,
     bottlenecks,
   };
 }

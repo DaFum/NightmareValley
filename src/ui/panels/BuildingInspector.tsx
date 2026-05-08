@@ -405,9 +405,6 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                   const imgSrc = imageMap[`resources/${resource}.png`];
                   const currentAmount = inventory[resource as ResourceType] ?? 0;
                   const short = currentAmount < (amount ?? 0);
-                  const costLabel = Object.entries(hireCost.resources)
-                    .map(([resource, amount]) => `${resourceShortLabel(resource as ResourceType)} ${inventory[resource as ResourceType] ?? 0}/${amount ?? 0}`)
-                    .join(', ');
                   return (
                     <span
                       key={resource}
@@ -417,7 +414,7 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                       {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
                       <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
                       <span className="resource-pill__amount">{currentAmount}/{amount ?? 0}</span>
-                      <span className="sr-only">{costLabel}</span>
+                      <span className="sr-only">{resourceShortLabel(resource as ResourceType)}: {currentAmount}/{amount ?? 0}</span>
                     </span>
                   );
                 })}
