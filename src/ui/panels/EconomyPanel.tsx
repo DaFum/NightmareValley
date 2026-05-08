@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore, player1Id } from '../../store/game.store';
+import { useSelectionStore } from '../../store/selection.store';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingType, ResourceType } from '../../game/core/economy.types';
 import { BuildingInstance } from '../../game/core/game.types';
@@ -35,6 +36,16 @@ type ResourceFlow = {
   inTransit: number;
 };
 
+type ActiveCarrierRoute = {
+  workerId: string;
+  phase: string;
+  resource: ResourceType;
+  amount: number;
+  pickupName: string;
+  dropoffName: string;
+  progress: string;
+};
+
 function statusLabel(status: string): { label: string; color: string } {
   switch (status) {
     case 'working':         return { label: 'Working', color: 'var(--econ-success)' };
@@ -64,7 +75,15 @@ function getRoadDisconnectedDetail(
   return productionStatus.detail;
 }
 
+function getBuildingName(buildings: Record<string, BuildingInstance>, buildingId: string): string {
+  const building = buildings[buildingId];
+  if (!building) return 'Missing building';
+  return BUILDING_DEFINITIONS[building.type]?.name ?? building.type;
+}
+
 export default function EconomyPanel(): JSX.Element | null {
+  const selectBuilding = useSelectionStore((state) => state.selectBuilding);
+  const selectWorker = useSelectionStore((state) => state.selectWorker);
   const { buildings, workers, transport, territory, players, ageOfTeeth, tick, worldPulse, military } = useGameStore(
     useShallow((s) => ({
       buildings: s.gameState.buildings,
@@ -160,6 +179,27 @@ export default function EconomyPanel(): JSX.Element | null {
       .slice(0, 8);
   }, [buildings, transport.activeCarrierTasks]);
 
+  const activeCarrierRoutes = useMemo((): ActiveCarrierRoute[] => (
+    Object.entries(transport.activeCarrierTasks)
+      .map(([workerId, task]) => {
+        const pickupName = getBuildingName(buildings, task.pickupBuildingId);
+        const dropoffName = getBuildingName(buildings, task.dropoffBuildingId);
+        const pathLength = Math.max(1, task.path.length);
+        const pathStep = Math.min(pathLength, Math.max(1, task.pathIndex + 1));
+
+        return {
+          workerId,
+          phase: task.phase === 'toPickup' ? 'Pickup' : 'Deliver',
+          resource: task.resourceType as ResourceType,
+          amount: task.amount,
+          pickupName,
+          dropoffName,
+          progress: `${pathStep}/${pathLength}`,
+        };
+      })
+      .slice(0, 4)
+  ), [buildings, transport.activeCarrierTasks]);
+
   const plannerSnapshot = useMemo(
     () => getEconomyPlanSnapshot({ buildings, workers, transport, players, territory, ageOfTeeth, tick, worldPulse, military } as WorldState, player1Id),
     [ageOfTeeth, buildings, military, players, territory, tick, transport, workers, worldPulse]
@@ -211,7 +251,13 @@ export default function EconomyPanel(): JSX.Element | null {
             {buildingRows.map((row) => {
               const { label, color } = statusLabel(row.status);
               return (
-                <div key={row.id} className="econ-building-row">
+                <button
+                  key={row.id}
+                  type="button"
+                  className="econ-building-row"
+                  aria-label={`Inspect ${row.name}: ${label}. ${row.statusDetail}`}
+                  onClick={() => selectBuilding(row.id)}
+                >
                   <div className="econ-building-row__name" title={row.name}>
                     {row.name}
                     <span className="econ-building-row__lvl">L{row.level}</span>
@@ -232,7 +278,7 @@ export default function EconomyPanel(): JSX.Element | null {
                       style={{ width: `${row.outputFill * 50}%`, marginLeft: '50%' }}
                     />
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -253,6 +299,28 @@ export default function EconomyPanel(): JSX.Element | null {
               <strong>{situationSnapshot.transport.headline}</strong>
               <span>{situationSnapshot.transport.action}</span>
             </p>
+            <div className="econ-carrier-task-list" aria-label="Carrier tasks">
+              <h4>Carrier tasks</h4>
+              {activeCarrierRoutes.length === 0 ? (
+                <p className="inspector-note">No active carrier routes.</p>
+              ) : (
+                activeCarrierRoutes.map((route) => (
+                  <button
+                    key={`${route.workerId}-${route.resource}`}
+                    type="button"
+                    className="econ-carrier-task"
+                    aria-label={`Inspect carrier ${route.workerId}: ${route.phase} ${route.amount} ${route.resource} from ${route.pickupName} to ${route.dropoffName}`}
+                    onClick={() => selectWorker(route.workerId)}
+                  >
+                    <span>{route.phase}</span>
+                    <strong>{route.amount} {route.resource}</strong>
+                    <small>
+                      {route.pickupName} -&gt; {route.dropoffName} ({route.progress})
+                    </small>
+                  </button>
+                ))
+              )}
+            </div>
           </section>
 
           <section className="economy-panel__section" aria-label="Resource flow">
@@ -281,11 +349,17 @@ export default function EconomyPanel(): JSX.Element | null {
                 <p className="inspector-note">No critical bottlenecks.</p>
               ) : (
                 plannerSnapshot.bottlenecks.slice(0, 4).map((bottleneck) => (
-                  <div key={`${bottleneck.buildingId}-${bottleneck.kind}`} className={`econ-bottleneck econ-bottleneck--${bottleneck.kind}`}>
+                  <button
+                    key={`${bottleneck.buildingId}-${bottleneck.kind}`}
+                    type="button"
+                    className={`econ-bottleneck econ-bottleneck--${bottleneck.kind}`}
+                    aria-label={`Inspect ${bottleneck.buildingName} bottleneck: ${bottleneck.label}`}
+                    onClick={() => selectBuilding(bottleneck.buildingId)}
+                  >
                     <span>{bottleneck.buildingName}</span>
                     <small>{bottleneck.label}</small>
                     <em>{getBottleneckAction(bottleneck)}</em>
-                  </div>
+                  </button>
                 ))
               )}
             </div>

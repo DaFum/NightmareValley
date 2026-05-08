@@ -12,6 +12,7 @@
     "build:vite": "vite build",
     "preview": "vite preview",
     "screenshot:playwright": "node scripts/playwright-screenshots.mjs",
+    "smoke:playwright": "node scripts/playwright-game-smoke.mjs",
     "symbols:generate": "node scripts/generate-symbols.mjs",
     "symbols:check": "node scripts/generate-symbols.mjs --check",
     "check:export-policy": "jest --runInBand src/tests/core/export-style-policy.test.ts"

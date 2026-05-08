@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
 import { getSettlementSituationSnapshot } from '../../game/economy/economy.planner';
 import { GameScenarioProfile, player1Id, useGameStore } from '../../store/game.store';
+import { useSelectionStore } from '../../store/selection.store';
 
 type BriefGoal = {
   label: string;
@@ -16,6 +17,7 @@ const scenarioLabels: Record<GameScenarioProfile, string> = {
 };
 
 export default function SettlementBriefPanel(): JSX.Element {
+  const selectBuilding = useSelectionStore((state) => state.selectBuilding);
   const {
     activeScenario,
     gameState,
@@ -95,12 +97,30 @@ export default function SettlementBriefPanel(): JSX.Element {
 
       {brief.topIssues.length > 0 && (
         <ul className="settlement-brief__issues" aria-label="Settlement issues">
-          {brief.topIssues.map((issue) => (
-            <li key={`${issue.kind}-${issue.label}`} className={`settlement-brief__issue settlement-brief__issue--${issue.tone}`}>
-              <strong>{issue.label}</strong>
-              <small>{issue.action}</small>
-            </li>
-          ))}
+          {brief.topIssues.map((issue) => {
+            const issueClassName = `settlement-brief__issue settlement-brief__issue--${issue.tone}`;
+
+            return (
+              <li key={`${issue.kind}-${issue.label}`}>
+                {issue.buildingId ? (
+                  <button
+                    type="button"
+                    className={`${issueClassName} settlement-brief__issue-btn`}
+                    aria-label={`Inspect ${issue.label}`}
+                    onClick={() => selectBuilding(issue.buildingId ?? null)}
+                  >
+                    <strong>{issue.label}</strong>
+                    <small>{issue.action}</small>
+                  </button>
+                ) : (
+                  <div className={issueClassName}>
+                    <strong>{issue.label}</strong>
+                    <small>{issue.action}</small>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
