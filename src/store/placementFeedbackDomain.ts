@@ -97,8 +97,6 @@ export function getRoadToolFeedback(
       };
   }
 
-  const tile = getTileAt(territory, hoverTile.x, hoverTile.y);
-
   if (mode === 'place') {
     const validation = canPlaceRoadForPlayer(territory, hoverTile.x, hoverTile.y, ownerId);
     if (!validation.ok) {
@@ -115,6 +113,8 @@ export function getRoadToolFeedback(
       detail: 'Click to extend the logistics network between vaults and workplaces.',
     };
   }
+
+  const tile = getTileAt(territory, hoverTile.x, hoverTile.y);
 
   if (!tile || tile.ownerId !== ownerId) {
     return {

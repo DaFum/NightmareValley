@@ -33,7 +33,7 @@ function getIndicatorDetail(headline: string, detail: string): Pick<TransportInd
   return {
     headline,
     detail: normalizedDetail,
-    title: `${headline}: ${normalizedDetail}`,
+    title: normalizedDetail ? `${headline}: ${normalizedDetail}` : headline,
   };
 }
 
