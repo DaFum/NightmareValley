@@ -79,18 +79,20 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
         <div><dt>Carrying</dt><dd>{transport?.carrying ?? 'Nothing'}</dd></div>
       </dl>
 
-      <section className="inventory-block worker-transport">
-        <h3>Transport</h3>
-        <dl className="inspector-stats worker-transport__stats">
-          <div><dt>Delivery State</dt><dd>{transport?.deliveryState ?? 'Idle'}</dd></div>
-          <div><dt>Route</dt><dd>{transport?.route ?? 'No active route'}</dd></div>
-          <div><dt>Progress</dt><dd>{transport?.progress ?? 'No active route'}</dd></div>
-        </dl>
-        <p className="inspector-note">{transport?.idleReason ?? transport?.detail ?? 'No transport details available.'}</p>
-        {transport?.idleReason ? (
-          <p className="inspector-note worker-transport__hint">{transport.detail}</p>
-        ) : null}
-      </section>
+      {transport ? (
+        <section className="inventory-block worker-transport">
+          <h3>Transport</h3>
+          <dl className="inspector-stats worker-transport__stats">
+            <div><dt>Delivery State</dt><dd>{transport.deliveryState}</dd></div>
+            <div><dt>Route</dt><dd>{transport.route}</dd></div>
+            <div><dt>Progress</dt><dd>{transport.progress}</dd></div>
+          </dl>
+          <p className="inspector-note">{transport.idleReason ?? transport.detail}</p>
+          {transport.idleReason ? (
+            <p className="inspector-note worker-transport__hint">{transport.detail}</p>
+          ) : null}
+        </section>
+      ) : null}
     </aside>
   );
 }

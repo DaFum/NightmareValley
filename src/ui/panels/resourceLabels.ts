@@ -1,3 +1,4 @@
+import { resourceLabel } from '../../store/economy.utils';
 import type { ResourceType } from '../../game/core/economy.types';
 
 export function resourceShortLabel(resource: ResourceType): string {
@@ -33,6 +34,6 @@ export function resourceShortLabel(resource: ResourceType): string {
     case 'sinewTimber':
       return 'Timber';
     default:
-      return resource.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
+      return resourceLabel(resource);
   }
 }

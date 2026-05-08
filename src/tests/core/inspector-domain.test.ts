@@ -24,7 +24,7 @@ describe('inspectorDomain', () => {
     });
   });
 
-  it('preserves valid worker and tile selections', () => {
+  it('returns worker target when selected worker exists', () => {
     const world = {
       players: { [player1Id]: { buildings: ['building-1'], workers: ['worker-1'] } },
       buildings: { 'building-1': { id: 'building-1' } },
@@ -32,13 +32,22 @@ describe('inspectorDomain', () => {
       territory: { tiles: { 'tile-1': { id: 'tile-1' } } },
     } as unknown as WorldState;
     const workerId = 'worker-1';
-    const tileId = 'tile-1';
 
     expect(getInspectorTarget(world, {
       selectedBuildingId: null,
       selectedWorkerId: workerId,
       selectedTileId: null,
     })).toEqual({ kind: 'worker', workerId });
+  });
+
+  it('returns tile target when selected tile exists', () => {
+    const world = {
+      players: { [player1Id]: { buildings: ['building-1'], workers: ['worker-1'] } },
+      buildings: { 'building-1': { id: 'building-1' } },
+      workers: { 'worker-1': { id: 'worker-1' } },
+      territory: { tiles: { 'tile-1': { id: 'tile-1' } } },
+    } as unknown as WorldState;
+    const tileId = 'tile-1';
 
     expect(getInspectorTarget(world, {
       selectedBuildingId: null,

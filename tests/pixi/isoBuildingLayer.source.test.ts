@@ -14,10 +14,12 @@ describe('IsoBuildingLayer texture fallbacks', () => {
   it('waits for texture registry readiness before warning about missing building sprites', () => {
     const buildingLayerSource = readFileSync(join(process.cwd(), 'src/pixi/layers/IsoBuildingLayer.tsx'), 'utf8');
     const ghostLayerSource = readFileSync(join(process.cwd(), 'src/pixi/layers/IsoGhostPlacementLayer.tsx'), 'utf8');
+    const useTexturesPattern = /const\s*\{\s*ready\s*,\s*registry\s*\}\s*=\s*useTextures\(\s*\)\s*;/;
+    const readyGuardPattern = /if\s*\(\s*!ready\s*\)\s*return\s+null\s*;/;
 
-    expect(buildingLayerSource).toContain('const { ready, registry } = useTextures();');
-    expect(buildingLayerSource).toContain('if (!ready) return null;');
-    expect(ghostLayerSource).toContain('const { ready, registry } = useTextures();');
-    expect(ghostLayerSource).toContain('if (!ready) return null;');
+    expect(buildingLayerSource).toMatch(useTexturesPattern);
+    expect(buildingLayerSource).toMatch(readyGuardPattern);
+    expect(ghostLayerSource).toMatch(useTexturesPattern);
+    expect(ghostLayerSource).toMatch(readyGuardPattern);
   });
 });

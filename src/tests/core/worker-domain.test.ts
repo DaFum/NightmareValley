@@ -38,9 +38,9 @@ describe('workerDomain selectors', () => {
     };
 
     const idleModel = getWorkerInspectorModel(worker, undefined, buildings);
-    expect(idleModel?.transport.deliveryState).toBe('Idle');
-    expect(idleModel?.transport.carrying).toBe('Nothing');
-    expect(idleModel?.transport.idleReason).toContain('No active transport task');
+    expect(idleModel?.transport?.deliveryState).toBe('Idle');
+    expect(idleModel?.transport?.carrying).toBe('Nothing');
+    expect(idleModel?.transport?.idleReason).toContain('No active transport task');
 
     const haulingModel = getWorkerInspectorModel(
       { ...worker, isIdle: false },
@@ -59,11 +59,19 @@ describe('workerDomain selectors', () => {
       buildings,
     );
 
-    expect(haulingModel?.transport.deliveryState).toBe('Delivering');
-    expect(haulingModel?.transport.detail).toContain('Carrying 2 Sinew Timber');
-    expect(haulingModel?.transport.route).toBe('Organ Harvester -> Vault of Digestive Stone');
-    expect(haulingModel?.transport.progress).toBe('2/3 tiles');
-    expect(haulingModel?.transport.carrying).toBe('2 Sinew Timber');
-    expect(haulingModel?.transport.idleReason).toBeNull();
+    expect(haulingModel?.transport?.deliveryState).toBe('Delivering');
+    expect(haulingModel?.transport?.detail).toContain('Carrying 2 Sinew Timber');
+    expect(haulingModel?.transport?.route).toBe('Organ Harvester -> Vault of Digestive Stone');
+    expect(haulingModel?.transport?.progress).toBe('2/3 tiles');
+    expect(haulingModel?.transport?.carrying).toBe('2 Sinew Timber');
+    expect(haulingModel?.transport?.idleReason).toBeNull();
+  });
+
+  it('does not show carrier transport guidance for idle production workers', () => {
+    const worker = createWorkerDraft('producer-1', 'timberExecutioner', 'p1', 1, 2);
+
+    const model = getWorkerInspectorModel(worker);
+
+    expect(model?.transport).toBeNull();
   });
 });

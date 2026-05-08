@@ -30,4 +30,21 @@ describe('placement flow', () => {
     expect(domain).toContain('export function getRoadPlacementReasonMessage(reason: RoadPlacementReason): string');
     expect(domain).toMatch(/never\s*=\s*reason/);
   });
+
+  it('does not look up road tiles before place-mode validation needs them', () => {
+    const domain = readFileSync(join(process.cwd(), 'src/store/placementFeedbackDomain.ts'), 'utf8');
+
+    expect(domain.indexOf('const tile = getTileAt(territory, hoverTile.x, hoverTile.y);'))
+      .toBeGreaterThan(domain.indexOf("if (mode === 'place')"));
+  });
+
+  it('short-circuits placement feedback work when no placement tool is active', () => {
+    const stage = readFileSync(join(process.cwd(), 'src/pixi/GameStage.tsx'), 'utf8');
+
+    expect(stage).toContain('if (!selectedBuildingToPlace && !roadPlacementMode && !roadRemovalMode) {');
+    expect(stage).toContain('clearPlacementFeedback();');
+    expect(stage).toContain('return;');
+    expect(stage).toContain("getRoadToolFeedback(gameState.territory, player1Id, roadRemovalMode ? 'remove' : 'place', ghostTile)");
+    expect(stage).not.toContain("getRoadToolFeedback(territory, player1Id, roadRemovalMode ? 'remove' : 'place', ghostTile)");
+  });
 });

@@ -189,10 +189,18 @@ export function GameStage() {
   }, [ghostTile, roadPlacementMode, roadRemovalMode, territory]);
 
   useEffect(() => {
+    if (!selectedBuildingToPlace && !roadPlacementMode && !roadRemovalMode) {
+      if (lastToolFeedbackKeyRef.current) {
+        lastToolFeedbackKeyRef.current = '';
+        clearPlacementFeedback();
+      }
+      return;
+    }
+
     const feedback = selectedBuildingToPlace
       ? getBuildingPlacementToolFeedback(gameState, player1Id, selectedBuildingToPlace, ghostTile)
       : roadPlacementMode || roadRemovalMode
-        ? getRoadToolFeedback(territory, player1Id, roadRemovalMode ? 'remove' : 'place', ghostTile)
+        ? getRoadToolFeedback(gameState.territory, player1Id, roadRemovalMode ? 'remove' : 'place', ghostTile)
         : null;
 
     if (!feedback) {

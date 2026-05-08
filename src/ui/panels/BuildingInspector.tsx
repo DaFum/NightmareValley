@@ -50,24 +50,35 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
     };
   }, [building, gameState]);
 
+  const isUnderConstruction = building?.constructionProgress !== undefined && building.constructionProgress < 1;
+  const upgradeControl = useMemo(() => {
+    const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
+    const inventory = panelDerived?.inventory ?? {};
+    const canUpgrade = panelDerived?.canUpgrade ?? false;
+    const upgradeMissing = upgradeCost
+      ? getMissingCostEntries(inventory, upgradeCost.resources)
+      : [];
+
+    return {
+      upgradeCost,
+      inventory,
+      canUpgrade,
+      upgradeMissing,
+      upgradeTitle: getUpgradeTitle({
+        canUpgrade,
+        isUnderConstruction,
+        upgradeCostMissing: upgradeMissing,
+        hasUpgradeCost: !!upgradeCost,
+      }),
+    };
+  }, [isUnderConstruction, panelDerived]);
+
   if (!building || !player) return null;
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
 
   const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', label: 'Idle', detail: 'No status available.' } as const;
-  const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
-  const inventory = panelDerived?.inventory ?? {};
-  const canUpgrade = panelDerived?.canUpgrade ?? false;
-  const isUnderConstruction = building.constructionProgress !== undefined && building.constructionProgress < 1;
-  const upgradeMissing = upgradeCost
-    ? getMissingCostEntries(inventory, upgradeCost.resources)
-    : [];
-  const upgradeTitle = getUpgradeTitle({
-    canUpgrade,
-    isUnderConstruction,
-    upgradeCostMissing: upgradeMissing,
-    hasUpgradeCost: !!upgradeCost,
-  });
+  const { upgradeCost, inventory, canUpgrade, upgradeTitle } = upgradeControl;
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
@@ -292,7 +303,7 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
           const canHire = !!player && vacant > 0 && !atPopCap && canAfford;
           const autoHire = building.autoHire?.[workerType] ?? false;
           const costLabel = Object.entries(hireCost.resources)
-            .map(([resource, amount]) => `${resourceShortLabel(resource as ResourceType)} ${inventory[resource as ResourceType] ?? 0}/${amount}`)
+            .map(([resource, amount]) => `${resourceShortLabel(resource as ResourceType)} ${inventory[resource as ResourceType] ?? 0}/${amount ?? 0}`)
             .join(', ');
 
           return (
@@ -313,11 +324,11 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                     <span
                       key={resource}
                       className={`resource-pill ${short ? 'resource-pill--short' : 'resource-pill--ready'}`}
-                      title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount}`}
+                      title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount ?? 0}`}
                     >
                       {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
                       <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                      {currentAmount}/{amount}
+                      {currentAmount}/{amount ?? 0}
                     </span>
                   );
                 })}

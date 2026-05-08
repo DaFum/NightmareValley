@@ -30,10 +30,11 @@ function getActiveTasksForOwner(state: WorldState, ownerId: string): number {
 
 function getIndicatorDetail(headline: string, detail: string): Pick<TransportIndicatorModel, 'detail' | 'title' | 'headline'> {
   const normalizedDetail = detail.trim();
+  const title = normalizedDetail ? `${headline}: ${normalizedDetail}` : headline;
   return {
     headline,
     detail: normalizedDetail,
-    title: `${headline}: ${normalizedDetail}`,
+    title,
   };
 }
 

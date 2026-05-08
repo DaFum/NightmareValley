@@ -29,6 +29,11 @@ function isRecruitReady(building: BuildingInstance): boolean {
   return building.isActive && building.connectedToRoad && isConstructed(building);
 }
 
+function isRecruitPaused(building: BuildingInstance): boolean {
+  const candidate = building as BuildingInstance & { paused?: boolean; isPaused?: boolean };
+  return candidate.paused === true || candidate.isPaused === true || building.isActive === false;
+}
+
 export default function MilitaryPanel(): JSX.Element | null {
   const gameState = useGameStore((state) => state.gameState);
   const spawnAndAssignWorker = useGameStore((state) => state.spawnAndAssignWorker);
@@ -50,6 +55,9 @@ export default function MilitaryPanel(): JSX.Element | null {
     const disconnectedRecruitBuildings = recruitBuildings.filter((building) => {
       return isConstructed(building) && !building.connectedToRoad;
     });
+    const pausedRecruitBuildings = recruitBuildings.filter((building) => {
+      return isConstructed(building) && building.connectedToRoad && isRecruitPaused(building);
+    });
 
     return {
       hasPlayer: Boolean(player),
@@ -60,6 +68,7 @@ export default function MilitaryPanel(): JSX.Element | null {
       readyRecruitBuildings,
       unfinishedRecruitBuildings,
       disconnectedRecruitBuildings,
+      pausedRecruitBuildings,
       population: player?.workers.length ?? 0,
       populationLimit: player?.populationLimit ?? 0,
       canAffordWarInfant: canAffordWorker(inventory, 'warInfant'),
@@ -90,6 +99,7 @@ export default function MilitaryPanel(): JSX.Element | null {
     snapshot.recruitBuildings.length,
     snapshot.unfinishedRecruitBuildings,
     snapshot.disconnectedRecruitBuildings,
+    snapshot.pausedRecruitBuildings,
     Boolean(recruitTarget),
   );
   const hostileRaidsRepelled = military?.raidsRepelled ?? 0;
@@ -195,6 +205,7 @@ function getRecruitSetupIssue(
   recruitBuildingCount: number,
   unfinishedRecruitBuildings: BuildingInstance[],
   disconnectedRecruitBuildings: BuildingInstance[],
+  pausedRecruitBuildings: BuildingInstance[],
   hasRecruitTarget: boolean,
 ): string | null {
   if (recruitBuildingCount === 0) {
@@ -205,6 +216,9 @@ function getRecruitSetupIssue(
   }
   if (disconnectedRecruitBuildings.length > 0) {
     return `Connect roads to ${buildingList(disconnectedRecruitBuildings)} before recruiting soldiers.`;
+  }
+  if (pausedRecruitBuildings.length > 0) {
+    return `Recruit buildings are paused; resume production on ${buildingList(pausedRecruitBuildings)}.`;
   }
   if (!hasRecruitTarget) {
     return 'Soldier slots are full. Build another Pit or Spire, or upgrade an existing one.';

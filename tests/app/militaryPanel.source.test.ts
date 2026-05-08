@@ -25,4 +25,12 @@ describe('MilitaryPanel guidance', () => {
     expect(source).toContain('Connect roads');
     expect(source).toContain('isRecruitReady');
   });
+
+  it('explains paused recruit buildings before reporting soldier slots full', () => {
+    const source = readFileSync(join(process.cwd(), 'src/ui/panels/MilitaryPanel.tsx'), 'utf8');
+
+    expect(source).toContain('pausedRecruitBuildings');
+    expect(source).toContain('isRecruitPaused');
+    expect(source).toContain('Recruit buildings are paused');
+  });
 });

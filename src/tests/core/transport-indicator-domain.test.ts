@@ -1,6 +1,8 @@
 import { getTransportIndicatorModel } from '../../store/transportIndicatorDomain';
 import { player1Id } from '../../store/game.store';
 import { createWorld } from '../../game/world/world.state';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 describe('transportIndicatorDomain', () => {
   it('surfaces the transport next step, not only active and queued counts', () => {
@@ -39,5 +41,13 @@ describe('transportIndicatorDomain', () => {
     const model = getTransportIndicatorModel(world, player1Id);
 
     expect(model.summary).toBe('Active 0 · Queued 5');
+  });
+
+  it('builds indicator titles without dangling separators when detail is empty', () => {
+    const source = readFileSync(join(process.cwd(), 'src/store/transportIndicatorDomain.ts'), 'utf8');
+
+    expect(source).toContain('const title = normalizedDetail ? `${headline}: ${normalizedDetail}` : headline;');
+    expect(source).toContain('title,');
+    expect(source).not.toContain('title: `${headline}: ${normalizedDetail}`');
   });
 });
