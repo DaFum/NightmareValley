@@ -2,7 +2,8 @@ import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { BuildingType, ResourceType } from '../core/economy.types';
 import { aggregateVaultInventory, CampaignObjectiveMetric, GameObjective, getCampaignObjectives } from '../core/victory.rules';
 import { getMilitaryMetrics } from '../military';
-import { getTileAt } from '../map/map.query';
+import { extractionNeedsDeposit, hasNearbyExtractionDeposit } from './extraction.utils';
+import { KIND_TO_BUILDING_STATUS } from '../entities/buildings/building.status';
 import { WorldState } from '../world/world.types';
 import {
   DEFAULT_SIMULATION_CONFIG,
@@ -220,27 +221,6 @@ function getProducers(): Producer[] {
 }
 
 const PRODUCERS = getProducers();
-const RENEWABLE_EXTRACTION_RESOURCES = new Set<ResourceType>(['pigFleshMass']);
-const EXTRACTION_SEARCH_RADIUS = 2;
-
-function extractionNeedsDeposit(resourceType: ResourceType, renewable?: boolean): boolean {
-  return !renewable && !RENEWABLE_EXTRACTION_RESOURCES.has(resourceType);
-}
-
-function hasNearbyExtractionDeposit(state: WorldState, buildingId: string, resourceType: ResourceType): boolean {
-  const building = state.buildings[buildingId];
-  if (!building) return false;
-  if (!state.territory?.tiles) return false;
-
-  for (let dy = -EXTRACTION_SEARCH_RADIUS; dy <= EXTRACTION_SEARCH_RADIUS; dy++) {
-    for (let dx = -EXTRACTION_SEARCH_RADIUS; dx <= EXTRACTION_SEARCH_RADIUS; dx++) {
-      const tile = getTileAt(state.territory, building.position.x + dx, building.position.y + dy);
-      if ((tile?.resourceDeposit?.[resourceType] ?? 0) > 0) return true;
-    }
-  }
-
-  return false;
-}
 
 function findProducer(resourceType: ResourceType): Producer | undefined {
   return PRODUCERS.find((producer) => producer.resourceType === resourceType);
@@ -325,9 +305,10 @@ function collectEconomyBottlenecks(state: WorldState, ownerId?: string): Economy
     }
 
     if (
+      state.territory?.tiles &&
       definition.extraction &&
       extractionNeedsDeposit(definition.extraction.resource, definition.extraction.renewable) &&
-      !hasNearbyExtractionDeposit(state, building.id, definition.extraction.resource)
+      !hasNearbyExtractionDeposit(state, building, definition.extraction.resource)
     ) {
       bottlenecks.push({
         buildingId: building.id,
@@ -503,7 +484,7 @@ function getEconomyActivity(state: WorldState, ownerId?: string): SettlementSitu
   return {
     workingBuildings,
     starvedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').length,
-    blockedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'outputFull' || bottleneck.kind === 'roadDisconnected').length,
+    blockedBuildings: allBottlenecks.filter((bottleneck) => KIND_TO_BUILDING_STATUS[bottleneck.kind] === 'blocked').length,
     bottlenecks,
   };
 }

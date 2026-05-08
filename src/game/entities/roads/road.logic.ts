@@ -71,6 +71,7 @@ export function placeRoadTile(
 				buildings,
 			};
 		}
+		return state;
 	}
 
 	const placement = canPlaceRoadForPlayer(state.territory, tile.position.x, tile.position.y, ownerId);
@@ -186,5 +187,4 @@ export function getRoadConnectionDiagnostic(
 	if (!target.connectedToRoad) return `${target.type} has no road entrance`;
 	return `${source.type} and ${target.type} are on disconnected roads`;
 }
-
 

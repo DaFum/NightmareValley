@@ -1807,6 +1807,7 @@ body.ui--tool-active .game-layout__debug-panel {
 
 .inspector-note--missingInput,
 .inspector-note--missingWorker,
+.inspector-note--missingDeposit,
 .inspector-note--roadDisconnected,
 .inspector-note--outputFull {
   border-color: var(--econ-warn-border);

@@ -17,7 +17,7 @@ describe('Playwright game smoke script', () => {
     expect(script).toContain('Economy overview');
     expect(script).toContain('Transport status');
     expect(script).toContain('Missing building texture');
-    expect(script).toContain('Worker');
+    expect(script).toContain('Hire Workers');
     expect(script).toContain('setSpeed(page,');
   });
 });

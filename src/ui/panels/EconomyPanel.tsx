@@ -59,6 +59,7 @@ function statusLabel(status: string): { label: string; color: string } {
     case 'idle':            return { label: 'Idle',    color: 'var(--econ-idle)' };
     case 'missingInput':    return { label: 'Starved', color: 'var(--econ-warn)' };
     case 'missingWorker':   return { label: 'No worker', color: 'var(--econ-warn)' };
+    case 'missingDeposit':  return { label: 'No deposit', color: 'var(--econ-warn)' };
     case 'underConstruction': return { label: 'Building', color: 'var(--econ-idle)' };
     case 'paused':          return { label: 'Paused',  color: 'var(--econ-disabled)' };
     default:                return { label: status,    color: 'var(--econ-default)' };
@@ -189,6 +190,11 @@ export default function EconomyPanel(): JSX.Element | null {
 
   const activeCarrierRoutes = useMemo((): ActiveCarrierRoute[] => (
     Object.entries(transport.activeCarrierTasks)
+      .filter(([, task]) => {
+        const pickup = buildings[task.pickupBuildingId];
+        const dropoff = buildings[task.dropoffBuildingId];
+        return pickup?.ownerId === player1Id || dropoff?.ownerId === player1Id;
+      })
       .map(([workerId, task]) => {
         const pickupName = getBuildingName(buildings, task.pickupBuildingId);
         const dropoffName = getBuildingName(buildings, task.dropoffBuildingId);

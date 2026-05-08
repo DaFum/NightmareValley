@@ -62,8 +62,6 @@ async function cdpScreenshot(page, outputPath) {
 
 async function assertVisible(locator, label) {
   await locator.first().waitFor({ state: 'visible', timeout: 10_000 });
-  const count = await locator.count();
-  if (count < 1) throw new Error(`Expected visible ${label}.`);
 }
 
 async function assertNoBlankCanvas(page) {
@@ -179,12 +177,17 @@ async function runSmoke() {
 
     await cdpScreenshot(page, path.join(OUTPUT_DIR, 'game-smoke.png'));
     await context.close();
+    if (consoleProblems.length > 0) {
+      throw new Error(`Browser smoke found runtime errors:\n${consoleProblems.join('\n')}`);
+    }
+  } catch (error) {
+    if (consoleProblems.length > 0) {
+      const original = error instanceof Error ? error.message : String(error);
+      throw new Error(`${original}\n\nBrowser console problems:\n${consoleProblems.join('\n')}`);
+    }
+    throw error;
   } finally {
     await browser.close();
-  }
-
-  if (consoleProblems.length > 0) {
-    throw new Error(`Browser smoke found runtime errors:\n${consoleProblems.join('\n')}`);
   }
 
   console.log(`[smoke] playable loop passed at ${BASE_URL}/game`);

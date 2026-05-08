@@ -4,11 +4,11 @@ import type { BuildingStatus } from './building.types';
 import { BUILDING_DEFINITIONS } from '../../core/economy.data';
 import type { ResourceType } from '../../core/economy.types';
 import { DEFAULT_SIMULATION_CONFIG, type SimulationConfig } from '../../economy/balancing.constants';
+import { extractionNeedsDeposit, hasNearbyExtractionDeposit } from '../../economy/extraction.utils';
 import { RECIPES } from '../../economy/recipes.data';
 import { canStoreRecipeOutputs, chooseRecipeForBuilding } from '../../economy/production.logic';
 import { hasAssignedWorkersForBuilding, requiresRoad, type EconomySimulationState } from '../../core/economy.simulation';
 import { hasEnoughResources } from '../../economy/stockpile.logic';
-import { getTileAt } from '../../map/map.query';
 
 export function deriveBuildingStatus(b: BuildingInstance | undefined): BuildingStatus {
 	if (!b || !b.isActive) return 'disabled';
@@ -35,7 +35,7 @@ export type ProductionStatus = {
   resourceType?: ResourceType;
 };
 
-const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
+export const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
   paused: 'disabled',
   underConstruction: 'underConstruction',
   roadDisconnected: 'blocked',
@@ -51,27 +51,6 @@ function resourceLabel(resourceType: ResourceType): string {
   return resourceType.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
 }
 
-const RENEWABLE_EXTRACTION_RESOURCES = new Set<ResourceType>(['pigFleshMass']);
-const EXTRACTION_SEARCH_RADIUS = 2;
-
-function extractionNeedsDeposit(resourceType: ResourceType, renewable?: boolean): boolean {
-  return !renewable && !RENEWABLE_EXTRACTION_RESOURCES.has(resourceType);
-}
-
-function hasNearbyExtractionDeposit(
-  state: EconomySimulationState,
-  building: BuildingInstance,
-  resourceType: ResourceType,
-): boolean {
-  for (let dy = -EXTRACTION_SEARCH_RADIUS; dy <= EXTRACTION_SEARCH_RADIUS; dy++) {
-    for (let dx = -EXTRACTION_SEARCH_RADIUS; dx <= EXTRACTION_SEARCH_RADIUS; dx++) {
-      const tile = getTileAt(state.territory, building.position.x + dx, building.position.y + dy);
-      if ((tile?.resourceDeposit?.[resourceType] ?? 0) > 0) return true;
-    }
-  }
-
-  return false;
-}
 
 export function getProductionStatus(
   state: EconomySimulationState,
@@ -134,6 +113,7 @@ export function getProductionStatus(
         };
       }
       if (
+        state.territory?.tiles &&
         extractionNeedsDeposit(definition.extraction.resource, definition.extraction.renewable) &&
         !hasNearbyExtractionDeposit(state, building, definition.extraction.resource)
       ) {
@@ -195,5 +175,3 @@ export function deriveProductionBuildingStatus(
 ): BuildingStatus {
   return KIND_TO_BUILDING_STATUS[getProductionStatus(state, building, config).kind];
 }
-
-
