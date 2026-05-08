@@ -309,12 +309,34 @@ describe('victory rules', () => {
     );
   });
 
+  it('requires the hostile pressure to be broken before victory', () => {
+    const state = makeState();
+    state.buildings.vault.outputBuffer = { funeralLoaf: 10, tormentInstrument: 3 };
+    state.military = { difficulty: 'medium', enemyPressure: 25, nextAttackAge: 600, raidsRepelled: 1 };
+
+    const outcome = evaluateGameOutcome(state, 'p1');
+
+    expect(outcome.kind).toBe('in-progress');
+    expect(outcome.objectives).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'breakHostileChoir',
+          complete: false,
+          current: 0,
+          target: 1,
+        }),
+      ])
+    );
+  });
+
   it('declares victory when all campaign objectives are complete', () => {
     const state = makeState();
     state.buildings.vault.outputBuffer = { funeralLoaf: 10, tormentInstrument: 3 };
+    state.military = { difficulty: 'medium', enemyPressure: 5, nextAttackAge: 600, raidsRepelled: 2 };
     state.ageOfTeeth = 300;
     const outcome = evaluateGameOutcome(state, 'p1');
     expect(outcome.kind).toBe('victory');
+    expect(outcome.title).toBe('Hostile Choir Defeated');
     expect(outcome.score?.total).toBeGreaterThan(0);
     expect(outcome.objectives.every((objective) => objective.complete)).toBe(true);
   });
@@ -339,6 +361,7 @@ describe('victory rules', () => {
       'holdTerritory',
       'musterDefense',
       'repelFirstRaid',
+      'breakHostileChoir',
       'forgeInstruments',
     ]);
     expect(outcome.objectives.map((objective) => objective.chapter)).toContain('Fortification');

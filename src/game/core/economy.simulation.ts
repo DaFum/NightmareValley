@@ -10,7 +10,12 @@ import {
 import { BuildingType, WorkerType, ResourceType, ResourceInventory, TerrainType } from "./economy.types";
 import { TransportState } from "../transport";
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from "./economy.data";
-import { SimulationConfig, DEFAULT_SIMULATION_CONFIG } from "../economy/balancing.constants";
+import {
+  BASE_POPULATION_LIMIT,
+  DEFAULT_SIMULATION_CONFIG,
+  SimulationConfig,
+  VAULT_LEVEL_POPULATION_BONUS,
+} from "../economy/balancing.constants";
 import { addResource, removeResource, hasEnoughResources, getResourceAmount } from "../economy/stockpile.logic";
 import { getUpgradeCost } from "../economy/production.logic";
 import { isConstructed } from "../entities/buildings/building.types";
@@ -389,9 +394,12 @@ export function syncPopulationLimitsFromVaults(state: EconomySimulationState): E
     for (const buildingId of player.buildings) {
       const building = state.buildings[buildingId];
       if (building?.type !== "vaultOfDigestiveStone" || !isConstructed(building)) continue;
-      bonus += Math.max(0, building.level - 1) * 10;
+      bonus += Math.max(0, building.level - 1) * VAULT_LEVEL_POPULATION_BONUS;
     }
-    player.populationLimit = Math.max(player.populationLimit ?? 20, 20 + bonus);
+    player.populationLimit = Math.max(
+      player.populationLimit ?? BASE_POPULATION_LIMIT,
+      BASE_POPULATION_LIMIT + bonus
+    );
   }
   return state;
 }

@@ -7,6 +7,8 @@ export const TRANSPORT_AVERAGE_LATENCY_WARNING_SEC = 12;
 export const VAULT_CRITICAL_INTEGRITY_PERCENT = 35;
 export const ENEMY_PRESSURE_WARNING_THRESHOLD = 70;
 export const NEXT_ATTACK_WARNING_SEC = 45;
+export const BASE_POPULATION_LIMIT = 30;
+export const VAULT_LEVEL_POPULATION_BONUS = 10;
 
 export interface SimulationConfig {
   defaultTransportPriority: number;

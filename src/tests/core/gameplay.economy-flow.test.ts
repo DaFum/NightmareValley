@@ -1,4 +1,33 @@
 import { player1Id, useGameStore } from "../../store/game.store";
+import { isTileBuildableForPlayer } from "../../game/core/economy.simulation";
+import { BuildingType } from "../../game/core/economy.types";
+
+const FULL_SETTLEMENT_BUILD_SEQUENCE: BuildingType[] = [
+  "sepulcherQuarry",
+  "wombWell",
+  "shoreOfHooks",
+  "fieldOfMouths",
+  "dustCathedralMill",
+  "ovenOfLastBread",
+  "refectoryOfSalt",
+  "coalWound",
+  "ironVeinPit",
+  "bloodSmeltery",
+  "instrumentCrucible",
+  "vaultOfDigestiveStone",
+  "spireOfJurisdiction",
+  "pitOfWarBirth",
+];
+
+function placeFirstValidTile(buildingType: BuildingType): void {
+  const state = useGameStore.getState().gameState;
+  const tile = Object.values(state.territory.tiles).find((candidate) => {
+    return isTileBuildableForPlayer(candidate, player1Id, buildingType);
+  });
+
+  expect(tile).toBeDefined();
+  expect(useGameStore.getState().placeBuildingAt(player1Id, buildingType, tile!.id)).toBe(true);
+}
 
 describe("complete gameplay economy flow", () => {
   let state: ReturnType<typeof useGameStore.getState>["gameState"];
@@ -42,5 +71,31 @@ describe("complete gameplay economy flow", () => {
 
   it("never reports lastError during steady-state simulation", () => {
     expect(lastError).toBeUndefined();
+  });
+
+  it("can staff a full settlement build queue without starving military construction", () => {
+    useGameStore.getState().resetGame("challenging");
+    useGameStore.setState({ isRunning: false, lastError: undefined });
+
+    for (const buildingType of FULL_SETTLEMENT_BUILD_SEQUENCE) {
+      placeFirstValidTile(buildingType);
+    }
+
+    useGameStore.setState({ isRunning: true, lastError: undefined });
+    for (let i = 0; i < 3; i++) {
+      useGameStore.getState().runSimulationSteps(1, 0.2, 5);
+    }
+
+    const current = useGameStore.getState();
+    const player = current.gameState.players[player1Id];
+    const recruitBuildings = Object.values(current.gameState.buildings).filter((building) => {
+      return building.ownerId === player1Id &&
+        (building.type === "pitOfWarBirth" || building.type === "spireOfJurisdiction");
+    });
+
+    expect(current.lastError).toBeUndefined();
+    expect(player.workers.length).toBeLessThanOrEqual(player.populationLimit);
+    expect(recruitBuildings).toHaveLength(2);
+    expect(recruitBuildings.every((building) => building.assignedWorkers.length > 0)).toBe(true);
   });
 });

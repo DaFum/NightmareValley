@@ -9,6 +9,7 @@ import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { getInventoryForCostChecks, canAffordUpgradeForBuilding } from '../../store/simulation.selectors';
 import { getBuildingPanelStatus } from '../../store/buildingDomain';
+import { resourceShortLabel } from './resourceLabels';
 
 type BuildingInspectorProps = {
   buildingId: string;
@@ -49,15 +50,35 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
     };
   }, [building, gameState]);
 
+  const isUnderConstruction = building?.constructionProgress !== undefined && building.constructionProgress < 1;
+  const upgradeControl = useMemo(() => {
+    const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
+    const inventory = panelDerived?.inventory ?? {};
+    const canUpgrade = panelDerived?.canUpgrade ?? false;
+    const upgradeMissing = upgradeCost
+      ? getMissingCostEntries(inventory, upgradeCost.resources)
+      : [];
+
+    return {
+      upgradeCost,
+      inventory,
+      canUpgrade,
+      upgradeMissing,
+      upgradeTitle: getUpgradeTitle({
+        canUpgrade,
+        isUnderConstruction,
+        upgradeCostMissing: upgradeMissing,
+        hasUpgradeCost: !!upgradeCost,
+      }),
+    };
+  }, [isUnderConstruction, panelDerived]);
+
   if (!building || !player) return null;
 
   const def = BUILDING_DEFINITIONS[building.type] || { name: 'Unknown', description: '', maxLevel: 1 };
 
-  const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', detail: 'No status available.' } as const;
-  const upgradeCost = panelDerived?.panelStatus?.upgradeCost ?? null;
-  const inventory = panelDerived?.inventory ?? {};
-  const canUpgrade = panelDerived?.canUpgrade ?? false;
-  const isUnderConstruction = building.constructionProgress !== undefined && building.constructionProgress < 1;
+  const productionStatus = panelDerived?.panelStatus?.productionStatus ?? { kind: 'idle', label: 'Idle', detail: 'No status available.' } as const;
+  const { upgradeCost, inventory, canUpgrade, upgradeTitle } = upgradeControl;
 
   return (
     <aside className="macabre-panel inspector-panel" aria-label="Building inspector">
@@ -80,11 +101,14 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       <dl className="inspector-stats">
         <div><dt>Level</dt><dd>{building.level}/{def.maxLevel}</dd></div>
         <div><dt>Integrity</dt><dd>{Math.round(building.integrity)}%</dd></div>
-        <div><dt>Status</dt><dd title={productionStatus.detail}>{statusLabel(productionStatus.kind)}</dd></div>
+        <div><dt>Status</dt><dd title={productionStatus.detail}>{productionStatus.label}</dd></div>
         <div><dt>Road</dt><dd>{building.connectedToRoad ? 'connected' : 'missing'}</dd></div>
         <div><dt>Workers</dt><dd>{building.assignedWorkers.length}</dd></div>
         <div><dt>Corruption</dt><dd>{Math.round(building.corruption ?? 0)}%</dd></div>
       </dl>
+      <p className={`inspector-note inspector-note--status inspector-note--${productionStatus.kind}`}>
+        {productionStatus.detail}
+      </p>
 
       <InventoryBlock title="Input" inventory={building.inputBuffer} />
       <InventoryBlock title="Output" inventory={building.outputBuffer} />
@@ -96,7 +120,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
         {!building.connectedToRoad ? (
           <button className="hud-button" onClick={() => connectBuildingAt(building.id)}>Connect road</button>
         ) : null}
-        <button className="hud-button" disabled={!canUpgrade} onClick={() => upgradeBuildingAt(player.id, building.id)}>
+        <button className="hud-button" disabled={!canUpgrade} title={upgradeTitle} onClick={() => upgradeBuildingAt(player.id, building.id)}>
           Upgrade
         </button>
         {isUnderConstruction ? (
@@ -112,6 +136,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       {upgradeCost ? (
         <div className="cost-row">
           {Object.entries(upgradeCost.resources).map(([resource, amount]) => {
+            const requiredAmount = amount ?? 0;
             const imgSrc = imageMap[`resources/${resource}.png`];
             return (
               <span key={resource} className="resource-pill" title={resource}>
@@ -120,7 +145,8 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
                 ) : (
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
-                {amount}
+                <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
+                {inventory[resource as ResourceType] ?? 0}/{requiredAmount}
               </span>
             );
           })}
@@ -198,26 +224,13 @@ function RecipeSelectionSection({ building, onSelectRecipe }: RecipeSelectionSec
 }
 
 function formatRecipeFlow(recipe: (typeof RECIPES)[string]) {
-  const inputs = Object.entries(recipe.inputs).map(([resource, amount]) => `${amount} ${resource}`).join(' + ');
-  const outputs = Object.entries(recipe.outputs).map(([resource, amount]) => `${amount} ${resource}`).join(' + ');
+  const inputs = Object.entries(recipe.inputs)
+    .map(([resource, amount]) => `${amount} ${resourceShortLabel(resource as ResourceType)}`)
+    .join(' + ');
+  const outputs = Object.entries(recipe.outputs)
+    .map(([resource, amount]) => `${amount} ${resourceShortLabel(resource as ResourceType)}`)
+    .join(' + ');
   return `${inputs} -> ${outputs}`;
-}
-
-function statusLabel(kind: string) {
-  switch (kind) {
-    case 'roadDisconnected':
-      return 'road missing';
-    case 'missingWorker':
-      return 'needs worker';
-    case 'missingInput':
-      return 'needs input';
-    case 'outputFull':
-      return 'output full';
-    case 'underConstruction':
-      return 'building';
-    default:
-      return kind;
-  }
 }
 
 type WorkerSlotsSectionProps = {
@@ -290,7 +303,7 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
           const canHire = !!player && vacant > 0 && !atPopCap && canAfford;
           const autoHire = building.autoHire?.[workerType] ?? false;
           const costLabel = Object.entries(hireCost.resources)
-            .map(([resource, amount]) => `${resource}: ${inventory[resource as ResourceType] ?? 0}/${amount}`)
+            .map(([resource, amount]) => `${resourceShortLabel(resource as ResourceType)} ${inventory[resource as ResourceType] ?? 0}/${amount ?? 0}`)
             .join(', ');
 
           return (
@@ -311,10 +324,11 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                     <span
                       key={resource}
                       className={`resource-pill ${short ? 'resource-pill--short' : 'resource-pill--ready'}`}
-                      title={`${resource}: ${currentAmount}/${amount}`}
+                      title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount ?? 0}`}
                     >
                       {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
-                      {amount}
+                      <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
+                      {currentAmount}/{amount ?? 0}
                     </span>
                   );
                 })}
@@ -323,7 +337,7 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                 className="hud-button worker-hire-row__btn"
                 onClick={() => onHire(workerType)}
                 disabled={!canHire}
-                title={atPopCap ? 'Population limit reached' : canAfford ? `Hire ${workerDef?.name ?? workerType}` : `Missing ${costLabel}`}
+                title={atPopCap ? 'Population limit reached' : canAfford ? `Hire ${workerDef?.name ?? workerType}` : `Vault is short: ${costLabel}.`}
               >
                 Hire
               </button>
@@ -390,6 +404,9 @@ function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: Del
           ))}
         </div>
       </div>
+      <p className="inspector-note delivery-controls__note">
+        Higher priority pulls vault deliveries sooner. Paused inputs stop requesting carriers for that resource.
+      </p>
       {inputResources.size > 0 && (
         <div className="delivery-pause-list">
           <span className="delivery-pause-label">Pause delivery</span>
@@ -397,25 +414,61 @@ function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: Del
             const paused = building.pausedInputs?.[r] ?? false;
             const imgSrc = imageMap[`resources/${r}.png`];
             return (
-              <button
-                key={r}
-                className={`hud-button resource-pill delivery-pause-btn${paused ? ' delivery-pause-btn--paused' : ''}`}
-                onClick={() => onTogglePause(r)}
-                title={`${paused ? 'Resume' : 'Pause'} delivery of ${r}`}
-              >
-                {imgSrc ? (
-                  <img src={imgSrc} alt="" aria-hidden="true" />
-                ) : (
-                  <span>{(r.charAt(0) || '?').toUpperCase()}</span>
-                )}
-                {paused ? '✕' : '✓'}
-              </button>
+                <button
+                  key={r}
+                  className={`hud-button resource-pill delivery-pause-btn${paused ? ' delivery-pause-btn--paused' : ''}`}
+                  onClick={() => onTogglePause(r)}
+                  title={`${paused ? 'Resume' : 'Pause'} delivery of ${resourceShortLabel(r)}`}
+                >
+                  {imgSrc ? (
+                    <img src={imgSrc} alt="" aria-hidden="true" />
+                  ) : (
+                    <span>{(r.charAt(0) || '?').toUpperCase()}</span>
+                  )}
+                  <span className="resource-pill__label">{resourceShortLabel(r)}</span>
+                  {paused ? '✕' : '✓'}
+                </button>
             );
           })}
         </div>
       )}
     </section>
   );
+}
+
+function getMissingCostEntries(
+  inventory: ResourceInventory,
+  cost: Partial<Record<ResourceType, number>>,
+) {
+  return Object.entries(cost)
+    .map(([resource, required]) => ({
+      resource: resource as ResourceType,
+      required: required ?? 0,
+      available: inventory[resource as ResourceType] ?? 0,
+    }))
+    .filter(({ available, required }) => available < required);
+}
+
+function getUpgradeTitle({
+  canUpgrade,
+  isUnderConstruction,
+  upgradeCostMissing,
+  hasUpgradeCost,
+}: {
+  canUpgrade: boolean;
+  isUnderConstruction: boolean;
+  upgradeCostMissing: ReturnType<typeof getMissingCostEntries>;
+  hasUpgradeCost: boolean;
+}) {
+  if (canUpgrade) return 'Upgrade this building using vault resources.';
+  if (isUnderConstruction) return 'Finish construction before upgrading.';
+  if (!hasUpgradeCost) return 'Maximum level reached.';
+  if (upgradeCostMissing.length > 0) {
+    return `Vault is short: ${upgradeCostMissing
+      .map(({ resource, available, required }) => `${resourceShortLabel(resource)} ${available}/${required}`)
+      .join(', ')}.`;
+  }
+  return 'Upgrade unavailable in the current state.';
 }
 
 type InventoryBlockProps = {
@@ -433,12 +486,13 @@ function InventoryBlock({ title, inventory }: InventoryBlockProps) {
           {entries.map(([resource, amount]) => {
             const imgSrc = imageMap[`resources/${resource}.png`];
             return (
-              <span key={resource} className="resource-pill" title={resource}>
+              <span key={resource} className="resource-pill" title={resourceShortLabel(resource as ResourceType)}>
                 {imgSrc ? (
                   <img src={imgSrc} alt="" aria-hidden="true" />
                 ) : (
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
+                <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
                 {amount}
               </span>
             );
@@ -450,4 +504,3 @@ function InventoryBlock({ title, inventory }: InventoryBlockProps) {
     </section>
   );
 }
-

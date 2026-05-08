@@ -68,6 +68,7 @@ export default function WarehousePanel(): JSX.Element | null {
   return (
     <section className="warehouse-panel macabre-panel" aria-label="Vault inventory">
       <h3 className="warehouse-panel__title">Vault</h3>
+      <p className="warehouse-panel__note">Build and upgrade checks spend from this output buffer.</p>
       <div className="warehouse-panel__grid">
         {entries.map(({ resource, stored, inTransit, inTransitOut }) => {
           const imgSrc = imageMap[`resources/${resource}.png`];

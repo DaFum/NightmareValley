@@ -8,6 +8,7 @@ import { BuildingType, ResourceInventory, ResourceType } from '../../game/core/e
 import { getInventoryForCostChecks } from '../../store/simulation.selectors';
 import { getBuildingAffordabilityFromInventory, listBuildingDomainEntries } from '../../store/buildingDomain';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
+import { resourceShortLabel } from './resourceLabels';
 
 type BuildCategory = 'basic' | 'processing' | 'storage' | 'military' | 'road';
 
@@ -282,6 +283,7 @@ export function BuildingMenu() {
                           alt=""
                           aria-hidden="true"
                         />
+                        <span className="resource-pill__label">{resourceShortLabel(res as ResourceType)}</span>
                         {current}/{amt}
                       </span>
                       );
@@ -318,7 +320,7 @@ function getToolHint({
     return {
       tone: 'active',
       label: `Placing ${definition.name}`,
-      detail: 'Click an owned valid tile. Right-click or choose the building again to cancel.',
+      detail: 'Move over owned valid terrain, click to build, or press Esc to cancel.',
     };
   }
 

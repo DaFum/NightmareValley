@@ -9,7 +9,8 @@ import { useUIStore } from '../../store/ui.store';
 import { useIsoPointer } from './useIsoPointer';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { canAffordBuildingForPlayer, getPlacementValidation } from '../../store/simulation.selectors';
-import { canPlaceRoadForPlayer, isRemovableRoadTile, type RoadPlacementReason } from '../../game/entities/roads/road.api';
+import { canPlaceRoadForPlayer, isRemovableRoadTile } from '../../game/entities/roads/road.api';
+import { getRoadPlacementReasonMessage } from '../../store/placementFeedbackDomain';
 
 interface SelectionInputOptions {
   world: IsoRenderWorld;
@@ -152,7 +153,7 @@ export function useSelectionInput({
         setPlacementFeedback({
           tone: 'warn',
           label: 'Road blocked',
-          detail: getRoadPlacementMessage(roadValidation.reason),
+          detail: getRoadPlacementReasonMessage(roadValidation.reason),
         });
         return;
       }
@@ -234,21 +235,3 @@ export function useSelectionInput({
 
 export default useSelectionInput;
 
-function getRoadPlacementMessage(reason: RoadPlacementReason): string {
-  switch (reason) {
-    case 'out_of_bounds':
-      return 'Move the cursor back over known ground.';
-    case 'occupied':
-      return 'Roads need an empty tile.';
-    case 'dirt_path':
-    case 'already_road':
-      return 'This tile is already part of the road network.';
-    case 'invalid_terrain':
-      return 'Roads can be built on scarred earth, forest, or ash bog terrain.';
-    case 'unowned':
-      return 'Claim this tile before building a road here.';
-    default:
-      const _exhaustive: never = reason;
-      return 'This tile cannot accept a road.';
-  }
-}

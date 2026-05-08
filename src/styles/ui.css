@@ -65,11 +65,74 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
 
 .game-layout__debug-panel {
   position: fixed;
-  top: 8rem;
-  left: 1rem;
+  right: 24px;
+  bottom: 96px;
   z-index: 90;
-  max-height: calc(100vh - 9rem);
+  width: min(260px, calc(100vw - 48px));
+  max-height: min(320px, calc(100dvh - 180px));
   overflow-y: auto;
+  pointer-events: auto;
+  scrollbar-gutter: stable;
+}
+
+.debug-logistics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  color: var(--bone);
+  background: rgba(12, 8, 10, 0.94);
+  border: 1px solid rgba(158, 20, 35, 0.72);
+}
+
+.debug-logistics-panel__title {
+  margin: 0;
+  color: var(--fresh-blood);
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+
+.debug-logistics-panel__stats {
+  display: grid;
+  gap: 3px;
+  color: var(--marrow);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.debug-logistics-panel__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.debug-logistics-panel__button {
+  padding: 7px 8px;
+  color: var(--bone);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(227, 220, 211, 0.12);
+  border-radius: 2px;
+  font-size: 12px;
+  text-align: left;
+}
+
+.debug-logistics-panel__button:hover,
+.debug-logistics-panel__button--active {
+  background: var(--hud-button-hover-bg);
+  border-color: rgba(158, 20, 35, 0.72);
+}
+
+.debug-logistics-panel__checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--bone);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.3;
 }
 
 .hud-layout {
@@ -349,8 +412,8 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
 
 .status-chip {
   display: grid;
-  grid-template-columns: auto auto;
-  gap: 6px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 3px 6px;
   align-items: center;
   min-height: 32px;
   padding: 5px 9px;
@@ -370,10 +433,36 @@ body.ui--focus canvas { filter: brightness(1.08) saturate(1.12) contrast(1.05); 
   font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-chip small {
+  grid-column: 1 / -1;
+  max-width: 240px;
+  overflow: hidden;
+  color: var(--marrow);
+  font-size: 10px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-chip--good strong {
+  color: var(--econ-success);
+}
+
+.status-chip--idle strong,
+.status-chip--idle small {
+  color: var(--econ-idle);
 }
 
 .status-chip--warn strong {
-  color: var(--fresh-blood);
+  color: var(--econ-warn);
+}
+
+.status-chip--danger strong,
+.status-chip--danger small {
+  color: var(--econ-damaged);
 }
 
 /* ── Run Dialogs ──────────────────────────────────────────────── */
@@ -718,7 +807,7 @@ body.ui--tool-active .game-layout__debug-panel {
   position: fixed;
   z-index: 130;
   left: 24px;
-  top: 148px;
+  top: 204px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -963,7 +1052,7 @@ body.ui--tool-active .game-layout__debug-panel {
 
 @media (max-width: 760px) {
   .tactical-map {
-    top: 92px;
+    top: 164px;
     left: 12px;
     right: 12px;
     align-items: flex-start;
@@ -983,7 +1072,7 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .selection-status {
-    top: 144px;
+    top: 216px;
     max-width: calc(100vw - 24px);
   }
 }
@@ -1439,7 +1528,7 @@ body.ui--tool-active .game-layout__debug-panel {
 .building-option {
   display: grid;
   gap: 6px;
-  min-height: 128px;
+  min-height: 178px;
   padding: 10px;
   color: var(--bone);
   text-align: left;
@@ -1564,6 +1653,15 @@ body.ui--tool-active .game-layout__debug-panel {
   background: var(--econ-warn-bg);
 }
 
+.resource-pill__label {
+  color: inherit;
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .resource-pill img {
   width: 16px;
   height: 16px;
@@ -1608,6 +1706,10 @@ body.ui--tool-active .game-layout__debug-panel {
   background: rgba(0, 0, 0, 0.3);
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.7));
   border-radius: 2px;
+}
+
+.inspector-portrait--placeholder {
+  background: rgba(0, 0, 0, 0.36);
 }
 
 .panel-kicker {
@@ -1676,6 +1778,34 @@ body.ui--tool-active .game-layout__debug-panel {
   overflow-wrap: anywhere;
 }
 
+.worker-transport__stats {
+  grid-template-columns: 1fr;
+}
+
+.worker-transport__hint {
+  margin-top: 6px;
+  color: var(--econ-idle);
+}
+
+.inspector-note--status {
+  padding: 7px 8px;
+  border: 1px solid var(--econ-idle-border);
+  background: var(--econ-idle-bg);
+}
+
+.inspector-note--working {
+  border-color: var(--econ-success-border);
+  background: var(--econ-success-bg);
+}
+
+.inspector-note--missingInput,
+.inspector-note--missingWorker,
+.inspector-note--roadDisconnected,
+.inspector-note--outputFull {
+  border-color: var(--econ-warn-border);
+  background: var(--econ-warn-bg);
+}
+
 .inspector-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1690,7 +1820,7 @@ body.ui--tool-active .game-layout__debug-panel {
   margin-top: 8px;
 }
 
-.cost-row span {
+.cost-row > span {
   padding: 3px 6px;
   color: var(--bone);
   font-size: 10px;
@@ -2358,12 +2488,18 @@ body.ui--tool-active .game-layout__debug-panel {
 .production-chain__row small {
   display: block;
   margin-top: 2px;
-  overflow: hidden;
   color: var(--marrow);
   font-size: 9px;
   line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.production-chain__row em {
+  display: block;
+  margin-top: 3px;
+  color: var(--econ-warn);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.2;
 }
 
 .production-chain__count {
@@ -2735,6 +2871,13 @@ body.ui--tool-active .game-layout__debug-panel {
   line-height: 1.25;
 }
 
+.econ-bottleneck em {
+  color: var(--marrow);
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.25;
+}
+
 .econ-bottleneck--outputFull {
   border-color: var(--econ-idle-border);
   background: var(--econ-idle-bg);
@@ -2872,6 +3015,13 @@ body.ui--tool-active .game-layout__debug-panel {
   margin: 0 0 7px;
 }
 
+.warehouse-panel__note {
+  margin: -3px 0 7px;
+  color: var(--marrow);
+  font-size: 10px;
+  line-height: 1.25;
+}
+
 .warehouse-panel__grid {
   display: flex;
   flex-wrap: wrap;
@@ -2983,6 +3133,11 @@ body.ui--tool-active .game-layout__debug-panel {
   margin-right: 2px;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+
+.delivery-controls__note {
+  margin: 0 0 7px;
+  font-size: 11px;
 }
 
 .delivery-pause-btn {
@@ -3129,6 +3284,26 @@ body.ui--tool-active .game-layout__debug-panel {
 .military-panel__raid {
   display: grid;
   gap: 0.15rem;
+}
+
+.military-panel__objective {
+  display: grid;
+  gap: 0.15rem;
+  border: 1px solid var(--econ-warn-border);
+  border-radius: 6px;
+  padding: 0.55rem;
+  background: var(--econ-warn-bg);
+}
+
+.military-panel__objective--complete {
+  border-color: var(--econ-success-border);
+  background: var(--econ-success-bg);
+}
+
+.military-panel__objective span,
+.military-panel__objective small,
+.military-panel__raid small {
+  color: var(--text-muted);
 }
 
 .military-panel__recruit {

@@ -1,5 +1,6 @@
 import { useGameStore } from '../../store/game.store';
 import { useSelectionStore } from '../../store/selection.store';
+import { useShallow } from 'zustand/react/shallow';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { getWorkerInspectorModel } from '../../store/workerDomain';
 
@@ -7,19 +8,43 @@ type WorkerInspectorProps = {
   workerId: string;
 };
 
+function buildTaskBuildings(
+  activeTask: ReturnType<typeof useGameStore.getState>['gameState']['transport']['activeCarrierTasks'][string] | undefined,
+  pickupBuilding: ReturnType<typeof useGameStore.getState>['gameState']['buildings'][string] | undefined,
+  dropoffBuilding: ReturnType<typeof useGameStore.getState>['gameState']['buildings'][string] | undefined,
+) {
+  if (!activeTask) return {};
+  return {
+    [activeTask.pickupBuildingId]: pickupBuilding,
+    [activeTask.dropoffBuildingId]: dropoffBuilding,
+  };
+}
+
 export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX.Element | null {
-  const worker = useGameStore((state) => state.gameState.workers[workerId]);
-  const homeBuilding = useGameStore((state) => {
-    const w = state.gameState.workers[workerId];
-    return w?.homeBuildingId ? state.gameState.buildings[w.homeBuildingId] : undefined;
-  });
-  const activeTask = useGameStore((state) => state.gameState.transport.activeCarrierTasks[workerId]);
+  const { worker, homeBuilding, activeTask, pickupBuilding, dropoffBuilding } = useGameStore(
+    useShallow((state) => {
+      const selectedWorker = state.gameState.workers[workerId];
+      const task = state.gameState.transport.activeCarrierTasks[workerId];
+      return {
+        worker: selectedWorker,
+        homeBuilding: selectedWorker?.homeBuildingId
+          ? state.gameState.buildings[selectedWorker.homeBuildingId]
+          : undefined,
+        activeTask: task,
+        pickupBuilding: task ? state.gameState.buildings[task.pickupBuildingId] : undefined,
+        dropoffBuilding: task ? state.gameState.buildings[task.dropoffBuildingId] : undefined,
+      };
+    }),
+  );
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!worker) return null;
 
-  const workerModel = getWorkerInspectorModel(worker);
+  const taskBuildings = buildTaskBuildings(activeTask, pickupBuilding, dropoffBuilding);
+
+  const workerModel = getWorkerInspectorModel(worker, activeTask, taskBuildings);
   const def = workerModel?.definition || { name: 'Unknown Worker', description: 'No definition found.' };
+  const transport = workerModel?.transport;
   const portraitSrc = imageMap[`workers/${worker.type}.png`] ?? imageMap[`workers/${worker.type}.svg`];
 
   return (
@@ -33,7 +58,7 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
             className="inspector-portrait"
           />
         ) : (
-          <div className="inspector-portrait" style={{ backgroundColor: '#222' }} />
+          <div className="inspector-portrait inspector-portrait--placeholder" />
         )}
         <div>
           <span className="panel-kicker">Worker</span>
@@ -51,15 +76,23 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
         <div><dt>Scars</dt><dd>{worker.scars}</dd></div>
         <div><dt>Position</dt><dd>{worker.position.x}, {worker.position.y}</dd></div>
         <div><dt>Home</dt><dd>{homeBuilding?.type ?? 'none'}</dd></div>
+        <div><dt>Carrying</dt><dd>{transport?.carrying ?? 'Nothing'}</dd></div>
       </dl>
 
-      {activeTask ? (
-        <section className="inventory-block">
+      {transport ? (
+        <section className="inventory-block worker-transport">
           <h3>Transport</h3>
-          <p className="inspector-note">{activeTask.resourceType} — {activeTask.phase === "toPickup" ? "heading to pickup" : "delivering"}</p>
+          <dl className="inspector-stats worker-transport__stats">
+            <div><dt>Delivery State</dt><dd>{transport.deliveryState}</dd></div>
+            <div><dt>Route</dt><dd>{transport.route}</dd></div>
+            <div><dt>Progress</dt><dd>{transport.progress}</dd></div>
+          </dl>
+          <p className="inspector-note">{transport.idleReason ?? transport.detail}</p>
+          {transport.idleReason ? (
+            <p className="inspector-note worker-transport__hint">{transport.detail}</p>
+          ) : null}
         </section>
       ) : null}
     </aside>
   );
 }
-

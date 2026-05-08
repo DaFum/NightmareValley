@@ -29,7 +29,9 @@ export default function IsoGhostPlacementLayer({
   footprintWidth = 1,
   footprintHeight = 1,
 }: IsoGhostPlacementLayerProps): JSX.Element | null {
-  const { registry } = useTextures();
+  const { ready, registry } = useTextures();
+
+  if (!ready) return null;
 
   // stage4 is the fully-built appearance; ghosts always show the final form regardless of level
   const spriteKey = `buildings_stage4_${buildingType}`;

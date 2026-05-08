@@ -284,6 +284,7 @@ export default function EconomyPanel(): JSX.Element | null {
                   <div key={`${bottleneck.buildingId}-${bottleneck.kind}`} className={`econ-bottleneck econ-bottleneck--${bottleneck.kind}`}>
                     <span>{bottleneck.buildingName}</span>
                     <small>{bottleneck.label}</small>
+                    <em>{getBottleneckAction(bottleneck)}</em>
                   </div>
                 ))
               )}

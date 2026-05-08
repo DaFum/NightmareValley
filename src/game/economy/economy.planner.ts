@@ -422,6 +422,12 @@ function getMetricRecommendation(
         reason: 'Keep the vault defended until the next raid is repelled.',
         objective,
       };
+    case 'hostileDefeated':
+      return {
+        label: 'Break the Hostile Choir',
+        reason: 'Repel 2 raids and drive enemy pressure to 10 or lower.',
+        objective,
+      };
     default:
       return {
         label: objective.label,

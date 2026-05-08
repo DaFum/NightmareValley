@@ -2,6 +2,8 @@
 import { useMemo } from 'react';
 import { BUILDING_DEFINITIONS, WORKER_DEFINITIONS } from '../../game/core/economy.data';
 import { BuildingInstance, WorkerInstance } from '../../game/core/game.types';
+import { ResourceInventory, ResourceType } from '../../game/core/economy.types';
+import { isConstructed } from '../../game/entities/buildings/building.types';
 import { canAffordWorker, getWorkerHireCost } from '../../game/economy/production.logic';
 import { getMilitaryMetrics } from '../../game/military';
 import { player1Id, useGameStore } from '../../store/game.store';
@@ -9,6 +11,8 @@ import { getInventoryForCostChecks } from '../../store/simulation.selectors';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 
 const fmt0 = new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 });
+const HOSTILE_RAIDS_REQUIRED = 2;
+const HOSTILE_PRESSURE_TARGET = 10;
 
 function countAssignedType(
   building: BuildingInstance,
@@ -19,6 +23,15 @@ function countAssignedType(
     const worker = workers[workerId];
     return count + (worker?.type === workerType ? 1 : 0);
   }, 0);
+}
+
+function isRecruitReady(building: BuildingInstance): boolean {
+  return building.isActive && building.connectedToRoad && isConstructed(building);
+}
+
+function isRecruitPaused(building: BuildingInstance): boolean {
+  const candidate = building as BuildingInstance & { paused?: boolean; isPaused?: boolean };
+  return candidate.paused === true || candidate.isPaused === true || building.isActive === false;
 }
 
 export default function MilitaryPanel(): JSX.Element | null {
@@ -37,12 +50,25 @@ export default function MilitaryPanel(): JSX.Element | null {
         })
       : [];
 
+    const readyRecruitBuildings = recruitBuildings.filter(isRecruitReady);
+    const unfinishedRecruitBuildings = recruitBuildings.filter((building) => !isConstructed(building));
+    const disconnectedRecruitBuildings = recruitBuildings.filter((building) => {
+      return isConstructed(building) && !building.connectedToRoad;
+    });
+    const pausedRecruitBuildings = recruitBuildings.filter((building) => {
+      return isConstructed(building) && building.connectedToRoad && isRecruitPaused(building);
+    });
+
     return {
       hasPlayer: Boolean(player),
       ageOfTeeth: gameState.ageOfTeeth,
       military: gameState.military,
       metrics,
       recruitBuildings,
+      readyRecruitBuildings,
+      unfinishedRecruitBuildings,
+      disconnectedRecruitBuildings,
+      pausedRecruitBuildings,
       population: player?.workers.length ?? 0,
       populationLimit: player?.populationLimit ?? 0,
       canAffordWarInfant: canAffordWorker(inventory, 'warInfant'),
@@ -52,11 +78,11 @@ export default function MilitaryPanel(): JSX.Element | null {
   }, [gameState]);
 
   const recruitTarget = useMemo(() => {
-    return snapshot.recruitBuildings.find((building) => {
+    return snapshot.readyRecruitBuildings.find((building) => {
       const slots = BUILDING_DEFINITIONS[building.type].workerSlots.warInfant ?? 0;
       return countAssignedType(building, gameState.workers, 'warInfant') < slots;
     }) ?? null;
-  }, [gameState.workers, snapshot.recruitBuildings]);
+  }, [gameState.workers, snapshot.readyRecruitBuildings]);
 
   if (!snapshot.hasPlayer) return null;
 
@@ -68,6 +94,17 @@ export default function MilitaryPanel(): JSX.Element | null {
   const canRecruit = Boolean(recruitTarget) && snapshot.canAffordWarInfant && !atPopulationCap;
   const raidHealth = military?.activeRaid?.health ?? 0;
   const raidStrength = military?.activeRaid?.strength ?? 0;
+  const missingRecruitCosts = getMissingCostEntries(snapshot.inventory, snapshot.hireCost.resources);
+  const recruitSetupIssue = getRecruitSetupIssue(
+    snapshot.recruitBuildings.length,
+    snapshot.unfinishedRecruitBuildings,
+    snapshot.disconnectedRecruitBuildings,
+    snapshot.pausedRecruitBuildings,
+    Boolean(recruitTarget),
+  );
+  const hostileRaidsRepelled = military?.raidsRepelled ?? 0;
+  const hostilePressure = military?.enemyPressure ?? 0;
+  const hostileDefeated = hostileRaidsRepelled >= HOSTILE_RAIDS_REQUIRED && hostilePressure <= HOSTILE_PRESSURE_TARGET;
 
   return (
     <section className="military-panel macabre-panel" aria-label="Military and defense">
@@ -94,31 +131,43 @@ export default function MilitaryPanel(): JSX.Element | null {
         <div className="military-panel__raid" role="status">
           <strong>Attack in progress</strong>
           <span>Strength {raidStrength} · Health {fmt0.format(raidHealth)}</span>
+          <small>{snapshot.metrics.defenseStrength >= raidStrength ? 'Defense is winning; keep soldiers stationed.' : 'Raid strength exceeds defense; recruit or staff spires now.'}</small>
         </div>
+      ) : recruitSetupIssue ? (
+        <p className="military-panel__note">{recruitSetupIssue}</p>
       ) : (
-        <p className="military-panel__note">Build a Pit of War Birth or Spire of Jurisdiction to recruit and station defenders.</p>
+        <p className="military-panel__note">Recruit defenders now, then keep Spires staffed before the next attack.</p>
       )}
+
+      <div className={`military-panel__objective ${hostileDefeated ? 'military-panel__objective--complete' : ''}`}>
+        <strong>Break the Hostile Choir</strong>
+        <span>Win condition: repel 2 raids and drive enemy pressure to 10 or lower.</span>
+        <small>
+          Raids {Math.min(hostileRaidsRepelled, HOSTILE_RAIDS_REQUIRED)}/{HOSTILE_RAIDS_REQUIRED} · Pressure {fmt0.format(hostilePressure)}/{HOSTILE_PRESSURE_TARGET}
+        </small>
+      </div>
 
       <div className="military-panel__recruit">
         <button
           className="hud-button hud-button--primary"
           disabled={!canRecruit}
           onClick={() => recruitTarget && spawnAndAssignWorker(player1Id, 'warInfant', recruitTarget.id)}
-          title={recruitTitle(Boolean(recruitTarget), snapshot.canAffordWarInfant, atPopulationCap)}
+          title={recruitTitle(Boolean(recruitTarget), atPopulationCap, missingRecruitCosts, recruitSetupIssue)}
         >
           Recruit Soldier
         </button>
         <div className="military-panel__costs">
           {Object.entries(snapshot.hireCost.resources).map(([resource, amount]) => {
-            const current = snapshot.inventory[resource as keyof typeof snapshot.inventory] ?? 0;
+            const current = snapshot.inventory[resource as ResourceType] ?? 0;
             const imgSrc = imageMap[`resources/${resource}.png`];
             return (
               <span
                 key={resource}
                 className={`resource-pill ${current >= (amount ?? 0) ? 'resource-pill--ready' : 'resource-pill--short'}`}
-                title={`${resource}: ${current}/${amount}`}
+                title={`${resourceShortLabel(resource as ResourceType)}: ${current}/${amount}`}
               >
                 {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
+                <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
                 {current}/{amount}
               </span>
             );
@@ -135,10 +184,100 @@ function pressureTone(value: number): 'low' | 'medium' | 'high' {
   return 'low';
 }
 
-function recruitTitle(hasTarget: boolean, canAfford: boolean, atPopulationCap: boolean): string {
+function recruitTitle(
+  hasTarget: boolean,
+  atPopulationCap: boolean,
+  missingCosts: Array<{ resource: ResourceType; available: number; required: number }>,
+  setupIssue: string | null,
+): string {
+  if (setupIssue) return setupIssue;
   if (!hasTarget) return 'Build a Pit of War Birth or a Spire with free soldier slots.';
   if (atPopulationCap) return 'Population limit reached.';
-  if (!canAfford) return 'Missing Funeral Loaf or Rib Blade.';
+  if (missingCosts.length > 0) {
+    return `Vault is short: ${missingCosts
+      .map(({ resource, available, required }) => `${resourceShortLabel(resource)} ${available}/${required}`)
+      .join(', ')}.`;
+  }
   return 'Recruit a War Infant defender.';
+}
+
+function getRecruitSetupIssue(
+  recruitBuildingCount: number,
+  unfinishedRecruitBuildings: BuildingInstance[],
+  disconnectedRecruitBuildings: BuildingInstance[],
+  pausedRecruitBuildings: BuildingInstance[],
+  hasRecruitTarget: boolean,
+): string | null {
+  if (recruitBuildingCount === 0) {
+    return 'Build a Pit of War Birth or Spire of Jurisdiction to recruit and station defenders.';
+  }
+  if (unfinishedRecruitBuildings.length > 0) {
+    return `${buildingList(unfinishedRecruitBuildings)} under construction. Keep it connected and wait for builders before recruiting.`;
+  }
+  if (disconnectedRecruitBuildings.length > 0) {
+    return `Connect roads to ${buildingList(disconnectedRecruitBuildings)} before recruiting soldiers.`;
+  }
+  if (pausedRecruitBuildings.length > 0) {
+    return `Recruit buildings are paused; resume production on ${buildingList(pausedRecruitBuildings)}.`;
+  }
+  if (!hasRecruitTarget) {
+    return 'Soldier slots are full. Build another Pit or Spire, or upgrade an existing one.';
+  }
+  return null;
+}
+
+function buildingList(buildings: BuildingInstance[]): string {
+  return buildings
+    .map((building) => BUILDING_DEFINITIONS[building.type].name)
+    .slice(0, 2)
+    .join(' and ');
+}
+
+function getMissingCostEntries(
+  inventory: ResourceInventory,
+  cost: Partial<Record<ResourceType, number>>,
+) {
+  return Object.entries(cost)
+    .map(([resource, required]) => ({
+      resource: resource as ResourceType,
+      required: required ?? 0,
+      available: inventory[resource as ResourceType] ?? 0,
+    }))
+    .filter(({ available, required }) => available < required);
+}
+
+function resourceShortLabel(resource: ResourceType): string {
+  switch (resource) {
+    case 'toothPlanks':
+      return 'Planks';
+    case 'sepulcherStone':
+      return 'Stone';
+    case 'marrowGrain':
+      return 'Grain';
+    case 'boneDust':
+      return 'Dust';
+    case 'amnioticWater':
+      return 'Water';
+    case 'eyelessFish':
+      return 'Fish';
+    case 'brainSalt':
+      return 'Salt';
+    case 'funeralLoaf':
+      return 'Loaf';
+    case 'graveCoal':
+      return 'Coal';
+    case 'veinIronOre':
+      return 'Ore';
+    case 'veinIronBar':
+      return 'Bars';
+    case 'tormentInstrument':
+      return 'Tools';
+    case 'ribBlade':
+      return 'Blades';
+    case 'sinewTimber':
+      return 'Timber';
+    default:
+      return resource.replace(/([A-Z])/g, ' $1');
+  }
 }
 

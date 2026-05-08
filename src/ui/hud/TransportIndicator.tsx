@@ -1,21 +1,21 @@
-import { useGameStore } from '../../store/game.store';
-
-const TRANSPORT_STRESS_WARN_THRESHOLD = 6;
+import { useMemo } from 'react';
+import { useGameStore, player1Id } from '../../store/game.store';
+import { getTransportIndicatorModel } from '../../store/transportIndicatorDomain';
 
 export default function TransportIndicator(): JSX.Element {
-  const queued = useGameStore((state) => state.gameState.transport.queuedJobCount ?? 0);
-  const active = useGameStore((state) => Object.keys(state.gameState.transport.activeCarrierTasks).length);
-  const stress = useGameStore((state) => state.gameState.transport.networkStress);
+  const gameState = useGameStore((state) => state.gameState);
+  const model = useMemo(() => getTransportIndicatorModel(gameState, player1Id), [gameState]);
 
   const className = [
     'status-chip',
-    stress > TRANSPORT_STRESS_WARN_THRESHOLD ? 'status-chip--warn' : null
+    `status-chip--${model.tone}`,
   ].filter(Boolean).join(' ');
 
   return (
-    <div className={className} aria-label="Transport status">
+    <div className={className} aria-label={`Transport status: ${model.title}`} title={model.title}>
       <span>Logistics</span>
-      <strong>Active {active} &middot; Queued {queued}</strong>
+      <strong>{model.summary}</strong>
+      <small>{model.headline}</small>
     </div>
   );
 }
