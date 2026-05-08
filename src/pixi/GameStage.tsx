@@ -200,14 +200,14 @@ export function GameStage() {
         lastToolFeedbackKeyRef.current = '';
         clearPlacementFeedback();
       }
-      return;
+    } else {
+      const key = `${feedback.tone}|${feedback.label}|${feedback.detail}`;
+      if (key !== lastToolFeedbackKeyRef.current) {
+        lastToolFeedbackKeyRef.current = key;
+        setPlacementFeedback(feedback);
+      }
     }
 
-    const key = `${feedback.tone}|${feedback.label}|${feedback.detail}`;
-    if (key !== lastToolFeedbackKeyRef.current) {
-      lastToolFeedbackKeyRef.current = key;
-      setPlacementFeedback(feedback);
-    }
   }, [
     clearPlacementFeedback,
     gameState,
@@ -216,8 +216,12 @@ export function GameStage() {
     roadRemovalMode,
     selectedBuildingToPlace,
     setPlacementFeedback,
-    territory,
   ]);
+
+  useEffect(() => () => {
+    clearPlacementFeedback();
+    lastToolFeedbackKeyRef.current = '';
+  }, [clearPlacementFeedback]);
 
   const handlePointerDown = useSelectionInput({
     world,

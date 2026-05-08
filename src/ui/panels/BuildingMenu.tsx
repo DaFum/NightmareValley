@@ -8,6 +8,7 @@ import { BuildingType, ResourceInventory, ResourceType } from '../../game/core/e
 import { getInventoryForCostChecks } from '../../store/simulation.selectors';
 import { getBuildingAffordabilityFromInventory, listBuildingDomainEntries } from '../../store/buildingDomain';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
+import { resourceShortLabel } from './resourceLabels';
 
 type BuildCategory = 'basic' | 'processing' | 'storage' | 'military' | 'road';
 
@@ -352,41 +353,4 @@ function getToolHint({
     label: 'Build tools ready',
     detail: 'Open Build for structures, Road for logistics, or Clear road to reshape paths.',
   };
-}
-
-function resourceShortLabel(resource: ResourceType): string {
-  switch (resource) {
-    case 'toothPlanks':
-      return 'Planks';
-    case 'sepulcherStone':
-      return 'Stone';
-    case 'marrowGrain':
-      return 'Grain';
-    case 'boneDust':
-      return 'Dust';
-    case 'amnioticWater':
-      return 'Water';
-    case 'eyelessFish':
-      return 'Fish';
-    case 'brainSalt':
-      return 'Salt';
-    case 'funeralLoaf':
-      return 'Loaf';
-    case 'graveCoal':
-      return 'Coal';
-    case 'veinIronOre':
-      return 'Ore';
-    case 'veinIronBar':
-      return 'Bars';
-    case 'tormentInstrument':
-      return 'Tools';
-    case 'haloGoldBar':
-      return 'Gold';
-    case 'cathedralGoldOre':
-      return 'Ore';
-    case 'sinewTimber':
-      return 'Timber';
-    default:
-      return resource.replace(/([A-Z])/g, ' $1');
-  }
 }

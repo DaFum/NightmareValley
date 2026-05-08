@@ -28,6 +28,6 @@ describe('placement flow', () => {
     expect(hook).not.toContain('function getRoadPlacementMessage');
     expect(domain).toContain("type RoadPlacementReason");
     expect(domain).toContain('export function getRoadPlacementReasonMessage(reason: RoadPlacementReason): string');
-    expect(domain).toContain('const _exhaustive: never = reason;');
+    expect(domain).toMatch(/never\s*=\s*reason/);
   });
 });

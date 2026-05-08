@@ -5,6 +5,7 @@ import { getWorkerDef, listWorkerTypes } from '../game/entities/workers/worker.d
 import { planPath } from '../game/entities/workers/worker.pathing';
 import { workerStatus } from '../game/entities/workers/worker.status';
 import { createWorker } from '../game/entities/workers/worker.types';
+import { resourceLabel } from './economy.utils';
 
 type BuildingLookup = Record<string, Pick<BuildingInstance, 'type'> | undefined>;
 
@@ -34,16 +35,13 @@ function getTaskProgress(task: CarrierTask): string {
   return `${currentStep}/${totalSteps} tiles`;
 }
 
-function resourceLabel(resourceType: string): string {
-  return resourceType.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
-}
-
 function getTransportInspectorModel(
   worker: WorkerInstance,
   activeTask?: CarrierTask,
   buildings?: BuildingLookup,
 ): WorkerTransportInspectorModel {
   if (!activeTask) {
+    const isCarrier = worker.type === 'burdenThrall';
     return {
       deliveryState: 'Idle',
       detail: 'Waiting for the next reachable transport job.',
@@ -51,7 +49,9 @@ function getTransportInspectorModel(
       carrying: 'Nothing',
       progress: 'No active route',
       idleReason: worker.isIdle
-        ? 'No active transport task is assigned. This worker will claim the next reachable queued job from connected roads.'
+        ? isCarrier
+          ? 'No active transport task is assigned. This worker will claim the next reachable queued job from connected roads.'
+          : 'No active transport task is assigned. This worker is waiting for production work from its home building.'
         : 'No active transport task is assigned, but this worker is still finishing movement or local work.',
     };
   }

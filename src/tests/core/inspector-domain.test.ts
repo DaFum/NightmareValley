@@ -1,10 +1,16 @@
 import { getInspectorTarget } from '../../store/inspectorDomain';
-import { useGameStore, player1Id } from '../../store/game.store';
+import { player1Id } from '../../store/game.store';
+import type { WorldState } from '../../game/world/world.types';
 
 describe('inspectorDomain', () => {
   it('returns a stale target when the selected building no longer exists', () => {
-    const world = structuredClone(useGameStore.getState().gameState);
-    const selectedBuildingId = world.players[player1Id].buildings[0];
+    const selectedBuildingId = 'building-1';
+    const world = {
+      players: { [player1Id]: { buildings: [selectedBuildingId], workers: ['worker-1'] } },
+      buildings: { [selectedBuildingId]: { id: selectedBuildingId } },
+      workers: { 'worker-1': { id: 'worker-1' } },
+      territory: { tiles: { 'tile-1': { id: 'tile-1' } } },
+    } as unknown as WorldState;
     delete world.buildings[selectedBuildingId];
 
     expect(getInspectorTarget(world, {
@@ -19,9 +25,14 @@ describe('inspectorDomain', () => {
   });
 
   it('preserves valid worker and tile selections', () => {
-    const world = structuredClone(useGameStore.getState().gameState);
-    const workerId = world.players[player1Id].workers[0];
-    const tileId = Object.keys(world.territory.tiles)[0];
+    const world = {
+      players: { [player1Id]: { buildings: ['building-1'], workers: ['worker-1'] } },
+      buildings: { 'building-1': { id: 'building-1' } },
+      workers: { 'worker-1': { id: 'worker-1' } },
+      territory: { tiles: { 'tile-1': { id: 'tile-1' } } },
+    } as unknown as WorldState;
+    const workerId = 'worker-1';
+    const tileId = 'tile-1';
 
     expect(getInspectorTarget(world, {
       selectedBuildingId: null,
