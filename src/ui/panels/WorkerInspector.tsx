@@ -8,31 +8,39 @@ type WorkerInspectorProps = {
   workerId: string;
 };
 
+function buildTaskBuildings(
+  activeTask: ReturnType<typeof useGameStore.getState>['gameState']['transport']['activeCarrierTasks'][string] | undefined,
+  pickupBuilding: ReturnType<typeof useGameStore.getState>['gameState']['buildings'][string] | undefined,
+  dropoffBuilding: ReturnType<typeof useGameStore.getState>['gameState']['buildings'][string] | undefined,
+) {
+  if (!activeTask) return {};
+  return {
+    [activeTask.pickupBuildingId]: pickupBuilding,
+    [activeTask.dropoffBuildingId]: dropoffBuilding,
+  };
+}
+
 export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX.Element | null {
-  const { worker, homeBuilding, activeTask, taskBuildings } = useGameStore(
+  const { worker, homeBuilding, activeTask, pickupBuilding, dropoffBuilding } = useGameStore(
     useShallow((state) => {
       const selectedWorker = state.gameState.workers[workerId];
       const task = state.gameState.transport.activeCarrierTasks[workerId];
-      const pickupBuilding = task ? state.gameState.buildings[task.pickupBuildingId] : undefined;
-      const dropoffBuilding = task ? state.gameState.buildings[task.dropoffBuildingId] : undefined;
       return {
         worker: selectedWorker,
         homeBuilding: selectedWorker?.homeBuildingId
           ? state.gameState.buildings[selectedWorker.homeBuildingId]
           : undefined,
         activeTask: task,
-        taskBuildings: task
-          ? {
-            [task.pickupBuildingId]: pickupBuilding,
-            [task.dropoffBuildingId]: dropoffBuilding,
-          }
-          : {},
+        pickupBuilding: task ? state.gameState.buildings[task.pickupBuildingId] : undefined,
+        dropoffBuilding: task ? state.gameState.buildings[task.dropoffBuildingId] : undefined,
       };
     }),
   );
   const clearSelection = useSelectionStore((state) => state.clearSelection);
 
   if (!worker) return null;
+
+  const taskBuildings = buildTaskBuildings(activeTask, pickupBuilding, dropoffBuilding);
 
   const workerModel = getWorkerInspectorModel(worker, activeTask, taskBuildings);
   const def = workerModel?.definition || { name: 'Unknown Worker', description: 'No definition found.' };
@@ -86,4 +94,3 @@ export default function WorkerInspector({ workerId }: WorkerInspectorProps): JSX
     </aside>
   );
 }
-

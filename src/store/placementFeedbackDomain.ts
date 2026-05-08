@@ -6,11 +6,8 @@ import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
 import { getTileAt } from '../game/map/map.query';
 import { canPlaceRoadForPlayer, isRemovableRoadTile, type RoadPlacementReason } from '../game/entities/roads/road.api';
 import { getBuildingAffordability } from './buildingDomain';
+import { resourceLabel } from './economy.utils';
 import { getPlacementValidation } from './simulation.selectors';
-
-function resourceLabel(resource: ResourceType): string {
-  return resource.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
-}
 
 function formatMissingResources(missing: Array<{ resource: ResourceType; required: number; available: number }>): string {
   return missing
@@ -31,9 +28,10 @@ export function getRoadPlacementReasonMessage(reason: RoadPlacementReason): stri
       return 'Roads can be built on scarred earth, forest, or ash bog terrain.';
     case 'unowned':
       return 'Claim this tile before building a road here.';
-    default:
+    default: {
       const _exhaustive: never = reason;
       return 'This tile cannot accept a road.';
+    }
   }
 }
 

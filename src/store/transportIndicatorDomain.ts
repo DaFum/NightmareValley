@@ -11,22 +11,43 @@ export type TransportIndicatorModel = {
   title: string;
 };
 
-export function getTransportIndicatorModel(state: WorldState, ownerId: string): TransportIndicatorModel {
-  const active = Object.values(state.transport.activeCarrierTasks ?? {}).filter((task) => {
+function getQueuedJobsForOwner(state: WorldState, ownerId: string): number {
+  const jobs = Object.values(state.transport.jobs ?? {});
+  if (jobs.length === 0) return state.transport.queuedJobCount ?? 0;
+  return jobs.filter((job) => {
+    if (job.status !== 'queued') return false;
+    const source = state.buildings[job.fromBuildingId];
+    return source?.ownerId === ownerId;
+  }).length;
+}
+
+function getActiveTasksForOwner(state: WorldState, ownerId: string): number {
+  return Object.values(state.transport.activeCarrierTasks ?? {}).filter((task) => {
     const worker = state.workers[task.workerId];
     return worker?.ownerId === ownerId;
   }).length;
-  const queued = state.transport.queuedJobCount ?? 0;
+}
+
+function getIndicatorDetail(headline: string, detail: string): Pick<TransportIndicatorModel, 'detail' | 'title' | 'headline'> {
+  const normalizedDetail = detail.trim();
+  return {
+    headline,
+    detail: normalizedDetail,
+    title: `${headline}: ${normalizedDetail}`,
+  };
+}
+
+export function getTransportIndicatorModel(state: WorldState, ownerId: string): TransportIndicatorModel {
+  const active = getActiveTasksForOwner(state, ownerId);
+  const queued = getQueuedJobsForOwner(state, ownerId);
   const situation = getSettlementSituationSnapshot(state, ownerId).transport;
-  const detail = `${situation.detail} ${situation.action}`;
+  const detailModel = getIndicatorDetail(situation.headline, `${situation.detail} ${situation.action}`);
 
   return {
     active,
     queued,
     tone: situation.tone,
     summary: `Active ${active} · Queued ${queued}`,
-    headline: situation.headline,
-    detail,
-    title: `${situation.headline}: ${detail}`,
+    ...detailModel,
   };
 }

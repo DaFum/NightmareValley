@@ -9,6 +9,7 @@ import { RECIPES } from '../../game/economy/recipes.data';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { getInventoryForCostChecks, canAffordUpgradeForBuilding } from '../../store/simulation.selectors';
 import { getBuildingPanelStatus } from '../../store/buildingDomain';
+import { resourceShortLabel } from './resourceLabels';
 
 type BuildingInspectorProps = {
   buildingId: string;
@@ -124,6 +125,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
       {upgradeCost ? (
         <div className="cost-row">
           {Object.entries(upgradeCost.resources).map(([resource, amount]) => {
+            const requiredAmount = amount ?? 0;
             const imgSrc = imageMap[`resources/${resource}.png`];
             return (
               <span key={resource} className="resource-pill" title={resource}>
@@ -133,7 +135,7 @@ export default function BuildingInspector({ buildingId }: BuildingInspectorProps
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
                 <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                {inventory[resource as ResourceType] ?? 0}/{amount}
+                {inventory[resource as ResourceType] ?? 0}/{requiredAmount}
               </span>
             );
           })}
@@ -458,43 +460,6 @@ function getUpgradeTitle({
   return 'Upgrade unavailable in the current state.';
 }
 
-function resourceShortLabel(resource: ResourceType): string {
-  switch (resource) {
-    case 'toothPlanks':
-      return 'Planks';
-    case 'sepulcherStone':
-      return 'Stone';
-    case 'marrowGrain':
-      return 'Grain';
-    case 'boneDust':
-      return 'Dust';
-    case 'amnioticWater':
-      return 'Water';
-    case 'eyelessFish':
-      return 'Fish';
-    case 'brainSalt':
-      return 'Salt';
-    case 'funeralLoaf':
-      return 'Loaf';
-    case 'graveCoal':
-      return 'Coal';
-    case 'veinIronOre':
-      return 'Ore';
-    case 'veinIronBar':
-      return 'Bars';
-    case 'tormentInstrument':
-      return 'Tools';
-    case 'haloGoldBar':
-      return 'Gold';
-    case 'cathedralGoldOre':
-      return 'Ore';
-    case 'sinewTimber':
-      return 'Timber';
-    default:
-      return resource.replace(/([A-Z])/g, ' $1');
-  }
-}
-
 type InventoryBlockProps = {
   title: string;
   inventory: Record<string, number | undefined>;
@@ -528,4 +493,3 @@ function InventoryBlock({ title, inventory }: InventoryBlockProps) {
     </section>
   );
 }
-
