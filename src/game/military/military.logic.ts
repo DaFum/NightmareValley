@@ -15,22 +15,23 @@ const SOLDIER_DEFENSE = 6;
 const SPIRE_BASE_DEFENSE = 8;
 const SPIRE_LEVEL_DEFENSE = 4;
 const RAID_WARNING_LEAD_SEC = 45;
+const RAID_REPEL_PRESSURE_REDUCTION = 40;
 
 const DIFFICULTY_CONFIG: Record<MilitaryDifficulty, DifficultyConfig> = {
   easy: {
-    initialAttackAge: 420,
+    initialAttackAge: 540,
     attackIntervalSec: 360,
     pressurePerSec: 0.035,
     baseRaidStrength: 6,
   },
   medium: {
-    initialAttackAge: 270,
+    initialAttackAge: 420,
     attackIntervalSec: 270,
     pressurePerSec: 0.055,
     baseRaidStrength: 10,
   },
   hard: {
-    initialAttackAge: 190,
+    initialAttackAge: 300,
     attackIntervalSec: 210,
     pressurePerSec: 0.08,
     baseRaidStrength: 14,
@@ -176,11 +177,12 @@ function resolveActiveRaid(state: WorldState, playerId: string, deltaSec: number
   const metrics = getMilitaryMetrics(state, playerId);
   const nextHealth = raid.health - metrics.defenseStrength * deltaSec;
   if (nextHealth <= 0) {
+    const nextEnemyPressure = Math.max(0, military.enemyPressure - RAID_REPEL_PRESSURE_REDUCTION);
     const next: WorldState = {
       ...state,
       military: {
         ...military,
-        enemyPressure: Math.max(0, military.enemyPressure - 15),
+        enemyPressure: nextEnemyPressure,
         raidsRepelled: (military.raidsRepelled ?? 0) + 1,
         activeRaid: undefined,
       },
@@ -188,7 +190,7 @@ function resolveActiveRaid(state: WorldState, playerId: string, deltaSec: number
     return appendMilitaryEvent(
       next,
       'Raid Repelled',
-      `Defenders broke the attack with ${metrics.defenseStrength} defense strength.`,
+      `Defenders broke the attack with ${metrics.defenseStrength} defense strength; enemy pressure falls to ${Math.round(nextEnemyPressure)}.`,
       'info'
     );
   }

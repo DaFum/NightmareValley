@@ -432,6 +432,24 @@
             686,
             2024
           ]
+        },
+        "pitOfWarBirth": {
+          "file": "buildings/stage0/pitOfWarBirth.png",
+          "box": [
+            15,
+            1296,
+            342,
+            1496
+          ]
+        },
+        "spireOfJurisdiction": {
+          "file": "buildings/stage0/spireOfJurisdiction.png",
+          "box": [
+            354,
+            1296,
+            681,
+            1492
+          ]
         }
       },
       "extras": []
@@ -581,6 +599,24 @@
             1772,
             1363,
             2000
+          ]
+        },
+        "pitOfWarBirth": {
+          "file": "buildings/stage3/pitOfWarBirth.png",
+          "box": [
+            350,
+            1245,
+            677,
+            1428
+          ]
+        },
+        "spireOfJurisdiction": {
+          "file": "buildings/stage3/spireOfJurisdiction.png",
+          "box": [
+            685,
+            1232,
+            1020,
+            1429
           ]
         }
       },

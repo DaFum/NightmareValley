@@ -141,6 +141,7 @@ describe('complete production chain', () => {
       ...next,
       seed: 1,
       lastDeltaSec: 20,
+      military: { ...state.military, enemyPressure: 5, raidsRepelled: 2 },
       buildings: {
         ...next.buildings,
         vault: {

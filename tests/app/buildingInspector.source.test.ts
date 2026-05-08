@@ -16,4 +16,12 @@ describe('BuildingInspector store subscriptions', () => {
 
     expect(source).toContain("isUnderConstruction ? 'Finish construction before upgrading.' : 'Maximum level reached.'");
   });
+
+  it('shows worker hire costs with resource labels and vault availability', () => {
+    const source = readFileSync(join(process.cwd(), 'src/ui/panels/BuildingInspector.tsx'), 'utf8');
+
+    expect(source).toContain('resourceShortLabel(resource as ResourceType)');
+    expect(source).toContain('{currentAmount}/{amount}');
+    expect(source).toContain('Vault is short');
+  });
 });

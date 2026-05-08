@@ -22,6 +22,7 @@ export type ObjectiveId =
   | 'holdTerritory'
   | 'musterDefense'
   | 'repelFirstRaid'
+  | 'breakHostileChoir'
   | 'forgeInstruments';
 
 export type CampaignChapter =
@@ -34,7 +35,7 @@ export type CampaignChapter =
   | 'Expansion'
   | 'Survival / Victory';
 
-export type CampaignObjectiveMetric = 'controlledTiles' | 'defenseStrength' | 'raidsRepelled';
+export type CampaignObjectiveMetric = 'controlledTiles' | 'defenseStrength' | 'raidsRepelled' | 'hostileDefeated';
 
 export type GameObjective = {
   id: ObjectiveId;
@@ -89,8 +90,12 @@ const OBJECTIVE_TARGETS: Record<ObjectiveId, number> = {
   holdTerritory: 400,
   musterDefense: 18,
   repelFirstRaid: 1,
+  breakHostileChoir: 1,
   forgeInstruments: 3,
 };
+
+const HOSTILE_CHOIR_RAIDS_REQUIRED = 2;
+const HOSTILE_CHOIR_PRESSURE_TARGET = 10;
 
 function countBuildings(state: WorldState, buildingType: BuildingType, ownerId?: string): number {
   return Object.values(state.buildings).filter((building) => {
@@ -158,6 +163,11 @@ function getCampaignMetricValue(state: WorldState, ownerId: string | undefined, 
       return getMilitaryMetrics(state, player.id).defenseStrength;
     case 'raidsRepelled':
       return state.military?.raidsRepelled ?? 0;
+    case 'hostileDefeated':
+      return (state.military?.raidsRepelled ?? 0) >= HOSTILE_CHOIR_RAIDS_REQUIRED
+        && (state.military?.enemyPressure ?? Number.POSITIVE_INFINITY) <= HOSTILE_CHOIR_PRESSURE_TARGET
+        ? 1
+        : 0;
     default:
       return 0;
   }
@@ -216,6 +226,7 @@ export function getCampaignObjectives(state: WorldState, ownerId?: string): Game
     metricObjective(state, ownerId, 'holdTerritory', 'Expand controlled territory', 'Expansion', 'Buildable frontier secured', OBJECTIVE_TARGETS.holdTerritory, 'controlledTiles'),
     metricObjective(state, ownerId, 'musterDefense', 'Muster border defense', 'Survival / Victory', 'Defense can withstand the first wave', OBJECTIVE_TARGETS.musterDefense, 'defenseStrength'),
     metricObjective(state, ownerId, 'repelFirstRaid', 'Repel an attack wave', 'Survival / Victory', 'Settlement survival proven', OBJECTIVE_TARGETS.repelFirstRaid, 'raidsRepelled'),
+    metricObjective(state, ownerId, 'breakHostileChoir', 'Break the Hostile Choir', 'Survival / Victory', 'Enemy pressure broken', OBJECTIVE_TARGETS.breakHostileChoir, 'hostileDefeated'),
     resourceObjective(state, ownerId, 'forgeInstruments', 'Store Torment Instruments', 'Survival / Victory', 'Endgame authority secured', OBJECTIVE_TARGETS.forgeInstruments, 'tormentInstrument'),
   ];
 
@@ -267,8 +278,8 @@ export function evaluateGameOutcome(state: WorldState, ownerId?: string): GameOu
   if (allComplete) {
     return {
       kind: 'victory',
-      title: 'Valley Subdued',
-      summary: 'The settlement can feed itself, expand its jurisdiction, survive hostile pressure, and forge instruments of rule.',
+      title: 'Hostile Choir Defeated',
+      summary: 'The settlement can feed itself, expand its jurisdiction, repel hostile waves, break enemy pressure, and forge instruments of rule.',
       objectives,
       score: calculateGameScore(state, ownerId),
     };

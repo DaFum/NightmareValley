@@ -807,7 +807,7 @@ body.ui--tool-active .game-layout__debug-panel {
   position: fixed;
   z-index: 130;
   left: 24px;
-  top: 148px;
+  top: 204px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -1052,7 +1052,7 @@ body.ui--tool-active .game-layout__debug-panel {
 
 @media (max-width: 760px) {
   .tactical-map {
-    top: 92px;
+    top: 164px;
     left: 12px;
     right: 12px;
     align-items: flex-start;
@@ -1072,7 +1072,7 @@ body.ui--tool-active .game-layout__debug-panel {
   }
 
   .selection-status {
-    top: 144px;
+    top: 216px;
     max-width: calc(100vw - 24px);
   }
 }
@@ -3284,6 +3284,26 @@ body.ui--tool-active .game-layout__debug-panel {
 .military-panel__raid {
   display: grid;
   gap: 0.15rem;
+}
+
+.military-panel__objective {
+  display: grid;
+  gap: 0.15rem;
+  border: 1px solid var(--econ-warn-border);
+  border-radius: 6px;
+  padding: 0.55rem;
+  background: var(--econ-warn-bg);
+}
+
+.military-panel__objective--complete {
+  border-color: var(--econ-success-border);
+  background: var(--econ-success-bg);
+}
+
+.military-panel__objective span,
+.military-panel__objective small,
+.military-panel__raid small {
+  color: var(--text-muted);
 }
 
 .military-panel__recruit {

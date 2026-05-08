@@ -18,7 +18,9 @@ const hoverProps = { anchor: CENTER_ANCHOR, y: 10, zIndex: 1, alpha: 0.5 };
 const warnedMissingBuildingTextures = new Set<string>();
 
 export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings }) => {
-  const { registry } = useTextures();
+  const { ready, registry } = useTextures();
+
+  if (!ready) return null;
 
   return (
     <>

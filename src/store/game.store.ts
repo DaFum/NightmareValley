@@ -10,7 +10,7 @@ import {
   spawnWorker,
   syncStockFromVaults,
 } from '../game/core/economy.simulation';
-import { DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
+import { BASE_POPULATION_LIMIT, DEFAULT_SIMULATION_CONFIG } from '../game/economy/balancing.constants';
 import { tickWorld } from '../game/world/world.tick';
 import { WorldState } from '../game/world/world.types';
 import { BuildingType, ResourceInventory, WorkerType } from "../game/core/economy.types";
@@ -266,7 +266,7 @@ const initialGameState: WorldState = {
         gnashSawyerId,
       ],
       territoryTileIds: preparedInitialTerritory.ownedTileIds,
-      populationLimit: 20,
+      populationLimit: BASE_POPULATION_LIMIT,
       doctrine: "industry",
       dread: 0,
       holinessDebt: 0
@@ -281,7 +281,7 @@ const initialGameState: WorldState = {
       ],
       workers: [],
       territoryTileIds: preparedInitialTerritory.enemyOwnedTileIds,
-      populationLimit: 20,
+      populationLimit: BASE_POPULATION_LIMIT,
       doctrine: "war",
       dread: 20,
       holinessDebt: 0

@@ -1,4 +1,4 @@
-import { processMilitaryTick, getMilitaryMetrics, getMilitaryDifficultyForScenario } from '../../game/military';
+import { processMilitaryTick, getMilitaryMetrics, getMilitaryDifficultyForScenario, createInitialMilitaryState } from '../../game/military';
 import { WorldState } from '../../game/world/world.types';
 import { BuildingInstance, MapTile, PlayerState, WorkerInstance } from '../../game/core/game.types';
 
@@ -117,6 +117,12 @@ describe('military logic', () => {
     expect(getMilitaryDifficultyForScenario('hardcore')).toBe('hard');
   });
 
+  it('gives the default campaign enough time to construct first defenses', () => {
+    const military = createInitialMilitaryState('challenging');
+
+    expect(military.nextAttackAge).toBeGreaterThanOrEqual(420);
+  });
+
   it('counts war infants as soldiers and spires as defensive strength', () => {
     const metrics = getMilitaryMetrics(makeWorld(), PLAYER_ID);
 
@@ -165,6 +171,31 @@ describe('military logic', () => {
     expect(next.military?.raidsRepelled).toBe(3);
     expect(next.events?.log[0]?.title).toContain('Repelled');
     expect(next.buildings.vault.integrity).toBe(100);
+  });
+
+  it('breaks enemy pressure after repeated successful defense', () => {
+    const world = makeWorld({
+      ageOfTeeth: 540,
+      military: {
+        difficulty: 'medium',
+        enemyPressure: 35,
+        nextAttackAge: 700,
+        raidsRepelled: 1,
+        activeRaid: {
+          id: 'raid_2',
+          strength: 8,
+          health: 2,
+          startedAtAge: 520,
+        },
+      },
+    });
+
+    const next = processMilitaryTick(world, PLAYER_ID, 1);
+
+    expect(next.military?.activeRaid).toBeUndefined();
+    expect(next.military?.raidsRepelled).toBe(2);
+    expect(next.military?.enemyPressure).toBeLessThanOrEqual(10);
+    expect(next.events?.log[0]?.description).toContain('enemy pressure');
   });
 
   it('damages the vault and marks defeat risk when defense collapses', () => {

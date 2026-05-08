@@ -11,4 +11,12 @@ describe('TopHud mode toggles', () => {
     expect(source).toContain('{hudDensityLabel}');
     expect(source).not.toContain("{minimalHud ? 'Full HUD' : 'Minimal'}");
   });
+
+  it('keeps the tactical map below the wrapped top HUD controls', () => {
+    const css = readFileSync(join(process.cwd(), 'src/styles/ui.css'), 'utf8');
+
+    expect(css).toContain('.tactical-map {\n  position: fixed;');
+    expect(css).toContain('top: 204px;');
+    expect(css).toContain('top: 164px;');
+  });
 });

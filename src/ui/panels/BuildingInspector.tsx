@@ -211,8 +211,12 @@ function RecipeSelectionSection({ building, onSelectRecipe }: RecipeSelectionSec
 }
 
 function formatRecipeFlow(recipe: (typeof RECIPES)[string]) {
-  const inputs = Object.entries(recipe.inputs).map(([resource, amount]) => `${amount} ${resource}`).join(' + ');
-  const outputs = Object.entries(recipe.outputs).map(([resource, amount]) => `${amount} ${resource}`).join(' + ');
+  const inputs = Object.entries(recipe.inputs)
+    .map(([resource, amount]) => `${amount} ${resourceShortLabel(resource as ResourceType)}`)
+    .join(' + ');
+  const outputs = Object.entries(recipe.outputs)
+    .map(([resource, amount]) => `${amount} ${resourceShortLabel(resource as ResourceType)}`)
+    .join(' + ');
   return `${inputs} -> ${outputs}`;
 }
 
@@ -286,7 +290,7 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
           const canHire = !!player && vacant > 0 && !atPopCap && canAfford;
           const autoHire = building.autoHire?.[workerType] ?? false;
           const costLabel = Object.entries(hireCost.resources)
-            .map(([resource, amount]) => `${resource}: ${inventory[resource as ResourceType] ?? 0}/${amount}`)
+            .map(([resource, amount]) => `${resourceShortLabel(resource as ResourceType)} ${inventory[resource as ResourceType] ?? 0}/${amount}`)
             .join(', ');
 
           return (
@@ -307,10 +311,11 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                     <span
                       key={resource}
                       className={`resource-pill ${short ? 'resource-pill--short' : 'resource-pill--ready'}`}
-                      title={`${resource}: ${currentAmount}/${amount}`}
+                      title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount}`}
                     >
                       {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
-                      {amount}
+                      <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
+                      {currentAmount}/{amount}
                     </span>
                   );
                 })}
@@ -319,7 +324,7 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
                 className="hud-button worker-hire-row__btn"
                 onClick={() => onHire(workerType)}
                 disabled={!canHire}
-                title={atPopCap ? 'Population limit reached' : canAfford ? `Hire ${workerDef?.name ?? workerType}` : `Missing ${costLabel}`}
+                title={atPopCap ? 'Population limit reached' : canAfford ? `Hire ${workerDef?.name ?? workerType}` : `Vault is short: ${costLabel}.`}
               >
                 Hire
               </button>
@@ -396,19 +401,20 @@ function DeliveryControlsSection({ building, onSetPriority, onTogglePause }: Del
             const paused = building.pausedInputs?.[r] ?? false;
             const imgSrc = imageMap[`resources/${r}.png`];
             return (
-              <button
-                key={r}
-                className={`hud-button resource-pill delivery-pause-btn${paused ? ' delivery-pause-btn--paused' : ''}`}
-                onClick={() => onTogglePause(r)}
-                title={`${paused ? 'Resume' : 'Pause'} delivery of ${r}`}
-              >
-                {imgSrc ? (
-                  <img src={imgSrc} alt="" aria-hidden="true" />
-                ) : (
-                  <span>{(r.charAt(0) || '?').toUpperCase()}</span>
-                )}
-                {paused ? '✕' : '✓'}
-              </button>
+                <button
+                  key={r}
+                  className={`hud-button resource-pill delivery-pause-btn${paused ? ' delivery-pause-btn--paused' : ''}`}
+                  onClick={() => onTogglePause(r)}
+                  title={`${paused ? 'Resume' : 'Pause'} delivery of ${resourceShortLabel(r)}`}
+                >
+                  {imgSrc ? (
+                    <img src={imgSrc} alt="" aria-hidden="true" />
+                  ) : (
+                    <span>{(r.charAt(0) || '?').toUpperCase()}</span>
+                  )}
+                  <span className="resource-pill__label">{resourceShortLabel(r)}</span>
+                  {paused ? '✕' : '✓'}
+                </button>
             );
           })}
         </div>
@@ -504,12 +510,13 @@ function InventoryBlock({ title, inventory }: InventoryBlockProps) {
           {entries.map(([resource, amount]) => {
             const imgSrc = imageMap[`resources/${resource}.png`];
             return (
-              <span key={resource} className="resource-pill" title={resource}>
+              <span key={resource} className="resource-pill" title={resourceShortLabel(resource as ResourceType)}>
                 {imgSrc ? (
                   <img src={imgSrc} alt="" aria-hidden="true" />
                 ) : (
                   <span>{(resource.charAt(0) || '?').toUpperCase()}</span>
                 )}
+                <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
                 {amount}
               </span>
             );

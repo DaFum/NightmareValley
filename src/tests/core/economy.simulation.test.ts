@@ -562,7 +562,7 @@ describe("spawnWorker hiring cost", () => {
     const result = upgradeBuilding(state, "p1", "v1");
 
     expect(result.buildings.v1.level).toBe(2);
-    expect(result.players.p1.populationLimit).toBe(30);
+    expect(result.players.p1.populationLimit).toBe(40);
   });
 });
 
