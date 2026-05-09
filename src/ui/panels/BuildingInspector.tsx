@@ -228,8 +228,8 @@ function StorageInspectorSection({ outputBuffer, ledger, logistics, roadDetails 
       </p>
       <dl className="inspector-stats storage-inspector__stats">
         <div><dt>Carriers free</dt><dd>{logistics ? `${logistics.availableCarriers}/${logistics.totalCarriers}` : 'unknown'}</dd></div>
-        <div><dt>Incoming</dt><dd>{logistics?.debugJobs.filter((job) => job.target.includes('Vault')).length ?? 0}</dd></div>
-        <div><dt>Outgoing</dt><dd>{logistics?.debugJobs.filter((job) => job.source.includes('Vault')).length ?? 0}</dd></div>
+        <div><dt>Incoming</dt><dd>{logistics?.debugJobs.filter((job) => job.targetType === 'vaultOfDigestiveStone').length ?? 0}</dd></div>
+        <div><dt>Outgoing</dt><dd>{logistics?.debugJobs.filter((job) => job.sourceType === 'vaultOfDigestiveStone').length ?? 0}</dd></div>
         <div><dt>Road network</dt><dd>{roadDetails?.connectedNetwork ?? 'unknown'}</dd></div>
       </dl>
       <p className={`inspector-note inspector-note--status inspector-note--${logistics?.tone ?? 'idle'}`}>
@@ -401,23 +401,33 @@ function WorkerSlotsSection({ building, player, workers, inventory, onHire, onTo
               <span className="worker-hire-row__name">{workerDef?.name ?? workerType}</span>
               <span className="worker-hire-row__slots">{current}/{maxCount}</span>
               <span className="worker-hire-row__costs">
-                {Object.entries(hireCost.resources).map(([resource, amount]) => {
-                  const imgSrc = imageMap[`resources/${resource}.png`];
-                  const currentAmount = inventory[resource as ResourceType] ?? 0;
-                  const short = currentAmount < (amount ?? 0);
+                {(() => {
+                  const costLabel = Object.entries(hireCost.resources)
+                    .map(([res, amt]) => `${resourceShortLabel(res as ResourceType)} ${inventory[res as ResourceType] ?? 0}/${amt ?? 0}`)
+                    .join(', ');
                   return (
-                    <span
-                      key={resource}
-                      className={`resource-pill ${short ? 'resource-pill--short' : 'resource-pill--ready'}`}
-                      title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount ?? 0}`}
-                    >
-                      {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
-                      <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                      <span className="resource-pill__amount">{currentAmount}/{amount ?? 0}</span>
-                      <span className="sr-only">{resourceShortLabel(resource as ResourceType)}: {currentAmount}/{amount ?? 0}</span>
-                    </span>
+                    <>
+                      {Object.entries(hireCost.resources).map(([resource, amount]) => {
+                        const imgSrc = imageMap[`resources/${resource}.png`];
+                        const currentAmount = inventory[resource as ResourceType] ?? 0;
+                        const short = currentAmount < (amount ?? 0);
+                        return (
+                          <span
+                            key={resource}
+                            className={`resource-pill ${short ? 'resource-pill--short' : 'resource-pill--ready'}`}
+                            title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount ?? 0}`}
+                            aria-hidden="true"
+                          >
+                            {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
+                            <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
+                            <span className="resource-pill__amount">{currentAmount}/{amount ?? 0}</span>
+                          </span>
+                        );
+                      })}
+                      <span className="sr-only">{costLabel}</span>
+                    </>
                   );
-                })}
+                })()}
               </span>
               <button
                 className="hud-button worker-hire-row__btn"

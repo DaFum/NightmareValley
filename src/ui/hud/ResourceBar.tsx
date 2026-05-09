@@ -1,4 +1,5 @@
 import React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { player1Id, useGameStore } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
@@ -52,10 +53,14 @@ const DISPLAY_RESOURCES: DisplayResource[] = [
 type ResourceSnapshot = Record<ResourceType, number>;
 
 export function ResourceBar() {
-  const gameState = useGameStore((state) => state.gameState);
-  const ledger = React.useMemo(() => getResourceLedger(gameState, player1Id), [gameState]);
-  const queuedJobs = gameState.transport.queuedJobCount ?? 0;
-  const trendBucket = Math.floor(gameState.ageOfTeeth / 5);
+  const { ledger, queuedJobs, trendBucket } = useGameStore(
+    useShallow((state) => ({
+      ledger: getResourceLedger(state.gameState, player1Id),
+      queuedJobs: state.gameState.transport.queuedJobCount ?? 0,
+      trendBucket: Math.floor(state.gameState.ageOfTeeth / 5),
+    }))
+  );
+
   const values = React.useMemo(() => ({
     toothPlanks: ledger.toothPlanks.available,
     sepulcherStone: ledger.sepulcherStone.available,

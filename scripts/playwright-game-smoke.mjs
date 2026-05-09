@@ -60,7 +60,7 @@ async function cdpScreenshot(page, outputPath) {
   client.detach().catch(() => undefined);
 }
 
-async function assertVisible(locator, label) {
+async function assertVisible(locator) {
   await locator.first().waitFor({ state: 'visible', timeout: 10_000 });
 }
 
@@ -138,11 +138,11 @@ async function runSmoke() {
     await page.goto(`${BASE_URL}/game`, { waitUntil: 'domcontentloaded' });
     await waitForGameReady(page);
     await assertNoBlankCanvas(page);
-    await assertVisible(page.getByLabel('Transport status'), 'Transport status');
-    await assertVisible(page.getByLabel('Economy overview'), 'Economy overview');
+    await assertVisible(page.getByLabel('Transport status'));
+    await assertVisible(page.getByLabel('Economy overview'));
 
     await page.keyboard.press('b');
-    await assertVisible(page.getByText('Architecture of Duty'), 'Build menu from B hotkey');
+    await assertVisible(page.getByText('Architecture of Duty'));
     await page.keyboard.press('Escape');
     await page.getByRole('button', { name: 'Build', exact: true }).click();
     await page.getByRole('button', { name: /Sepulcher Quarry/ }).click();
@@ -163,8 +163,8 @@ async function runSmoke() {
     await page.keyboard.press('Escape');
 
     await page.getByRole('button', { name: /Inspect Vault of Digestive Stone/ }).first().click();
-    await assertVisible(page.getByLabel('Building inspector'), 'Building inspector');
-    await assertVisible(page.getByText('Hire Workers'), 'Worker hire status');
+    await assertVisible(page.getByLabel('Building inspector'));
+    await assertVisible(page.getByText('Hire Workers'));
     const staffAll = page.getByRole('button', { name: 'Staff all' });
     if (await staffAll.isEnabled().catch(() => false)) {
       await staffAll.click();

@@ -12,7 +12,8 @@ describe('Quick module import tests', () => {
       Texture: { WHITE: {} },
       SCALE_MODES: { NEAREST: 0 },
       Rectangle: jest.fn(),
-      utils: { TextureCache: {} }
+      utils: { TextureCache: {} },
+      TextStyle: class TextStyle { constructor() {} },
     }));
 
     // Mock vite asset loader and spritesheet loader to avoid import.meta usage

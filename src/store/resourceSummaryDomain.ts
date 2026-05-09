@@ -56,7 +56,9 @@ function addInventory(
 ) {
   for (const [resource, amount] of Object.entries(inventory)) {
     const resourceType = resource as ResourceType;
-    ledger[resourceType][key] += amount ?? 0;
+    if (ledger[resourceType]) {
+      ledger[resourceType][key] += amount ?? 0;
+    }
   }
 }
 
@@ -85,14 +87,16 @@ export function getResourceLedger(state: WorldState, ownerId: string): ResourceL
     if (!ACTIVE_JOB_STATUSES.has(job.status)) continue;
     const source = state.buildings[job.fromBuildingId];
     if (source?.ownerId !== ownerId) continue;
-    const reserved = job.status === 'queued' ? job.amount : Math.max(job.reserved, job.amount - job.delivered);
-    ledger[job.resourceType].reserved += Math.max(0, reserved);
+    if (ledger[job.resourceType]) {
+      const reserved = job.status === 'queued' ? job.amount : Math.max(job.reserved, job.amount - job.delivered);
+      ledger[job.resourceType].reserved += Math.max(0, reserved);
+    }
   }
 
   for (const task of Object.values(state.transport?.activeCarrierTasks ?? {})) {
     const target = state.buildings[task.dropoffBuildingId];
     if (target?.ownerId !== ownerId) continue;
-    if (task.phase === 'toDropoff') {
+    if (task.phase === 'toDropoff' && ledger[task.resourceType]) {
       ledger[task.resourceType].inTransit += task.amount;
     }
   }

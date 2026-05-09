@@ -8,7 +8,6 @@ export type BuildingRoadDetails = {
   status: 'Connected' | 'Not connected';
   connectedNetwork: string;
   distanceToNearestVault: number | null;
-  roadDistanceTiles: number | null;
   estimatedDeliverySec: number | null;
   warning: string | null;
 };
@@ -28,7 +27,6 @@ export function getBuildingRoadDetails(
       status: 'Not connected',
       connectedNetwork: 'No selected building',
       distanceToNearestVault: null,
-      roadDistanceTiles: null,
       estimatedDeliverySec: null,
       warning: null,
     };
@@ -56,6 +54,7 @@ export function getBuildingRoadDetails(
       ? 'Connected but far: delivery time is high. Consider a shorter road or intermediate storage.'
       : null;
 
+  // TODO: implement road-aware pathfinding to populate a true roadDistanceTiles value
   return {
     status,
     connectedNetwork: building.type === 'vaultOfDigestiveStone'
@@ -64,7 +63,6 @@ export function getBuildingRoadDetails(
         ? `Nearest vault: ${nearestVault.vault.id}`
         : 'No vault found',
     distanceToNearestVault: distance,
-    roadDistanceTiles: distance,
     estimatedDeliverySec,
     warning,
   };

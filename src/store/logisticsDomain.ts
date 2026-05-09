@@ -30,6 +30,8 @@ export type LogisticsSummaryModel = {
   debugJobs: Array<{
     source: string;
     target: string;
+    sourceType: string;
+    targetType: string;
     resource: ResourceType;
     amount: number;
     distance: number;
@@ -253,6 +255,8 @@ export function getLogisticsSummaryModel(state: WorldState, ownerId: string): Lo
     debugJobs: candidates.slice(0, 12).map((candidate) => ({
       source: buildingName(candidate.source),
       target: buildingName(candidate.target),
+      sourceType: candidate.source.type,
+      targetType: candidate.target.type,
       resource: candidate.resource,
       amount: candidate.amount,
       distance: candidate.distance,
