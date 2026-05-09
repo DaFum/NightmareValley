@@ -1,5 +1,5 @@
 import { WorldState } from '../game/world/world.types';
-import { BuildingType, ResourceInventory, TerrainType } from '../game/core/economy.types';
+import { BuildingDefinition, BuildingType, ResourceInventory, TerrainType } from '../game/core/economy.types';
 import { canAffordBuilding, canAffordUpgrade } from '../game/economy/production.logic';
 import { canPlaceBuildingFootprint, isTileBuildableForPlayer } from '../game/core/economy.simulation';
 import { BUILDING_DEFINITIONS } from '../game/core/economy.data';
@@ -20,6 +20,8 @@ export type PlacementValidationResult = {
   allowedTerrain: TerrainType[];
   tileId?: TileId;
   reasonCode?: PlacementValidationReason;
+  nearestVaultDistance?: number | null;
+  logisticsHint?: string;
 };
 
 const TERRAIN_LABELS: Record<TerrainType, string> = {
@@ -63,6 +65,36 @@ function placementReasonMessage(
     default:
       return 'This tile cannot accept the selected building.';
   }
+}
+
+function getNearestVaultDistance(state: WorldState, ownerId: string, originX: number, originY: number): number | null {
+  let best: number | null = null;
+  const player = state.players[ownerId];
+  if (!player) return null;
+
+  for (const buildingId of player.buildings ?? []) {
+    const building = state.buildings[buildingId];
+    if (building?.type !== 'vaultOfDigestiveStone') continue;
+    if (!building.position) continue;
+    const distance = Math.abs(building.position.x - originX) + Math.abs(building.position.y - originY);
+    if (best == null || distance < best) best = distance;
+  }
+
+  return best;
+}
+
+function formatPlacementLogisticsHint(
+  definition: BuildingDefinition | undefined,
+  distance: number | null,
+): string {
+  const distanceLabel = distance == null
+    ? 'Distance to nearest vault: unavailable'
+    : `Distance to nearest vault: ${distance} tile${distance === 1 ? '' : 's'}`;
+  const roadLabel = definition?.requiresRoadConnection ? 'road required after build' : 'road optional';
+  const distanceWarning = distance != null && distance >= 18
+    ? 'Delivery time will be high at this distance.'
+    : 'Expected logistics cost is low to moderate.';
+  return `${distanceLabel}; ${roadLabel}; ${distanceWarning}`;
 }
 
 export function getInventoryForCostChecks(state: WorldState, ownerId: string): ResourceInventory {
@@ -166,6 +198,7 @@ export function getPlacementValidation(
   );
 
   if (result.ok) {
+    const nearestVaultDistance = getNearestVaultDistance(state, ownerId, originX, originY);
     return {
       ok: true,
       tileId: result.tileId,
@@ -173,6 +206,8 @@ export function getPlacementValidation(
       width,
       height,
       allowedTerrain,
+      nearestVaultDistance,
+      logisticsHint: formatPlacementLogisticsHint(definition, nearestVaultDistance),
     };
   }
 

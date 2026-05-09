@@ -2,6 +2,7 @@ import React from "react";
 import { Container, Sprite } from "@pixi/react";
 import { IsoBuildingRenderData } from "../../game/iso/iso.types";
 import { useTextures } from "../utils/textureRegistry";
+import { resolveBuildingTextureKey } from "../utils/buildingTextureKeys";
 
 export interface IsoBuildingLayerProps {
   buildings: IsoBuildingRenderData[];
@@ -36,7 +37,10 @@ export const IsoBuildingLayer: React.FC<IsoBuildingLayerProps> = ({ buildings })
           state,
         } = building;
 
-        const mainTex = registry.getTexture(spriteKey);
+        const resolvedSpriteKey = resolveBuildingTextureKey(spriteKey, (key) =>
+          registry.hasTexture(key),
+        );
+        const mainTex = resolvedSpriteKey ? registry.getTexture(resolvedSpriteKey) : undefined;
         const shadowTex = registry.getTexture("generic_building_shadow");
         const selectionTex = registry.getTexture("selection_ellipse_building");
         const hoverTex = registry.getTexture("hover_ellipse_building");

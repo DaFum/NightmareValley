@@ -4,6 +4,7 @@ import type { BuildingStatus } from './building.types';
 import { BUILDING_DEFINITIONS } from '../../core/economy.data';
 import type { ResourceType } from '../../core/economy.types';
 import { DEFAULT_SIMULATION_CONFIG, type SimulationConfig } from '../../economy/balancing.constants';
+import { extractionNeedsDeposit, hasNearbyExtractionDeposit } from '../../economy/extraction.utils';
 import { RECIPES } from '../../economy/recipes.data';
 import { canStoreRecipeOutputs, chooseRecipeForBuilding } from '../../economy/production.logic';
 import { hasAssignedWorkersForBuilding, requiresRoad, type EconomySimulationState } from '../../core/economy.simulation';
@@ -21,6 +22,7 @@ export type ProductionStatusKind =
   | 'underConstruction'
   | 'roadDisconnected'
   | 'missingWorker'
+  | 'missingDeposit'
   | 'missingInput'
   | 'outputFull'
   | 'working'
@@ -33,11 +35,12 @@ export type ProductionStatus = {
   resourceType?: ResourceType;
 };
 
-const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
+export const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
   paused: 'disabled',
   underConstruction: 'underConstruction',
   roadDisconnected: 'blocked',
   missingWorker: 'idle',
+  missingDeposit: 'blocked',
   missingInput: 'blocked',
   outputFull: 'blocked',
   working: 'working',
@@ -47,6 +50,7 @@ const KIND_TO_BUILDING_STATUS: Record<ProductionStatusKind, BuildingStatus> = {
 function resourceLabel(resourceType: ResourceType): string {
   return resourceType.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
 }
+
 
 export function getProductionStatus(
   state: EconomySimulationState,
@@ -72,6 +76,25 @@ export function getProductionStatus(
     return { kind: 'idle', label: 'Idle', detail: `${buildingName} has no definition.` };
   }
 
+  if (definition.type === 'vaultOfDigestiveStone') {
+    if (!hasAssignedWorkersForBuilding(state, building)) {
+      return {
+        kind: 'missingWorker',
+        label: 'Needs carriers',
+        detail: `${buildingName} needs assigned workers before it can dispatch storage deliveries.`,
+      };
+    }
+
+    const storedUnits = Object.values(building.outputBuffer ?? {}).reduce((sum, amount) => sum + (amount ?? 0), 0);
+    return {
+      kind: 'idle',
+      label: storedUnits > 0 ? 'Storage idle' : 'Storage empty',
+      detail: storedUnits > 0
+        ? `${buildingName} is the storage hub. Idle means no reachable building is currently requesting these resources.`
+        : `${buildingName} is the storage hub, but no resources are stored yet.`,
+    };
+  }
+
   if (!hasAssignedWorkersForBuilding(state, building)) {
     return { kind: 'missingWorker', label: 'Needs workers', detail: `${buildingName} has unfilled worker slots.` };
   }
@@ -86,6 +109,18 @@ export function getProductionStatus(
           kind: 'outputFull',
           label: 'Output full',
           detail: `${buildingName} cannot store more ${resourceLabel(definition.extraction.resource)}.`,
+          resourceType: definition.extraction.resource,
+        };
+      }
+      if (
+        state.territory?.tiles &&
+        extractionNeedsDeposit(definition.extraction.resource, definition.extraction.renewable) &&
+        !hasNearbyExtractionDeposit(state, building, definition.extraction.resource)
+      ) {
+        return {
+          kind: 'missingDeposit',
+          label: 'No deposit',
+          detail: `${buildingName} needs a nearby ${resourceLabel(definition.extraction.resource)} deposit.`,
           resourceType: definition.extraction.resource,
         };
       }
@@ -140,5 +175,3 @@ export function deriveProductionBuildingStatus(
 ): BuildingStatus {
   return KIND_TO_BUILDING_STATUS[getProductionStatus(state, building, config).kind];
 }
-
-

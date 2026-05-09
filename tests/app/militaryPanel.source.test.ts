@@ -6,7 +6,7 @@ describe('MilitaryPanel guidance', () => {
     const source = readFileSync(join(process.cwd(), 'src/ui/panels/MilitaryPanel.tsx'), 'utf8');
 
     expect(source).toContain('resourceShortLabel(resource as ResourceType)');
-    expect(source).toContain('{current}/{amount}');
+    expect(source).toContain('{current}/{amount ?? 0}');
     expect(source).toContain('Vault is short');
   });
 

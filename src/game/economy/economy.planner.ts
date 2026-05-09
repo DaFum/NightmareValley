@@ -2,6 +2,8 @@ import { BUILDING_DEFINITIONS } from '../core/economy.data';
 import { BuildingType, ResourceType } from '../core/economy.types';
 import { aggregateVaultInventory, CampaignObjectiveMetric, GameObjective, getCampaignObjectives } from '../core/victory.rules';
 import { getMilitaryMetrics } from '../military';
+import { extractionNeedsDeposit, hasNearbyExtractionDeposit } from './extraction.utils';
+import { KIND_TO_BUILDING_STATUS } from '../entities/buildings/building.status';
 import { WorldState } from '../world/world.types';
 import {
   DEFAULT_SIMULATION_CONFIG,
@@ -17,6 +19,7 @@ import { RECIPES } from './recipes.data';
 
 export type EconomyBottleneckKind =
   | 'missingWorker'
+  | 'missingDeposit'
   | 'missingInput'
   | 'outputFull'
   | 'roadDisconnected'
@@ -136,6 +139,8 @@ export function getBottleneckAction(bottleneck: EconomyBottleneck): string {
   switch (bottleneck.kind) {
     case 'missingWorker':
       return 'Inspect the building and hire or auto-hire the missing worker.';
+    case 'missingDeposit':
+      return 'Place the extractor near a matching deposit or build the matching resource chain elsewhere.';
     case 'missingInput':
       return bottleneck.resourceType
         ? `Build or connect the ${resourceLabel(bottleneck.resourceType)} supply chain.`
@@ -296,6 +301,22 @@ function collectEconomyBottlenecks(state: WorldState, ownerId?: string): Economy
         buildingName,
         kind: 'missingWorker',
         label: `${buildingName} needs workers`,
+      });
+    }
+
+    if (
+      state.territory?.tiles &&
+      definition.extraction &&
+      extractionNeedsDeposit(definition.extraction.resource, definition.extraction.renewable) &&
+      !hasNearbyExtractionDeposit(state, building, definition.extraction.resource)
+    ) {
+      bottlenecks.push({
+        buildingId: building.id,
+        buildingType: building.type,
+        buildingName,
+        kind: 'missingDeposit',
+        resourceType: definition.extraction.resource,
+        label: `${buildingName} has no nearby ${resourceLabel(definition.extraction.resource)} deposit`,
       });
     }
 
@@ -462,8 +483,8 @@ function getEconomyActivity(state: WorldState, ownerId?: string): SettlementSitu
 
   return {
     workingBuildings,
-    starvedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').length,
-    blockedBuildings: allBottlenecks.filter((bottleneck) => bottleneck.kind === 'outputFull' || bottleneck.kind === 'roadDisconnected').length,
+    starvedBuildings: new Set(allBottlenecks.filter((bottleneck) => bottleneck.kind === 'missingInput').map((bottleneck) => bottleneck.buildingId)).size,
+    blockedBuildings: new Set(allBottlenecks.filter((bottleneck) => KIND_TO_BUILDING_STATUS[bottleneck.kind] === 'blocked' && bottleneck.kind !== 'missingInput').map((bottleneck) => bottleneck.buildingId)).size,
     bottlenecks,
   };
 }

@@ -241,7 +241,7 @@ export function BuildingMenu() {
               const affordability = getBuildingAffordabilityFromInventory(inventory, def.type);
               const canAfford = affordability.canAfford;
               const isSelected = selectedBuildingToPlace === def.type;
-              const missingCosts = affordability.missing.map(({ resource, available, required }) => `${resource}: ${available}/${required}`);
+              const missingCosts = affordability.missing.map(({ resource, available, required }) => `${resourceShortLabel(resource)} ${required} required, ${available} available`);
               const placementLabel = def.allowedTerrain
                 .map((terrain) => terrainLabel[terrain] ?? terrain)
                 .join(', ');
@@ -276,7 +276,7 @@ export function BuildingMenu() {
                       <span
                         key={res}
                         className={`resource-pill ${isShort ? 'resource-pill--short' : 'resource-pill--ready'}`}
-                        title={`${res}: ${current}/${amt}`}
+                        title={`${resourceShortLabel(res as ResourceType)}: ${amt} required, ${current} available`}
                       >
                         <img
                           src={imageMap[`resources/${res}.png`]}
@@ -284,7 +284,7 @@ export function BuildingMenu() {
                           aria-hidden="true"
                         />
                         <span className="resource-pill__label">{resourceShortLabel(res as ResourceType)}</span>
-                        {current}/{amt}
+                        <span className="resource-pill__amount">{amt} {resourceShortLabel(res as ResourceType)} {current >= (amt ?? 0) ? '✓' : 'short'} {current}</span>
                       </span>
                       );
                     })}

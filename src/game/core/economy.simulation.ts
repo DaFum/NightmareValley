@@ -144,6 +144,24 @@ export function requiresRoad(buildingType: BuildingType): boolean {
   return BUILDING_DEFINITIONS[buildingType].requiresRoadConnection;
 }
 
+function isRoadConnectionTile(tile: MapTile | null | undefined, ownerId: OwnerId): boolean {
+  if (!tile || tile.ownerId !== ownerId) return false;
+  return tile.terrain === "scarPath" || tile.tier === "dirt" || tile.tier === "cobble" || tile.tier === "paved";
+}
+
+function hasAdjacentRoadConnection(territory: TerritoryState, position: Position, ownerId: OwnerId): boolean {
+  const offsets = [
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+  ];
+
+  return offsets.some((offset) => (
+    isRoadConnectionTile(getTileAt(territory, position.x + offset.x, position.y + offset.y), ownerId)
+  ));
+}
+
 export function hasAssignedWorkersForBuilding(
   state: EconomySimulationState,
   building: BuildingInstance
@@ -438,12 +456,15 @@ export function placeBuilding(
   }
 
   const buildingId = createId("building");
-  next.buildings[buildingId] = createBuildingInstance(
+  next.buildings[buildingId] = {
+    ...createBuildingInstance(
     buildingId,
     buildingType,
     ownerId,
     tile.position
-  );
+    ),
+    connectedToRoad: hasAdjacentRoadConnection(next.territory, tile.position, ownerId),
+  };
 
   tile.buildingId = buildingId;
   player.buildings.push(buildingId);

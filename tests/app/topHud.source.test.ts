@@ -20,7 +20,7 @@ describe('TopHud mode toggles', () => {
   });
 
   it('keeps the tactical map below the wrapped top HUD controls', () => {
-    const css = readFileSync(join(process.cwd(), 'src/styles/ui.css'), 'utf8');
+    const css = readFileSync(join(process.cwd(), 'src/styles/ui.css'), 'utf8').replace(/\r\n/g, '\n');
     const baseTacticalMapRule = extractRule(css, '.tactical-map {');
     const mobileTacticalMapMatch = css.match(/@media \(max-width: 760px\) \{[\s\S]*?\.tactical-map \{[\s\S]*?top: 164px;[\s\S]*?\n  \}/);
 

@@ -20,6 +20,7 @@ import { useResponsiveLayout } from './useResponsiveLayout';
 import { evaluateGameOutcome } from '../../game/core/victory.rules';
 import { player1Id, useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
+import type { LeftRailPanel } from '../../store/ui.store';
 import { useSelectionStore } from '../../store/selection.store';
 import ShortcutHelpDialog from '../../ui/dialogs/ShortcutHelpDialog';
 import { getGameHotkeyAction } from '../../ui/hotkeys/gameHotkeys';
@@ -44,21 +45,67 @@ export type GameLayoutProps = {
 
 const defaultBottomDock = (
   <div className="game-layout__bottom-dock">
-    <GameGuidePanel />
-    <SettlementBriefPanel />
-    <EventLogPanel />
-    <React.Suspense fallback={null}>
-      <ProductionChainPanel />
-    </React.Suspense>
-    <WarehousePanel />
-    <EconomyPanel />
-    <MilitaryPanel />
-    <React.Suspense fallback={null}>
-      <ContentCodexPanel />
-    </React.Suspense>
     <BuildingMenu />
   </div>
 );
+
+const leftRailTabs: Array<{ id: LeftRailPanel; label: string; title: string }> = [
+  { id: 'brief', label: 'Orders', title: 'Main objective and next action' },
+  { id: 'map', label: 'Map', title: 'Tactical map overview' },
+  { id: 'economy', label: 'Economy', title: 'Buildings, logistics and resource chains' },
+  { id: 'warehouse', label: 'Vault', title: 'Authoritative vault storage' },
+  { id: 'chain', label: 'Chain', title: 'Campaign production chain' },
+  { id: 'defense', label: 'Defense', title: 'Raid and border pressure' },
+  { id: 'omens', label: 'Omens', title: 'Event log' },
+  { id: 'guide', label: 'Guide', title: 'Game guide' },
+  { id: 'codex', label: 'Codex', title: 'Content codex' },
+];
+
+function GameLeftRail(): JSX.Element {
+  const leftPanel = useUIStore((state) => state.leftPanel);
+  const toggleLeftPanel = useUIStore((state) => state.toggleLeftPanel);
+
+  return (
+    <aside className="game-left-rail" aria-label="Primary panels">
+      <nav className="game-left-rail__tabs" aria-label="Panel tabs">
+        {leftRailTabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`game-left-rail__tab ${leftPanel === tab.id ? 'active' : ''}`}
+            aria-pressed={leftPanel === tab.id}
+            title={tab.title}
+            onClick={() => toggleLeftPanel(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      {leftPanel ? (
+        <div className="game-left-rail__panel">
+          {leftPanel === 'brief' ? <SettlementBriefPanel /> : null}
+          {leftPanel === 'map' ? <TacticalMapPanel /> : null}
+          {leftPanel === 'economy' ? <EconomyPanel /> : null}
+          {leftPanel === 'warehouse' ? <WarehousePanel /> : null}
+          {leftPanel === 'chain' ? (
+            <React.Suspense fallback={null}>
+              <ProductionChainPanel forceOpen />
+            </React.Suspense>
+          ) : null}
+          {leftPanel === 'defense' ? <MilitaryPanel /> : null}
+          {leftPanel === 'omens' ? <EventLogPanel /> : null}
+          {leftPanel === 'guide' ? <GameGuidePanel forceOpen /> : null}
+          {leftPanel === 'codex' ? (
+            <React.Suspense fallback={null}>
+              <ContentCodexPanel />
+            </React.Suspense>
+          ) : null}
+        </div>
+      ) : null}
+    </aside>
+  );
+}
 
 export function GameLayout({
   canvas = <GameCanvas />,
@@ -89,7 +136,6 @@ export function GameLayout({
   const setScenarioProfile = useGameStore((state) => state.setScenarioProfile);
   const focusMode = useUIStore((state) => state.focusMode);
   const minimalHud = useUIStore((state) => state.minimalHud);
-  const guideOpen = useUIStore((state) => state.guideOpen);
   const activePanel = useUIStore((state) => state.activePanel);
   const selectedBuildingToPlace = useUIStore((state) => state.selectedBuildingToPlace);
   const roadPlacementMode = useUIStore((state) => state.roadPlacementMode);
@@ -131,13 +177,12 @@ export function GameLayout({
     const buildMenuOpen = activePanel === 'buildingMenu';
     document.body.classList.toggle('ui--focus', focusMode);
     document.body.classList.toggle('ui--minimal', minimalHud);
-    document.body.classList.toggle('ui--guide-open', guideOpen);
     document.body.classList.toggle('ui--tool-active', toolActive);
     document.body.classList.toggle('ui--build-menu-open', buildMenuOpen);
     return () => {
-      document.body.classList.remove('ui--focus', 'ui--minimal', 'ui--guide-open', 'ui--tool-active', 'ui--build-menu-open');
+      document.body.classList.remove('ui--focus', 'ui--minimal', 'ui--tool-active', 'ui--build-menu-open');
     };
-  }, [activePanel, focusMode, guideOpen, minimalHud, roadPlacementMode, roadRemovalMode, selectedBuildingToPlace]);
+  }, [activePanel, focusMode, minimalHud, roadPlacementMode, roadRemovalMode, selectedBuildingToPlace]);
 
   React.useEffect(() => {
     if (!autosaveEnabled) return;
@@ -175,6 +220,7 @@ export function GameLayout({
         toggleRoadRemovalMode();
       } else if (action === 'toggleGuide') {
         toggleGuideOpen();
+        useUIStore.getState().setLeftPanel('guide');
       } else if (action === 'toggleMinimalHud') {
         toggleMinimalHud();
       } else if (action === 'openShortcutHelp') {
@@ -190,8 +236,8 @@ export function GameLayout({
           clearActiveTools();
         } else if (activePanel === 'buildingMenu') {
           togglePanel('buildingMenu');
-        } else if (guideOpen) {
-          toggleGuideOpen();
+        } else if (useUIStore.getState().leftPanel) {
+          useUIStore.getState().setLeftPanel(null);
         } else {
           clearActiveTools();
         }
@@ -203,7 +249,6 @@ export function GameLayout({
   }, [
     activePanel,
     clearActiveTools,
-    guideOpen,
     menuOpen,
     roadPlacementMode,
     roadRemovalMode,
@@ -268,8 +313,7 @@ export function GameLayout({
       </section>
       <SvgAnimationIntegrator />
       <Particles />
-      <HudLayout top={resolvedHud} right={inspector} bottom={panels} isMobile={isMobile} />
-      <TacticalMapPanel />
+      <HudLayout top={resolvedHud} left={<GameLeftRail />} right={inspector} bottom={panels} isMobile={isMobile} />
       <SelectionStatusChip />
       <ResumeRunPrompt
         visible={showResumePrompt}

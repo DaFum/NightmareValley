@@ -115,4 +115,17 @@ describe('ui.store autosave preference', () => {
 
     expect(useUIStore.getState().placementFeedback).toBeNull();
   });
+
+  it('keeps only one left rail panel active at a time', async () => {
+    const { useUIStore } = await loadUIStore();
+
+    useUIStore.getState().setLeftPanel('economy');
+    expect(useUIStore.getState().leftPanel).toBe('economy');
+
+    useUIStore.getState().setLeftPanel('defense');
+    expect(useUIStore.getState().leftPanel).toBe('defense');
+
+    useUIStore.getState().toggleLeftPanel('defense');
+    expect(useUIStore.getState().leftPanel).toBeNull();
+  });
 });

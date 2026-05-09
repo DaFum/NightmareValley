@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
@@ -6,7 +6,11 @@ import { getBottleneckAction, getEconomyBottlenecks } from '../../game/economy/e
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { player1Id, useGameStore } from '../../store/game.store';
 
-export default function ProductionChainPanel(): JSX.Element {
+export type ProductionChainPanelProps = {
+  forceOpen?: boolean;
+};
+
+export default function ProductionChainPanel({ forceOpen = false }: ProductionChainPanelProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const { buildings, workers, transport } = useGameStore(
     useShallow((state) => ({
@@ -15,6 +19,12 @@ export default function ProductionChainPanel(): JSX.Element {
       transport: state.gameState.transport,
     }))
   );
+
+  useEffect(() => {
+    if (!forceOpen) {
+      setOpen(false);
+    }
+  }, [forceOpen]);
 
   const rows = useMemo(() => {
     const gameState = { buildings, workers, transport } as ReturnType<typeof useGameStore.getState>['gameState'];
@@ -29,24 +39,30 @@ export default function ProductionChainPanel(): JSX.Element {
   }, [buildings, transport, workers]);
 
   const completeCount = rows.filter((row) => row.objective.complete).length;
+  const panelOpen = forceOpen || open;
 
   return (
     <div className="production-chain">
       <button
-        className={`macabre-panel production-chain__toggle ${open ? 'active' : ''}`}
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
+        className={`macabre-panel production-chain__toggle ${panelOpen ? 'active' : ''}`}
+        onClick={() => {
+          if (forceOpen) return;
+          setOpen((value) => !value);
+        }}
+        aria-expanded={panelOpen}
         aria-controls="production-chain-panel"
-        title="Open the objective production chain with blocked steps and rewards"
+        title="Objectives show current chain progress, blocked steps, and the next useful action"
       >
-        Chain {completeCount}/{rows.length}
+        Objectives {completeCount}/{rows.length}
       </button>
 
-      {open && (
+      {panelOpen && (
         <section id="production-chain-panel" className="macabre-panel production-chain__panel" aria-label="Production chain">
           <header className="production-chain__header">
-            <h2>Production Chain</h2>
-            <span>{completeCount}/{rows.length} complete</span>
+            <h2>Resource Chain</h2>
+            <span title="Completed objectives / total objectives. Build, connect, and supply the listed chain steps to raise this value.">
+              {completeCount}/{rows.length} complete
+            </span>
           </header>
 
           <ol className="production-chain__list">

@@ -62,4 +62,44 @@ describe('getProductionStatus', () => {
 
     expect(getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG).kind).toBe(expectedKind);
   });
+
+  it('reports a missing deposit when extraction has no reachable resource tile', () => {
+    const building = makeBuilding('sepulcherQuarry', {
+      assignedWorkers: ['w1'],
+      progressSec: 0,
+    });
+    const state = makeState(building, 'graveToothBreaker');
+
+    const status = getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG);
+
+    expect(status.kind).toBe('missingDeposit');
+    expect(status.detail).toContain('nearby Sepulcher Stone deposit');
+  });
+
+  it('keeps renewable extraction readable without requiring a deposit tile', () => {
+    const building = makeBuilding('seedOfTheHowlingRoot', {
+      assignedWorkers: ['w1'],
+      progressSec: 0,
+    });
+    const state = makeState(building, 'rootCantor');
+
+    expect(getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG).kind).toBe('idle');
+  });
+
+  it('describes vaults as storage instead of production buildings without recipes', () => {
+    const building = makeBuilding('vaultOfDigestiveStone', {
+      assignedWorkers: ['w1', 'w2', 'w3'],
+      outputBuffer: { toothPlanks: 12, sepulcherStone: 7 },
+    });
+    const state = makeState(building, 'burdenThrall');
+    state.workers.w2 = { id: 'w2', type: 'burdenThrall', ownerId: 'p1', position: building.position, isIdle: true } as any;
+    state.workers.w3 = { id: 'w3', type: 'fleshMason', ownerId: 'p1', position: building.position, isIdle: true } as any;
+
+    const status = getProductionStatus(state, building, DEFAULT_SIMULATION_CONFIG);
+
+    expect(status.kind).toBe('idle');
+    expect(status.label).toBe('Storage idle');
+    expect(status.detail).toContain('storage hub');
+    expect(status.detail).not.toContain('active recipe');
+  });
 });

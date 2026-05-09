@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
 import { getSettlementSituationSnapshot } from '../../game/economy/economy.planner';
 import { GameScenarioProfile, player1Id, useGameStore } from '../../store/game.store';
+import { useSelectionStore } from '../../store/selection.store';
 
 type BriefGoal = {
   label: string;
@@ -16,6 +17,8 @@ const scenarioLabels: Record<GameScenarioProfile, string> = {
 };
 
 export default function SettlementBriefPanel(): JSX.Element {
+  const [showSecondaryGoals, setShowSecondaryGoals] = useState(false);
+  const selectBuilding = useSelectionStore((state) => state.selectBuilding);
   const {
     activeScenario,
     gameState,
@@ -95,23 +98,54 @@ export default function SettlementBriefPanel(): JSX.Element {
 
       {brief.topIssues.length > 0 && (
         <ul className="settlement-brief__issues" aria-label="Settlement issues">
-          {brief.topIssues.map((issue) => (
-            <li key={`${issue.kind}-${issue.label}`} className={`settlement-brief__issue settlement-brief__issue--${issue.tone}`}>
-              <strong>{issue.label}</strong>
-              <small>{issue.action}</small>
-            </li>
-          ))}
+          {brief.topIssues.map((issue) => {
+            const issueClassName = `settlement-brief__issue settlement-brief__issue--${issue.tone}`;
+
+            return (
+              <li key={`${issue.kind}-${issue.label}`}>
+                {issue.buildingId ? (
+                  <button
+                    type="button"
+                    className={`${issueClassName} settlement-brief__issue-btn`}
+                    aria-label={`Inspect ${issue.label}`}
+                    onClick={() => selectBuilding(issue.buildingId ?? null)}
+                  >
+                    <strong>{issue.label}</strong>
+                    <small>{issue.action}</small>
+                  </button>
+                ) : (
+                  <div className={issueClassName}>
+                    <strong>{issue.label}</strong>
+                    <small>{issue.action}</small>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
-      <ol className="settlement-brief__goals" aria-label="Suggested build order">
-        {brief.goals.map((goal) => (
-          <li key={goal.label} className={goal.done ? 'done' : ''}>
-            <span aria-hidden="true">{goal.done ? 'OK' : '--'}</span>
-            {goal.label}
-          </li>
-        ))}
-      </ol>
+      <div className="settlement-brief__goal-toggle">
+        <button
+          type="button"
+          className="hud-button"
+          onClick={() => setShowSecondaryGoals((value) => !value)}
+          aria-expanded={showSecondaryGoals}
+        >
+          {showSecondaryGoals ? 'Hide secondary goals' : 'Show secondary goals'}
+        </button>
+      </div>
+
+      {showSecondaryGoals ? (
+        <ol className="settlement-brief__goals" aria-label="Suggested build order">
+          {brief.goals.map((goal) => (
+            <li key={goal.label} className={goal.done ? 'done' : ''}>
+              <span aria-hidden="true">{goal.done ? 'Done' : 'Next'}</span>
+              {goal.label}
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </section>
   );
 }

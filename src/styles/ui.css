@@ -26,6 +26,13 @@
   --econ-danger-bg: rgba(255, 123, 114, 0.12);
   --econ-danger-border: rgba(255, 123, 114, 0.28);
   --econ-default: #cdd9e5;
+  --z-map: 0;
+  --z-selection: 50;
+  --z-hud: 100;
+  --z-panels: 220;
+  --z-inspector: 320;
+  --z-modal: 1200;
+  --z-toast: 360;
 }
 
 body::after { opacity: var(--noise-opacity); }
@@ -1800,6 +1807,7 @@ body.ui--tool-active .game-layout__debug-panel {
 
 .inspector-note--missingInput,
 .inspector-note--missingWorker,
+.inspector-note--missingDeposit,
 .inspector-note--roadDisconnected,
 .inspector-note--outputFull {
   border-color: var(--econ-warn-border);
@@ -2188,6 +2196,10 @@ body.ui--tool-active .game-layout__debug-panel {
   list-style: none;
 }
 
+.settlement-brief__issues li {
+  min-width: 0;
+}
+
 .settlement-brief__issue {
   display: grid;
   gap: 2px;
@@ -2195,6 +2207,19 @@ body.ui--tool-active .game-layout__debug-panel {
   padding: 5px 7px;
   border: 1px solid var(--econ-warn-border);
   background: var(--econ-warn-bg);
+}
+
+.settlement-brief__issue-btn {
+  width: 100%;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.settlement-brief__issue-btn:hover,
+.settlement-brief__issue-btn:focus-visible {
+  border-color: var(--econ-warn);
 }
 
 .settlement-brief__issue--danger {
@@ -2702,15 +2727,22 @@ body.ui--tool-active .game-layout__debug-panel {
   display: grid;
   grid-template-rows: auto auto;
   gap: 2px;
+  width: 100%;
   padding: 5px 6px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   background: rgba(0, 0, 0, 0.24);
   border: 1px solid rgba(227, 220, 211, 0.05);
   border-radius: 2px;
   transition: all 0.1s;
 }
 
-.econ-building-row:hover {
+.econ-building-row:hover,
+.econ-building-row:focus-visible {
   background: rgba(0, 0, 0, 0.34);
+  border-color: var(--econ-idle-border);
   box-shadow: 0 0 8px rgba(90, 12, 19, 0.12);
 }
 
@@ -2799,6 +2831,65 @@ body.ui--tool-active .game-layout__debug-panel {
   font-weight: 700;
 }
 
+.econ-carrier-task-list {
+  display: grid;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.econ-carrier-task-list h4 {
+  margin: 0;
+  color: var(--marrow);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.econ-carrier-task {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 6px;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--econ-success-border);
+  background: var(--econ-success-bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.econ-carrier-task:hover,
+.econ-carrier-task:focus-visible {
+  border-color: var(--econ-success);
+  outline: 1px solid var(--econ-success);
+  outline-offset: 1px;
+}
+
+.econ-carrier-task span {
+  color: var(--econ-success);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.econ-carrier-task strong {
+  overflow: hidden;
+  color: var(--bone);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.econ-carrier-task small {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--marrow);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .econ-resource-list {
   display: flex;
   flex-direction: column;
@@ -2851,9 +2942,19 @@ body.ui--tool-active .game-layout__debug-panel {
 .econ-bottleneck {
   display: grid;
   gap: 2px;
+  width: 100%;
   padding: 4px 6px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
   border: 1px solid var(--econ-warn-border);
   background: var(--econ-warn-bg);
+}
+
+.econ-bottleneck:hover,
+.econ-bottleneck:focus-visible {
+  border-color: var(--econ-warn);
 }
 
 .econ-bottleneck span {
@@ -3318,4 +3419,318 @@ body.ui--tool-active .game-layout__debug-panel {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.35rem;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   QA readability layout pass
+   ────────────────────────────────────────────────────────────── */
+.hud-layout {
+  z-index: var(--z-hud);
+}
+
+.hud-layout__left {
+  left: 18px;
+  top: 202px;
+  bottom: 92px;
+  transform: none;
+  z-index: var(--z-panels);
+  max-width: min(390px, calc(100vw - 420px));
+}
+
+.hud-layout__right {
+  right: 18px;
+  top: 132px;
+  z-index: var(--z-inspector);
+  max-width: min(370px, calc(100vw - 36px));
+}
+
+.hud-layout__bottom {
+  left: 18px;
+  right: auto;
+  bottom: 14px;
+  z-index: var(--z-panels);
+}
+
+.game-left-rail {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  max-height: 100%;
+  pointer-events: auto;
+}
+
+.game-left-rail__tabs {
+  display: grid;
+  gap: 5px;
+  width: 76px;
+}
+
+.game-left-rail__tab {
+  min-height: 32px;
+  border: 1px solid var(--hud-button-border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: rgba(10, 5, 6, 0.86);
+  color: var(--bone);
+  font-family: var(--font-display);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.game-left-rail__tab:hover,
+.game-left-rail__tab:focus-visible,
+.game-left-rail__tab.active {
+  border-color: var(--fresh-blood);
+  background: var(--hud-button-active-bg);
+  outline: none;
+}
+
+.game-left-rail__panel {
+  width: min(312px, calc(100vw - 124px));
+  max-height: calc(100dvh - 232px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.game-left-rail__panel > * {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.game-left-rail .settlement-brief,
+.game-left-rail .economy-panel,
+.game-left-rail .military-panel,
+.game-left-rail .warehouse-panel,
+.game-left-rail .game-guide,
+.game-left-rail .event-log,
+.game-left-rail .content-codex,
+.game-left-rail .production-chain__panel {
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+}
+
+.game-left-rail .economy-panel__cols {
+  grid-template-columns: 1fr;
+  max-height: none;
+  overflow: visible;
+}
+
+.game-left-rail .economy-panel__right {
+  min-width: 0;
+}
+
+.game-left-rail .settlement-brief__metrics,
+.game-left-rail .military-panel__stats,
+.storage-inspector__stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.game-left-rail .tactical-map {
+  position: static;
+  width: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.game-left-rail .tactical-map__toggle {
+  width: 100%;
+}
+
+.game-left-rail .tactical-map__panel {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.top-hud-inner {
+  justify-content: flex-start;
+  align-items: start;
+  gap: 10px;
+  padding: 14px 18px;
+}
+
+.top-hud__economy {
+  flex: 1 1 680px;
+  max-width: min(900px, calc(100vw - 470px));
+}
+
+.hud-controls {
+  flex: 0 1 620px;
+  flex-wrap: nowrap;
+  gap: 7px;
+  max-width: min(640px, calc(100vw - 36px));
+  overflow-x: auto;
+  scrollbar-gutter: stable;
+}
+
+.status-chip--simulation {
+  min-width: 180px;
+}
+
+.status-chip--pulse {
+  max-width: 180px;
+}
+
+.status-chip--pulse .world-pulse {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.status-chip small {
+  max-width: 260px;
+  white-space: normal;
+}
+
+.build-dock {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  z-index: auto;
+  width: min(760px, calc(100vw - 36px));
+  gap: 8px;
+}
+
+.build-dock__toggle {
+  min-width: 78px;
+  padding: 10px 14px;
+  font-size: 18px;
+}
+
+.tool-mode-hint {
+  max-width: min(360px, calc(100vw - 310px));
+}
+
+.inspector-panel {
+  width: min(370px, calc(100vw - 36px));
+  max-height: calc(100dvh - 150px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.game-layout__debug-panel {
+  right: 404px;
+  bottom: 92px;
+  z-index: var(--z-panels);
+}
+
+.storage-ledger {
+  display: grid;
+  gap: 5px;
+}
+
+.storage-ledger__row {
+  display: grid;
+  grid-template-columns: minmax(88px, 1fr) repeat(3, auto);
+  gap: 6px;
+  align-items: center;
+  padding: 5px 6px;
+  border: 1px solid rgba(227, 220, 211, 0.06);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.storage-ledger__row span {
+  color: var(--marrow);
+  font-size: 10px;
+}
+
+.storage-ledger__row strong {
+  color: var(--bone);
+}
+
+.storage-ledger__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--bone) !important;
+}
+
+.storage-ledger__name img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.resource-pill__amount {
+  color: var(--bone);
+  white-space: nowrap;
+}
+
+.warehouse-entry__transit--reserved {
+  color: var(--econ-warn);
+  border-color: var(--econ-warn-border);
+  background: var(--econ-warn-bg);
+}
+
+.settlement-brief__goal-toggle {
+  margin-top: 0.5rem;
+}
+
+.worker-transport__stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1080px) {
+  .hud-layout__left {
+    max-width: min(360px, calc(100vw - 36px));
+  }
+
+  .top-hud__economy {
+    max-width: calc(100vw - 36px);
+  }
+
+  .game-layout__debug-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .hud-layout--mobile .hud-layout__left {
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: 92px;
+  }
+
+  .hud-layout--mobile .hud-layout__right {
+    left: 10px;
+    right: 10px;
+    top: 116px;
+    bottom: auto;
+    max-width: none;
+  }
+
+  .game-left-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .game-left-rail__tabs {
+    display: flex;
+    width: auto;
+    overflow-x: auto;
+  }
+
+  .game-left-rail__tab {
+    flex: 0 0 auto;
+  }
+
+  .game-left-rail__panel {
+    width: 100%;
+    max-height: 34dvh;
+  }
+
+  .build-dock {
+    width: calc(100vw - 20px);
+    flex-wrap: wrap;
+  }
+
+  .tool-mode-hint {
+    width: 100%;
+    max-width: none;
+  }
 }

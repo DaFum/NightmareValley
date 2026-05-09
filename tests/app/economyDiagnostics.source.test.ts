@@ -21,6 +21,31 @@ describe('economy diagnostics integration', () => {
     expect(source).toContain('routeDiagnostic ?? productionStatus.detail');
   });
 
+  it('lets players inspect economy buildings and bottlenecks without map clicks', () => {
+    const source = readFileSync(join(process.cwd(), 'src/ui/panels/EconomyPanel.tsx'), 'utf8');
+
+    expect(source).toContain("import { useSelectionStore } from '../../store/selection.store'");
+    expect(source).toContain('const selectBuilding = useSelectionStore((state) => state.selectBuilding);');
+    expect(source).toContain('const selectWorker = useSelectionStore((state) => state.selectWorker);');
+    expect(source).toContain('aria-label={`Inspect ${row.name}: ${label}. ${row.statusDetail}`}');
+    expect(source).toContain('onClick={() => selectBuilding(row.id)}');
+    expect(source).toContain('aria-label={`Inspect ${bottleneck.buildingName} bottleneck: ${bottleneck.label}`}');
+    expect(source).toContain('onClick={() => selectBuilding(bottleneck.buildingId)}');
+  });
+
+  it('summarizes active carrier routes in EconomyPanel transport diagnostics', () => {
+    const source = readFileSync(join(process.cwd(), 'src/ui/panels/EconomyPanel.tsx'), 'utf8');
+
+    expect(source).toContain('activeCarrierRoutes');
+    expect(source).toContain('econ-carrier-task-list');
+    expect(source).toContain('Carrier tasks');
+    expect(source).toContain('task.phase ===');
+    expect(source).toContain('pickupName');
+    expect(source).toContain('dropoffName');
+    expect(source).toContain('aria-label={`Inspect carrier ${route.workerId}: ${route.phase} ${route.amount} ${route.resource} from ${route.pickupName} to ${route.dropoffName}`}');
+    expect(source).toContain('onClick={() => selectWorker(route.workerId)}');
+  });
+
   it('uses named balancing thresholds for settlement brief warnings', () => {
     const planner = readFileSync(join(process.cwd(), 'src/game/economy/economy.planner.ts'), 'utf8');
     const constants = readFileSync(join(process.cwd(), 'src/game/economy/balancing.constants.ts'), 'utf8');

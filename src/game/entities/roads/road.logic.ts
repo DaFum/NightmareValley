@@ -30,6 +30,31 @@ export function removeRoadSegment(network: RoadNetwork, id: string): RoadNetwork
 	};
 }
 
+function connectAdjacentBuildingsToRoad(
+	buildings: Record<string, BuildingInstance>,
+	tile: MapTile,
+	ownerId: string
+): { buildings: Record<string, BuildingInstance>; connectedAny: boolean } {
+	let connectedAny = false;
+	const nextBuildings = { ...buildings };
+
+	for (const building of Object.values(buildings)) {
+		if (building.ownerId !== ownerId) continue;
+		if (building.connectedToRoad) continue;
+
+		const distance =
+			Math.abs(building.position.x - tile.position.x) +
+			Math.abs(building.position.y - tile.position.y);
+
+		if (distance <= 1) {
+			nextBuildings[building.id] = { ...building, connectedToRoad: true };
+			connectedAny = true;
+		}
+	}
+
+	return { buildings: nextBuildings, connectedAny };
+}
+
 export function placeRoadTile(
 	state: EconomySimulationState,
 	ownerId: string,
@@ -37,6 +62,17 @@ export function placeRoadTile(
 ): EconomySimulationState {
 	const tile = state.territory.tiles[tileId];
 	if (!tile) throw new Error(`Unknown road tile: ${tileId}`);
+
+	if (tile.ownerId === ownerId && isRoadTile(tile)) {
+		const { buildings, connectedAny } = connectAdjacentBuildingsToRoad(state.buildings, tile, ownerId);
+		if (connectedAny) {
+			return {
+				...state,
+				buildings,
+			};
+		}
+		return state;
+	}
 
 	const placement = canPlaceRoadForPlayer(state.territory, tile.position.x, tile.position.y, ownerId);
 	if (!placement.ok) throw new Error(`Cannot place road at ${tile.position.x},${tile.position.y}: ${placement.reason}`);
@@ -48,16 +84,7 @@ export function placeRoadTile(
 		tier: 'dirt' as const,
 	};
 
-	const buildings = { ...state.buildings };
-	for (const building of Object.values(state.buildings)) {
-		if (building.ownerId !== ownerId) continue;
-		const distance =
-			Math.abs(building.position.x - tile.position.x) +
-			Math.abs(building.position.y - tile.position.y);
-		if (distance <= 1 && !building.connectedToRoad) {
-			buildings[building.id] = { ...building, connectedToRoad: true };
-		}
-	}
+	const { buildings } = connectAdjacentBuildingsToRoad(state.buildings, nextTile, ownerId);
 
 	return {
 		...state,
@@ -160,5 +187,4 @@ export function getRoadConnectionDiagnostic(
 	if (!target.connectedToRoad) return `${target.type} has no road entrance`;
 	return `${source.type} and ${target.type} are on disconnected roads`;
 }
-
 

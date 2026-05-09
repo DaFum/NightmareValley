@@ -3,16 +3,21 @@ import { getTutorialStep } from '../../game/tutorial/tutorial.rules';
 import { player1Id, useGameStore } from '../../store/game.store';
 import { useUIStore } from '../../store/ui.store';
 
-export default function GameGuidePanel(): JSX.Element | null {
+export type GameGuidePanelProps = {
+  forceOpen?: boolean;
+};
+
+export default function GameGuidePanel({ forceOpen = false }: GameGuidePanelProps): JSX.Element | null {
   const guideCheckBucket = useGameStore((state) => Math.floor(state.gameState.ageOfTeeth));
   const guideOpen = useUIStore((state) => state.guideOpen);
   const setGuideOpen = useUIStore((state) => state.setGuideOpen);
+  const setLeftPanel = useUIStore((state) => state.setLeftPanel);
   const step = useMemo(
     () => getTutorialStep(useGameStore.getState().gameState, player1Id),
     [guideCheckBucket]
   );
 
-  if (!guideOpen) return null;
+  if (!forceOpen && !guideOpen) return null;
 
   return (
     <section className="game-guide macabre-panel" aria-label="Game guide">
@@ -23,7 +28,10 @@ export default function GameGuidePanel(): JSX.Element | null {
         </div>
         <button
           className="hud-button game-guide__close"
-          onClick={() => setGuideOpen(false)}
+          onClick={() => {
+            setGuideOpen(false);
+            if (forceOpen) setLeftPanel(null);
+          }}
           title="Hide guide"
           aria-label="Hide guide"
         >

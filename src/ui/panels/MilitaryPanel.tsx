@@ -122,9 +122,9 @@ export default function MilitaryPanel(): JSX.Element | null {
         <div><dt>Soldiers</dt><dd>{snapshot.metrics.soldiers}</dd></div>
         <div><dt>Spires</dt><dd>{snapshot.metrics.spires}</dd></div>
         <div><dt>Defense</dt><dd>{fmt0.format(snapshot.metrics.defenseStrength)}</dd></div>
-        <div><dt>Enemy land</dt><dd>{snapshot.metrics.enemyTerritoryTiles}</dd></div>
-        <div><dt>Vault</dt><dd>{fmt0.format(snapshot.metrics.vaultIntegrity)}%</dd></div>
-        <div><dt>Next attack</dt><dd>{military?.activeRaid ? 'now' : `${fmt0.format(nextAttack)}s`}</dd></div>
+        <div><dt>Enemy territory</dt><dd>{snapshot.metrics.enemyTerritoryTiles} tiles</dd></div>
+        <div><dt>Vault integrity</dt><dd>{fmt0.format(snapshot.metrics.vaultIntegrity)}%</dd></div>
+        <div><dt>Next raid</dt><dd>{military?.activeRaid ? 'now' : `in ${fmt0.format(nextAttack)}s`}</dd></div>
       </dl>
 
       {military?.activeRaid ? (
@@ -141,7 +141,7 @@ export default function MilitaryPanel(): JSX.Element | null {
 
       <div className={`military-panel__objective ${hostileDefeated ? 'military-panel__objective--complete' : ''}`}>
         <strong>Break the Hostile Choir</strong>
-        <span>Win condition: repel 2 raids and drive enemy pressure to 10 or lower.</span>
+        <span>Goal: repel 2 raids and reduce enemy pressure to 10 or lower.</span>
         <small>
           Raids {Math.min(hostileRaidsRepelled, HOSTILE_RAIDS_REQUIRED)}/{HOSTILE_RAIDS_REQUIRED} · Pressure {fmt0.format(hostilePressure)}/{HOSTILE_PRESSURE_TARGET}
         </small>
@@ -164,11 +164,11 @@ export default function MilitaryPanel(): JSX.Element | null {
               <span
                 key={resource}
                 className={`resource-pill ${current >= (amount ?? 0) ? 'resource-pill--ready' : 'resource-pill--short'}`}
-                title={`${resourceShortLabel(resource as ResourceType)}: ${current}/${amount}`}
+                title={`${resourceShortLabel(resource as ResourceType)}: ${current}/${amount ?? 0}`}
               >
                 {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
                 <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                {current}/{amount}
+                <span className="resource-pill__amount">{current}/{amount ?? 0}</span>
               </span>
             );
           })}
@@ -280,4 +280,3 @@ function resourceShortLabel(resource: ResourceType): string {
       return resource.replace(/([A-Z])/g, ' $1');
   }
 }
-

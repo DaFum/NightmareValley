@@ -115,6 +115,37 @@ describe('economy planner', () => {
     );
   });
 
+  it('reports extraction buildings with no nearby deposit as actionable bottlenecks', () => {
+    const state = makeState({
+      quarry: building('quarry', 'sepulcherQuarry', {
+        assignedWorkers: ['worker-1'],
+      }),
+    }) as any;
+    state.workers = {
+      'worker-1': {
+        id: 'worker-1',
+        type: 'graveToothBreaker',
+        ownerId: 'p1',
+        position: { x: 0, y: 0 },
+        isIdle: false,
+      },
+    };
+
+    const bottlenecks = getEconomyBottlenecks(state, 'p1');
+
+    expect(bottlenecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          buildingId: 'quarry',
+          kind: 'missingDeposit',
+          resourceType: 'sepulcherStone',
+        }),
+      ])
+    );
+    expect(getBottleneckAction(bottlenecks.find((entry) => entry.kind === 'missingDeposit')!))
+      .toContain('near a matching deposit');
+  });
+
   it('combines next objective, recommendation, and bottlenecks into one snapshot', () => {
     const state = makeState({
       vault: building('vault', 'vaultOfDigestiveStone', {
@@ -292,6 +323,17 @@ describe('economy planner', () => {
     expect(snapshot.transport.queuedJobs).toBe(0);
     expect(snapshot.transport.busyCarriers).toBe(0);
     expect(snapshot.transport.networkStress).toBe(0);
+  });
+
+  it('does not crash legacy UI projections that omit territory', () => {
+    const state = makeState({
+      quarry: building('quarry', 'sepulcherQuarry', {
+        assignedWorkers: ['worker-1'],
+      }),
+    }) as any;
+    delete state.territory;
+
+    expect(() => getEconomyBottlenecks(state, 'p1')).not.toThrow();
   });
 
   it('prioritizes active raids over routine economy advice', () => {
