@@ -168,7 +168,7 @@ export default function MilitaryPanel(): JSX.Element | null {
               >
                 {imgSrc ? <img src={imgSrc} alt="" aria-hidden="true" /> : null}
                 <span className="resource-pill__label">{resourceShortLabel(resource as ResourceType)}</span>
-                <span className="resource-pill__amount">{current}/{amount}</span>
+                <span className="resource-pill__amount">{current}/{amount ?? 0}</span>
               </span>
             );
           })}

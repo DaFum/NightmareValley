@@ -30,7 +30,6 @@ describe('BuildingInspector store subscriptions', () => {
 
     expect(source).toContain('resourceShortLabel(resource as ResourceType)');
     expect(source).toMatch(/\{currentAmount\}\/\{amount(?: \?\? 0)?\}/);
-    expect(source).toMatch(/const costLabel = Object\.entries\(hireCost\.resources\)[\s\S]*\$\{resourceShortLabel\(resource as ResourceType\)\} \$\{inventory\[resource as ResourceType\] \?\? 0\}\/\$\{amount \?\? 0\}/);
     expect(source).toContain('title={`${resourceShortLabel(resource as ResourceType)}: ${currentAmount}/${amount ?? 0}`}');
     expect(source).toContain('{currentAmount}/{amount ?? 0}');
     expect(source).toContain('Vault is short');

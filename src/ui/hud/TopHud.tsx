@@ -77,7 +77,7 @@ export function TopHud({ onOpenMenu, onOpenSettings, onOpenShortcuts }: TopHudPr
             aria-pressed={leftPanel === 'guide'}
             onClick={() => {
               toggleGuideOpen();
-              setLeftPanel('guide');
+              setLeftPanel(leftPanel === 'guide' ? null : 'guide');
             }}
             title="Show game guide in the left rail"
           >

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { BUILDING_DEFINITIONS } from '../../game/core/economy.data';
 import { getCampaignObjectives } from '../../game/core/victory.rules';
@@ -20,6 +20,12 @@ export default function ProductionChainPanel({ forceOpen = false }: ProductionCh
     }))
   );
 
+  useEffect(() => {
+    if (!forceOpen) {
+      setOpen(false);
+    }
+  }, [forceOpen]);
+
   const rows = useMemo(() => {
     const gameState = { buildings, workers, transport } as ReturnType<typeof useGameStore.getState>['gameState'];
     const bottlenecks = getEconomyBottlenecks(gameState, player1Id);
@@ -39,7 +45,10 @@ export default function ProductionChainPanel({ forceOpen = false }: ProductionCh
     <div className="production-chain">
       <button
         className={`macabre-panel production-chain__toggle ${panelOpen ? 'active' : ''}`}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (forceOpen) return;
+          setOpen((value) => !value);
+        }}
         aria-expanded={panelOpen}
         aria-controls="production-chain-panel"
         title="Objectives show current chain progress, blocked steps, and the next useful action"

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { useGameStore, player1Id } from '../../store/game.store';
 import imageMap from '../../pixi/utils/vite-asset-loader';
 import { ResourceType } from '../../game/core/economy.types';
@@ -15,13 +16,13 @@ type VaultEntry = {
 };
 
 export default function WarehousePanel(): JSX.Element | null {
-  const gameState = useGameStore((s) => s.gameState);
-  const { buildings, transport } = useMemo(() => ({
-    buildings: gameState.buildings,
-    transport: gameState.transport,
-  }), [gameState]);
-
-  const ledger = useMemo(() => getResourceLedger(gameState, player1Id), [gameState]);
+  const { buildings, transport, ledger } = useGameStore(
+    useShallow((s) => ({
+      buildings: s.gameState.buildings,
+      transport: s.gameState.transport,
+      ledger: getResourceLedger(s.gameState, player1Id),
+    }))
+  );
 
   const entries = useMemo((): VaultEntry[] => {
     const stored: Partial<Record<ResourceType, number>> = {};

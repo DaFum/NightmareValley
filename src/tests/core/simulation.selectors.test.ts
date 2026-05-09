@@ -88,16 +88,31 @@ describe('simulation selectors', () => {
   });
 
   it('returns logistics distance details for valid building placement', () => {
-    const world = structuredClone(useGameStore.getState().gameState);
-    const [playerId] = Object.keys(world.players);
-    const placeableTile = Object.values(world.territory.tiles).find((tile) => tile.ownerId === playerId && !tile.buildingId);
+    const playerId = 'p1';
+    const world = {
+      players: {
+        [playerId]: { id: playerId, buildings: ['vault_1'] },
+      },
+      buildings: {
+        'vault_1': { id: 'vault_1', type: 'vaultOfDigestiveStone', ownerId: playerId, position: { x: 0, y: 0 }, isConstructed: true },
+      },
+      territory: {
+        tiles: {
+          'tile_1': { id: 'tile_1', ownerId: playerId, position: { x: 5, y: 5 }, terrain: 'scarredEarth' }
+        },
+        tileIndex: {
+          '5,5': 'tile_1',
+        }
+      }
+    } as any;
+    const placeableTile = world.territory.tiles['tile_1'];
 
     expect(placeableTile).toBeDefined();
 
     const validation = getPlacementValidation(world, playerId, 'organHarvester', placeableTile!.position.x, placeableTile!.position.y);
 
     expect(validation.ok).toBe(true);
-    expect(validation.nearestVaultDistance).toEqual(expect.any(Number));
+    expect(Number.isFinite(validation.nearestVaultDistance)).toBe(true);
     expect(validation.logisticsHint).toContain('nearest vault');
   });
 });

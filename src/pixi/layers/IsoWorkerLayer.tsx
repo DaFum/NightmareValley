@@ -12,6 +12,14 @@ interface IsoWorkerLayerProps {
 
 const WORKER_SCALE = 0.18;
 const WORKER_ANCHOR = { x: 0.5, y: 1 } as const;
+
+const WORKER_LABEL_STYLE = new PIXI.TextStyle({
+  fill: '#e3dcd3',
+  fontFamily: 'Georgia, serif',
+  fontSize: 11,
+  stroke: '#080305',
+  strokeThickness: 3,
+});
 // Carry sprite is proportionally larger and offset upward relative to the worker scale
 const CARRY_SCALE = WORKER_SCALE * (0.2 / 0.13);
 const CARRY_OFFSET_Y = -Math.round(16 * (WORKER_SCALE / 0.13));
@@ -93,13 +101,7 @@ export function IsoWorkerLayer({ workers }: IsoWorkerLayerProps) {
                 y={-42}
                 anchor={{ x: 0.5, y: 1 }}
                 zIndex={2}
-                style={new PIXI.TextStyle({
-                  fill: '#e3dcd3',
-                  fontFamily: 'Georgia, serif',
-                  fontSize: 11,
-                  stroke: '#080305',
-                  strokeThickness: 3,
-                })}
+                style={WORKER_LABEL_STYLE}
               />
             )}
           </Container>
